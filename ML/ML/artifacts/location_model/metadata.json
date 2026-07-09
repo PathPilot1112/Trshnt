@@ -1,0 +1,18 @@
+{
+  "class_names": [
+    "Clock tower",
+    "Ganesh Temple",
+    "Genz",
+    "Hospital",
+    "Library",
+    "MBA Gate",
+    "Perarignar anna statue",
+    "Thanthai periyar",
+    "Vendhar square",
+    "Vivekanand statue",
+    "aaruush logo"
+  ],
+  "confidence_threshold": 0.55,
+  "image_size": 224,
+  "weights": "efficientnet_b0"
+}
