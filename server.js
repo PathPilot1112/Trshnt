@@ -8,6 +8,9 @@ import clueRoutes from './routes/clueRoutes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import connectDB from './config/db.js';
+import adminRoutes from './routes/adminRoutes.js';
+import teamRoutes from './routes/teamRoutes.js';
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -25,6 +28,14 @@ connectDB();
 
 app.use(cors());
 app.use(express.json());
+
+app.use('/api/admin', adminRoutes);
+app.use('/api/teams', teamRoutes);
+
+app.get('/', (req, res) => {
+  res.send('API is running...');
+});
+
 
 // Serve static uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
