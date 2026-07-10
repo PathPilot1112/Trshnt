@@ -1,0 +1,12 @@
+{
+  "data_dir": "Treasure hunt Photos",
+  "output_dir": "artifacts/location_model",
+  "image_size": 224,
+  "batch_size": 16,
+  "epochs": 25,
+  "lr": 0.0003,
+  "val_size": 0.2,
+  "seed": 42,
+  "confidence_threshold": 0.55,
+  "freeze_backbone_epochs": 3
+}
