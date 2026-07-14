@@ -7,10 +7,9 @@ import connectDB from './config/db.js';
 import clueRoutes from './routes/clueRoutes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
-import connectDB from './config/db.js';
 import adminRoutes from './routes/adminRoutes.js';
 import teamRoutes from './routes/teamRoutes.js';
+import { seedDatabase } from './utils/seed.js';
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -24,7 +23,9 @@ const io = new Server(server, {
 
 app.set('io', io); // make io accessible to controllers
 
-connectDB();
+connectDB().then(() => {
+  seedDatabase();
+});
 
 app.use(cors());
 app.use(express.json());
