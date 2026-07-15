@@ -5,7 +5,7 @@ import Scan from './pages/Scan';
 import AdminDashboard from './pages/AdminDashboard';
 import ScanlineOverlay from './components/ScanlineOverlay';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api';
+const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
 function App() {
   const [operatorName, setOperatorName] = useState('');

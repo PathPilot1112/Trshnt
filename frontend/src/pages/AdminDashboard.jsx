@@ -293,7 +293,7 @@ const AdminDashboard = ({ API_BASE }) => {
                     LABEL: {submission.mlResult?.predictedLabel || 'N/A'} | CONFIDENCE: {Math.round((submission.mlResult?.confidence || 0) * 100)}%
                   </div>
                 </div>
-                <a href={`${API_BASE.replace(/\/api\/?$/, '')}${submission.photoUrl}`} target="_blank" rel="noreferrer" className="cyber-btn-outline">
+                <a href={submission.photoUrl?.startsWith('http') ? submission.photoUrl : `${API_BASE.replace(/\/api\/?$/, '')}${submission.photoUrl}`} target="_blank" rel="noreferrer" className="cyber-btn-outline">
                   <Eye size={14} /> VIEW PHOTO
                 </a>
               </div>

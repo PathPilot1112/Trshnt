@@ -2,6 +2,8 @@ import Clue from "../models/Clue.js";
 import Team from "../models/Team.js";
 import Submission from "../models/Submission.js";
 import { predictImage } from "../utils/mlClient.js";
+import { uploadToCloudinary, isCloudinaryConfigured } from "../utils/cloudinary.js";
+import fs from "fs/promises";
 
 // @route   GET /api/clues/current
 // @desc    Get the current clue for the logged-in user's team
@@ -41,10 +43,21 @@ export const submitPhoto = async (req, res) => {
 
   const currentClue = clues[team.currentClueIndex];
   const photoPath = req.file.path; // from multer
-  const photoUrl = `/uploads/${req.file.filename}`; 
+  let photoUrl = `/uploads/${req.file.filename}`; 
 
   try {
-    // 1. Send photo to ML Service with offline fallback
+    // 1. Upload to Cloudinary if configured
+    if (isCloudinaryConfigured) {
+      try {
+        console.log("☁️ Uploading photo to Cloudinary...");
+        photoUrl = await uploadToCloudinary(photoPath);
+        console.log("☁️ Cloudinary upload successful:", photoUrl);
+      } catch (err) {
+        console.error("❌ Cloudinary upload failed, falling back to local storage:", err.message);
+      }
+    }
+
+    // 2. Send photo to ML Service with offline fallback
     let mlResponse;
     try {
       mlResponse = await predictImage(photoPath);
@@ -57,12 +70,12 @@ export const submitPhoto = async (req, res) => {
       };
     }
     
-    // 2. Validate against current clue
+    // 3. Validate against current clue
     const isLabelMatch = mlResponse.prediction === currentClue.targetLabel;
     const isConfident = mlResponse.confidence >= currentClue.confidenceThreshold;
     const isCorrect = isLabelMatch && isConfident;
 
-    // 3. Log Submission
+    // 4. Log Submission
     const submission = new Submission({
       team: team._id,
       clue: currentClue._id,
@@ -76,7 +89,17 @@ export const submitPhoto = async (req, res) => {
     });
     await submission.save();
 
-    // 4. Update Team Progress if Correct
+    // 5. Clean up temporary local file if Cloudinary was used
+    if (isCloudinaryConfigured) {
+      try {
+        await fs.unlink(photoPath);
+        console.log("🗑️ Local temporary file deleted:", photoPath);
+      } catch (err) {
+        console.warn("⚠️ Failed to delete local temp file:", err.message);
+      }
+    }
+
+    // 6. Update Team Progress if Correct
     if (isCorrect) {
       team.completedClues.push({
         clue: currentClue._id,

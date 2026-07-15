@@ -223,8 +223,7 @@ const Scan = ({ API_BASE, token, onAbort }) => {
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-                opacity: isCaptured ? 0.15 : 0.85,
-                filter: 'grayscale(100%) contrast(140%) brightness(90%) sepia(20%) hue-rotate(80deg)',
+                opacity: isCaptured ? 0.2 : 1.0,
               }}
             />
             <canvas
@@ -235,8 +234,7 @@ const Scan = ({ API_BASE, token, onAbort }) => {
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-                opacity: isCaptured ? 0.9 : 0,
-                filter: 'grayscale(100%) contrast(140%) brightness(90%) sepia(20%) hue-rotate(80deg)',
+                opacity: isCaptured ? 1.0 : 0,
               }}
             />
           </>
@@ -244,14 +242,12 @@ const Scan = ({ API_BASE, token, onAbort }) => {
           <img src={scannerBg} alt="Simulated Viewport" className="camera-feed-bg" />
         )}
 
-        <div className="viewport-grid"></div>
         <div className="viewport-corners"></div>
         {!isCaptured && (
           <div className="reticle">
             <div className="reticle-circle"></div>
           </div>
         )}
-        <div className="laser-beam"></div>
         <div className={`screen-flash ${isFlashing ? 'active' : ''}`}></div>
 
         {isTransmitting && (
@@ -265,50 +261,91 @@ const Scan = ({ API_BASE, token, onAbort }) => {
               alignItems: 'center',
               justifyContent: 'center',
               color: 'var(--cyan-primary)',
+              fontWeight: 'bold',
             }}
           >
-            TRANSMITTING...
+            TRANSMITTING DATA...
           </div>
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
-        <div className="telemetry-card">
-          <div className="telemetry-label">PERMISSIONS</div>
-          <div style={{ marginTop: '8px', fontSize: '11px', display: 'grid', gap: '6px' }}>
-            <div><Camera size={12} style={{ marginRight: '6px' }} /> CAMERA: {cameraPermission}</div>
-            <div><MapPin size={12} style={{ marginRight: '6px' }} /> LOCATION: {locationPermission}</div>
-            <div>COORDS: {coords ? `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}` : 'PENDING'}</div>
-          </div>
-        </div>
-
-        <div className="telemetry-card">
-          <div className="telemetry-label">ACTIONS</div>
-          <div style={{ marginTop: '8px', display: 'grid', gap: '8px' }}>
-            <button className="cyber-btn striped" onClick={handleCapture}>
-              <Camera size={14} /> CAPTURE
-            </button>
-            <label className="cyber-btn-outline" style={{ display: 'flex', justifyContent: 'center', cursor: 'pointer' }}>
-              <Upload size={14} /> LOAD FILE
+      {/* Main Interactive Controls */}
+      {!isCaptured ? (
+        <div style={{ marginTop: '14px', display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: '10px', width: '100%' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+            <label className="cyber-btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', margin: 0, padding: '8px 14px', fontSize: '11px' }}>
+              <Upload size={12} /> FILE
               <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLocalFile} />
             </label>
           </div>
+
+          <div>
+            <button
+              onClick={handleCapture}
+              title="Capture Image"
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                border: '3px solid var(--cyan-primary)',
+                background: 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 0 12px rgba(0, 240, 255, 0.4)',
+                padding: 0,
+              }}
+            >
+              <div style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                background: 'var(--cyan-primary)',
+                boxShadow: '0 0 8px var(--cyan-primary)',
+              }}></div>
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', fontSize: '10px', color: 'rgba(0, 240, 255, 0.7)', fontFamily: 'var(--font-mono)' }}>
+            {coords ? `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` : 'NO GPS LOCK'}
+          </div>
+        </div>
+      ) : (
+        <div style={{ marginTop: '14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', width: '100%' }}>
+          <button className="cyber-btn-outline" onClick={handleRecapture} disabled={isTransmitting}>
+            <RefreshCw size={12} /> RETAKE
+          </button>
+          <button className="cyber-btn striped" onClick={handleTransmit} disabled={!capturedBlob || isTransmitting}>
+            <Send size={12} /> SUBMIT SCAN
+          </button>
+        </div>
+      )}
+
+      {/* Simplified Status Indicators */}
+      <div className="telemetry-card" style={{ marginTop: '10px', padding: '8px 12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'rgba(0, 240, 255, 0.8)' }}>
+          <span>CAM: {cameraPermission.toUpperCase()}</span>
+          <span>GPS: {locationPermission.toUpperCase()}</span>
+          <span>LINK: SECURE</span>
         </div>
       </div>
 
-      <div className="ml-log-console" style={{ height: '140px', marginTop: '12px' }}>
-        {logs.slice(-8).map((log, index) => (
-          <div key={`${log}-${index}`} className="log-entry">{log}</div>
-        ))}
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '12px' }}>
-        <button className="cyber-btn-outline" onClick={handleRecapture} disabled={!isCaptured}>
-          <RefreshCw size={14} /> RESET
-        </button>
-        <button className="cyber-btn striped" onClick={handleTransmit} disabled={!capturedBlob || isTransmitting}>
-          <Send size={14} /> SUBMIT
-        </button>
+      {/* Terminal Log Status Ticker */}
+      <div className="log-entry" style={{
+        marginTop: '10px',
+        padding: '6px 10px',
+        border: '1px solid rgba(0, 240, 255, 0.15)',
+        background: 'rgba(3, 12, 15, 0.4)',
+        fontSize: '9px',
+        fontFamily: 'var(--font-mono)',
+        textAlign: 'center',
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        textOverflow: 'ellipsis',
+        color: 'var(--cyan-primary)'
+      }}>
+        STATUS // {logs[logs.length - 1] || 'SYSTEM ONLINE'}
       </div>
 
       {showModal && scanResult && (

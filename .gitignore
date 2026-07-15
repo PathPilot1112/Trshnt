@@ -1,0 +1,67 @@
+# Dependency directories
+node_modules/
+**/node_modules/
+jspm_packages/
+web_modules/
+
+# Build and distribution directories
+dist/
+**/dist/
+build/
+**/build/
+out/
+**/out/
+.next/
+.nuxt/
+
+# Local configuration
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# IDE/Editor files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.sw?
+.DS_Store
+Thumbs.db
+
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Uploads and temporary assets
+uploads/
+bin/
+cloudflare.log
+
+# SSH Keys and private keys
+git  push
+git  push.pub
+*.key
+*.pem
+*.pub
+
+# Python cache and environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+.pytest_cache/
+
+# ML training data and model checkpoints
+ML/ML/artifacts/
+ML/ML/Treasure hunt Photos/
+
