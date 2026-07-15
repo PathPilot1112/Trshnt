@@ -17,6 +17,10 @@ const teamSchema = new mongoose.Schema(
     score: { type: Number, default: 0 },
     startedAt: Date,
     finishedAt: Date,
+    timerStartedAt: Date,
+    timerStoppedAt: Date,
+    timerAccumulatedMs: { type: Number, default: 0 },
+    timerRunning: { type: Boolean, default: false },
     status: {
       type: String,
       enum: ["not_started", "in_progress", "finished", "disqualified"],

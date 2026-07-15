@@ -5,7 +5,7 @@ import User from "../models/User.js";
 export const seedDatabase = async () => {
   try {
     // 1. Seed Admin User
-    const adminEmail = process.env.ADMIN_MAIL || "admin@stalker.net";
+    const adminEmail = process.env.ADMIN_MAIL || "admintest@gmail.com";
     const existingAdmin = await User.findOne({ role: "admin" });
     if (!existingAdmin) {
       const admin = new User({

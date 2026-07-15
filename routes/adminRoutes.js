@@ -10,7 +10,9 @@ import {
   adminLogin,
   startTeamMission,
   resetTeamMission,
-  clueOverride
+  clueOverride,
+  getLeaderboardSnapshot,
+  stopTeamTimer
 } from "../controllers/adminController.js";
 import { protect, adminOnly } from "../middleware/auth.js";
 
@@ -18,6 +20,7 @@ const router = express.Router();
 
 router.post("/login", adminLogin);
 router.get("/leaderboard", protect, getLeaderboard);
+router.get("/leaderboard/live", protect, adminOnly, getLeaderboardSnapshot);
 router.get("/teams", protect, adminOnly, listTeams);
 router.get("/submissions", protect, adminOnly, listSubmissions);
 router.get("/clues", protect, adminOnly, listClues);
@@ -27,6 +30,7 @@ router.delete("/clues/:id", protect, adminOnly, deleteClue);
 router.get("/:id", protect, adminOnly, getTeam);
 
 router.post("/teams/:id/start", protect, adminOnly, startTeamMission);
+router.post("/teams/:id/stop", protect, adminOnly, stopTeamTimer);
 router.post("/teams/:id/reset", protect, adminOnly, resetTeamMission);
 router.post("/teams/:id/clue-override", protect, adminOnly, clueOverride);
 

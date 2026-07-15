@@ -88,6 +88,13 @@ export const submitPhoto = async (req, res) => {
       if (team.currentClueIndex >= clues.length) {
         team.status = "finished";
         team.finishedAt = new Date();
+        if (team.timerRunning && team.timerStartedAt) {
+          team.timerAccumulatedMs =
+            (team.timerAccumulatedMs || 0) + (Date.now() - new Date(team.timerStartedAt).getTime());
+        }
+        team.timerRunning = false;
+        team.timerStoppedAt = new Date();
+        team.timerStartedAt = undefined;
       } else {
         team.status = "in_progress";
       }
@@ -101,7 +108,9 @@ export const submitPhoto = async (req, res) => {
           teamId: team._id,
           name: team.name,
           score: team.score,
-          currentClueIndex: team.currentClueIndex
+          currentClueIndex: team.currentClueIndex,
+          timerRunning: team.timerRunning,
+          timerAccumulatedMs: team.timerAccumulatedMs || 0,
         });
       }
 

@@ -4,13 +4,43 @@ import Submission from "../models/Submission.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
+const JWT_SECRET = process.env.JWT_SECRET || "stalkersecret";
+
+const computeElapsedMs = (team) => {
+  const base = team.timerAccumulatedMs || 0;
+  if (!team.timerRunning || !team.timerStartedAt) return base;
+  return base + (Date.now() - new Date(team.timerStartedAt).getTime());
+};
+
+const buildLeaderboardEntry = (team) => ({
+  teamId: team._id,
+  name: team.name,
+  score: team.score,
+  status: team.status,
+  currentClueIndex: team.currentClueIndex,
+  elapsedMs: computeElapsedMs(team),
+  timerRunning: team.timerRunning,
+  timerStartedAt: team.timerStartedAt,
+  timerAccumulatedMs: team.timerAccumulatedMs || 0,
+  location: team.location,
+});
+
+const buildSnapshot = (teams) =>
+  teams
+    .map(buildLeaderboardEntry)
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      if (b.currentClueIndex !== a.currentClueIndex) return b.currentClueIndex - a.currentClueIndex;
+      return a.elapsedMs - b.elapsedMs;
+    });
+
 // --- Admin Authentication ---
 
 export const adminLogin = async (req, res) => {
   const { email, password } = req.body;
   
-  const targetEmail = process.env.ADMIN_MAIL || "admin@stalker.net";
-  const targetPassword = process.env.ADMIN_PASSWORD || "liquidator";
+  const targetEmail = process.env.ADMIN_MAIL || "admintest@gmail.com";
+  const targetPassword = process.env.ADMIN_PASSWORD || "admin123";
 
   if (email !== targetEmail || password !== targetPassword) {
     return res.status(401).json({ message: "Invalid admin credentials" });
@@ -30,7 +60,7 @@ export const adminLogin = async (req, res) => {
 
     const token = jwt.sign(
       { id: adminUser._id, role: "admin" },
-      process.env.JWT_SECRET || "stalkersecret",
+      JWT_SECRET,
       { expiresIn: "7d" }
     );
 
@@ -107,16 +137,58 @@ export const startTeamMission = async (req, res) => {
 
     team.status = "in_progress";
     team.startedAt = new Date();
+    team.timerStartedAt = new Date();
+    team.timerStoppedAt = undefined;
+    team.timerAccumulatedMs = 0;
+    team.timerRunning = true;
     await team.save();
 
     const io = req.app.get("io");
     if (io) {
-      io.emit("team:status", { teamId: team._id, status: "in_progress", startedAt: team.startedAt });
+      io.emit("team:status", {
+        teamId: team._id,
+        status: "in_progress",
+        startedAt: team.startedAt,
+        timerStartedAt: team.timerStartedAt,
+        timerAccumulatedMs: team.timerAccumulatedMs,
+        timerRunning: team.timerRunning,
+      });
     }
 
     res.json({ message: "Mission started successfully", team });
   } catch (err) {
     res.status(500).json({ message: "Error starting mission", error: err.message });
+  }
+};
+
+export const stopTeamTimer = async (req, res) => {
+  try {
+    const team = await Team.findById(req.params.id);
+    if (!team) return res.status(404).json({ message: "Team not found" });
+
+    if (team.timerRunning && team.timerStartedAt) {
+      team.timerAccumulatedMs =
+        (team.timerAccumulatedMs || 0) + (Date.now() - new Date(team.timerStartedAt).getTime());
+    }
+
+    team.timerRunning = false;
+    team.timerStoppedAt = new Date();
+    team.timerStartedAt = undefined;
+    await team.save();
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("team:timer", {
+        teamId: team._id,
+        timerRunning: false,
+        timerAccumulatedMs: team.timerAccumulatedMs,
+        timerStoppedAt: team.timerStoppedAt,
+      });
+    }
+
+    res.json({ message: "Team timer stopped successfully", team });
+  } catch (err) {
+    res.status(500).json({ message: "Error stopping timer", error: err.message });
   }
 };
 
@@ -131,6 +203,10 @@ export const resetTeamMission = async (req, res) => {
     team.completedClues = [];
     team.startedAt = undefined;
     team.finishedAt = undefined;
+    team.timerStartedAt = undefined;
+    team.timerStoppedAt = undefined;
+    team.timerAccumulatedMs = 0;
+    team.timerRunning = false;
     await team.save();
 
     const io = req.app.get("io");
@@ -167,7 +243,8 @@ export const clueOverride = async (req, res) => {
         teamId: team._id,
         name: team.name,
         score: team.score,
-        currentClueIndex: team.currentClueIndex
+        currentClueIndex: team.currentClueIndex,
+        elapsedMs: computeElapsedMs(team),
       });
     }
 
@@ -193,5 +270,17 @@ export const listSubmissions = async (req, res) => {
     res.json({ submissions });
   } catch (err) {
     res.status(500).json({ message: "Error listing submissions", error: err.message });
+  }
+};
+
+export const getLeaderboardSnapshot = async (req, res) => {
+  try {
+    const teams = await Team.find()
+      .select("name score currentClueIndex status location timerStartedAt timerAccumulatedMs timerRunning")
+      .lean();
+
+    res.json({ teams: buildSnapshot(teams) });
+  } catch (err) {
+    res.status(500).json({ message: "Error listing leaderboard snapshot", error: err.message });
   }
 };

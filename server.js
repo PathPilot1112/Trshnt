@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url';
 import adminRoutes from './routes/adminRoutes.js';
 import teamRoutes from './routes/teamRoutes.js';
 import { seedDatabase } from './utils/seed.js';
+import Team from './models/Team.js';
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -51,6 +52,48 @@ io.on('connection', (socket) => {
     console.log('Client disconnected', socket.id);
   });
 });
+
+const broadcastLiveSnapshots = async () => {
+  try {
+    const teams = await Team.find()
+      .select("name score currentClueIndex status location timerStartedAt timerAccumulatedMs timerRunning")
+      .lean();
+
+    const withElapsed = teams.map((team) => {
+      const base = team.timerAccumulatedMs || 0;
+      const elapsedMs =
+        team.timerRunning && team.timerStartedAt
+          ? base + (Date.now() - new Date(team.timerStartedAt).getTime())
+          : base;
+
+      return {
+        teamId: team._id,
+        name: team.name,
+        score: team.score,
+        status: team.status,
+        currentClueIndex: team.currentClueIndex,
+        elapsedMs,
+        timerRunning: team.timerRunning,
+        timerStartedAt: team.timerStartedAt,
+        timerAccumulatedMs: team.timerAccumulatedMs || 0,
+        location: team.location,
+      };
+    });
+
+    const leaderboard = [...withElapsed].sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      if (b.currentClueIndex !== a.currentClueIndex) return b.currentClueIndex - a.currentClueIndex;
+      return a.elapsedMs - b.elapsedMs;
+    });
+
+    io.emit('leaderboard:snapshot', leaderboard);
+    io.emit('teams:snapshot', withElapsed);
+  } catch (err) {
+    console.error('Live snapshot broadcast failed:', err.message);
+  }
+};
+
+setInterval(broadcastLiveSnapshots, 1000);
 
 const PORT = process.env.PORT || 8000;
 server.listen(PORT, () => {

@@ -5,7 +5,7 @@ import Scan from './pages/Scan';
 import AdminDashboard from './pages/AdminDashboard';
 import ScanlineOverlay from './components/ScanlineOverlay';
 
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api';
 
 function App() {
   const [operatorName, setOperatorName] = useState('');
@@ -103,6 +103,27 @@ function App() {
     }
   };
 
+  const handleQrLogin = async (qrData) => {
+    const response = await fetch(`${API_BASE}/teams/scan-login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ qrData })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'QR login failed');
+    }
+
+    setToken(data.token);
+    setOperatorName(data.user.name);
+    setTeamInfo(data.team);
+    localStorage.setItem('stalker_token', data.token);
+    window.location.hash = '#hud';
+  };
+
   const handleRefreshProfile = async () => {
     if (!token) return;
     try {
@@ -161,7 +182,7 @@ function App() {
         ) : (
           <>
             {currentRoute === 'welcome' && (
-              <Welcome onLogin={handleLogin} />
+              <Welcome onLogin={handleLogin} onQrLogin={handleQrLogin} />
             )}
             
             {currentRoute === 'hud' && (
@@ -169,14 +190,15 @@ function App() {
                 operatorName={operatorName} 
                 teamInfo={teamInfo}
                 token={token}
+                API_BASE={API_BASE}
                 onNavigate={handleNavigation} 
                 onLogout={handleLogout}
-                onRefresh={handleRefreshProfile}
               />
             )}
             
             {currentRoute === 'scan' && (
               <Scan 
+                API_BASE={API_BASE}
                 token={token}
                 onAbort={() => {
                   handleRefreshProfile();
