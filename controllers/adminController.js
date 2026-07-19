@@ -3,6 +3,8 @@ import Team from "../models/Team.js";
 import Submission from "../models/Submission.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
+import fs from "fs/promises";
+import path from "path";
 
 const JWT_SECRET = process.env.JWT_SECRET || "stalkersecret";
 
@@ -282,5 +284,17 @@ export const getLeaderboardSnapshot = async (req, res) => {
     res.json({ teams: buildSnapshot(teams) });
   } catch (err) {
     res.status(500).json({ message: "Error listing leaderboard snapshot", error: err.message });
+  }
+};
+
+export const getClueLocations = async (req, res) => {
+  try {
+    const filePath = path.join(process.cwd(), "clue.json");
+    const fileData = await fs.readFile(filePath, "utf8");
+    const clueLocations = JSON.parse(fileData);
+    res.json({ clueLocations });
+  } catch (err) {
+    console.error("❌ Error reading clue.json:", err.message);
+    res.status(500).json({ message: "Failed to read clue locations", error: err.message });
   }
 };

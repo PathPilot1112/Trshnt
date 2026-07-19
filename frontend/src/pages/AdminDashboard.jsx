@@ -26,6 +26,22 @@ const AdminDashboard = ({ API_BASE }) => {
   const [leaderboard, setLeaderboard] = useState([]);
   const [activeTab, setActiveTab] = useState('teams');
   const [selectedQR, setSelectedQR] = useState(null);
+  const [clueLocations, setClueLocations] = useState([]);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [newSubmissionAlert, setNewSubmissionAlert] = useState(null);
+
+  const getClueLocationText = (clueId) => {
+    if (!clueId) return 'N/A';
+    const found = clueLocations.find((loc) => String(loc.clueid) === String(clueId));
+    return found ? found.location : 'Unknown Grid coordinates';
+  };
+
+  const getClueText = (clue) => {
+    if (clue?.text) return clue.text;
+    if (!clue?.clueId) return 'N/A';
+    const found = clueLocations.find((loc) => String(loc.clueid) === String(clue.clueId));
+    return found ? found['clue text'] : 'N/A';
+  };
 
   const clearAdminSession = () => {
     localStorage.removeItem('stalker_admin_token');
@@ -35,13 +51,14 @@ const AdminDashboard = ({ API_BASE }) => {
 
   const fetchDashboardData = async () => {
     const headers = { Authorization: `Bearer ${adminToken}` };
-    const [teamsRes, submissionsRes, leaderboardRes] = await Promise.all([
+    const [teamsRes, submissionsRes, leaderboardRes, clueLocationsRes] = await Promise.all([
       fetch(`${API_BASE}/admin/teams`, { headers }),
       fetch(`${API_BASE}/admin/submissions`, { headers }),
       fetch(`${API_BASE}/admin/leaderboard/live`, { headers }),
+      fetch(`${API_BASE}/admin/clue-locations`, { headers }),
     ]);
 
-    if ([teamsRes, submissionsRes, leaderboardRes].some((res) => res.status === 401)) {
+    if ([teamsRes, submissionsRes, leaderboardRes, clueLocationsRes].some((res) => res.status === 401)) {
       clearAdminSession();
       return;
     }
@@ -59,6 +76,11 @@ const AdminDashboard = ({ API_BASE }) => {
     if (leaderboardRes.ok) {
       const data = await leaderboardRes.json();
       setLeaderboard(data.teams);
+    }
+
+    if (clueLocationsRes && clueLocationsRes.ok) {
+      const data = await clueLocationsRes.json();
+      setClueLocations(data.clueLocations || []);
     }
   };
 
@@ -94,12 +116,29 @@ const AdminDashboard = ({ API_BASE }) => {
       );
     };
 
+    const handleNewSubmission = (newSub) => {
+      setSubmissions((prev) => {
+        if (prev.some((s) => String(s._id) === String(newSub._id))) {
+          return prev;
+        }
+        return [newSub, ...prev];
+      });
+
+      // Show toast alert
+      setNewSubmissionAlert(newSub);
+      setTimeout(() => {
+        setNewSubmissionAlert((current) => (current?._id === newSub._id ? null : current));
+      }, 5000);
+    };
+
     socket.on('leaderboard:snapshot', handleSnapshot);
     socket.on('teams:snapshot', handleTeamsSnapshot);
+    socket.on('submission:created', handleNewSubmission);
 
     return () => {
       socket.off('leaderboard:snapshot', handleSnapshot);
       socket.off('teams:snapshot', handleTeamsSnapshot);
+      socket.off('submission:created', handleNewSubmission);
     };
   }, [API_BASE, adminToken]);
 
@@ -282,25 +321,107 @@ const AdminDashboard = ({ API_BASE }) => {
       )}
 
       {activeTab === 'submissions' && (
-        <div style={{ display: 'grid', gap: '12px' }}>
-          {submissions.map((submission) => (
-            <div key={submission._id} style={{ border: '1px solid rgba(0,240,255,0.2)', background: 'rgba(3,12,15,0.75)', padding: '14px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-                <div>
-                  <div style={{ color: '#fff' }}>{submission.team?.name || 'Unknown Team'}</div>
-                  <div style={{ fontSize: '11px', marginTop: '6px' }}>
-                    CLUE: {submission.clue?.title || 'Unknown'} | RESULT: {submission.isCorrect ? 'CORRECT' : 'INCORRECT'}
+        <div style={{ display: 'grid', gap: '14px' }}>
+          {submissions.map((submission) => {
+            const photoUrl = submission.photoUrl?.startsWith('http')
+              ? submission.photoUrl
+              : `${API_BASE.replace(/\/api\/?$/, '')}${submission.photoUrl}`;
+
+            const matchLocation = getClueLocationText(submission.clue?.clueId);
+            const clueText = getClueText(submission.clue);
+
+            return (
+              <div
+                key={submission._id}
+                style={{
+                  border: `1px solid ${submission.isCorrect ? 'rgba(57,255,20,0.3)' : 'rgba(255,100,0,0.3)'}`,
+                  background: 'rgba(4, 18, 23, 0.85)',
+                  padding: '16px',
+                  display: 'flex',
+                  gap: '20px',
+                  alignItems: 'flex-start',
+                  flexWrap: 'wrap',
+                  position: 'relative',
+                  boxShadow: submission.isCorrect ? '0 0 10px rgba(57,255,20,0.05)' : '0 0 10px rgba(255,100,0,0.05)',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                {/* Result Indicator Badge */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    fontSize: '9px',
+                    letterSpacing: '1px',
+                    fontWeight: 'bold',
+                    padding: '2px 8px',
+                    background: submission.isCorrect ? 'rgba(57,255,20,0.15)' : 'rgba(255,100,0,0.15)',
+                    color: submission.isCorrect ? '#39FF14' : '#FF6400',
+                    border: `1px solid ${submission.isCorrect ? '#39FF14' : '#FF6400'}`,
+                  }}
+                >
+                  {submission.isCorrect ? 'VERIFIED' : 'REJECTED'}
+                </div>
+
+                {/* Left Side: Thumbnail with Click to Zoom */}
+                <div
+                  onClick={() => setSelectedPhoto(photoUrl)}
+                  style={{
+                    width: '120px',
+                    height: '120px',
+                    cursor: 'zoom-in',
+                    overflow: 'hidden',
+                    border: `1px solid ${submission.isCorrect ? 'rgba(57,255,20,0.5)' : 'rgba(255,100,0,0.5)'}`,
+                    boxShadow: '0 0 5px rgba(0,240,255,0.1)',
+                    position: 'relative'
+                  }}
+                >
+                  <img
+                    src={photoUrl}
+                    alt="Submission Snapshot"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      transition: 'transform 0.3s ease',
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.1)')}
+                    onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1.0)')}
+                  />
+                </div>
+
+                {/* Right Side: Meta details */}
+                <div style={{ flex: '1', minWidth: '260px' }}>
+                  <div style={{ color: '#fff', fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>{submission.team?.name || 'Unknown Team'}</span>
+                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 'normal' }}>
+                      ({new Date(submission.createdAt).toLocaleTimeString()})
+                    </span>
                   </div>
-                  <div style={{ fontSize: '11px', marginTop: '6px' }}>
-                    LABEL: {submission.mlResult?.predictedLabel || 'N/A'} | CONFIDENCE: {Math.round((submission.mlResult?.confidence || 0) * 100)}%
+
+                  <div style={{ fontSize: '11px', marginTop: '8px', color: 'var(--cyan-primary)', fontWeight: 'bold' }}>
+                    CLUE {submission.clue?.order || '?'}: {submission.clue?.title || 'Unknown'}
+                  </div>
+
+                  <div style={{ fontSize: '12px', marginTop: '6px', color: '#cbd5e1', fontStyle: 'italic', background: 'rgba(0,0,0,0.3)', padding: '6px 10px', borderLeft: '2px solid var(--cyan-primary)' }}>
+                    &ldquo;{clueText}&rdquo;
+                  </div>
+
+                  <div style={{ fontSize: '11px', marginTop: '8px', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px' }}>
+                    <span style={{ color: 'rgba(0,240,255,0.5)' }}>TARGET LOC:</span>
+                    <span style={{ color: '#ffb84d' }}>{matchLocation}</span>
+
+                    <span style={{ color: 'rgba(0,240,255,0.5)' }}>ML PREDICT:</span>
+                    <span>{submission.mlResult?.predictedLabel || 'N/A'}</span>
+
+                    <span style={{ color: 'rgba(0,240,255,0.5)' }}>CONFIDENCE:</span>
+                    <span>{Math.round((submission.mlResult?.confidence || 0) * 100)}%</span>
                   </div>
                 </div>
-                <a href={submission.photoUrl?.startsWith('http') ? submission.photoUrl : `${API_BASE.replace(/\/api\/?$/, '')}${submission.photoUrl}`} target="_blank" rel="noreferrer" className="cyber-btn-outline">
-                  <Eye size={14} /> VIEW PHOTO
-                </a>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -320,6 +441,98 @@ const AdminDashboard = ({ API_BASE }) => {
             <div style={{ marginTop: '16px', fontSize: '11px' }}>
               Scan this QR from the welcome screen or upload its image there.
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Real-time Submission Toast Notification */}
+      {newSubmissionAlert && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            zIndex: 1000,
+            background: 'rgba(2, 11, 14, 0.95)',
+            border: `1px solid ${newSubmissionAlert.isCorrect ? '#39FF14' : '#FF6400'}`,
+            boxShadow: `0 0 20px ${newSubmissionAlert.isCorrect ? 'rgba(57,255,20,0.3)' : 'rgba(255,100,0,0.3)'}`,
+            padding: '16px',
+            maxWidth: '320px',
+            fontFamily: "'Share Tech Mono', monospace"
+          }}
+        >
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <div style={{ width: '50px', height: '50px', flexShrink: 0, overflow: 'hidden', border: '1px solid rgba(0,240,255,0.3)' }}>
+              <img
+                src={newSubmissionAlert.photoUrl?.startsWith('http') ? newSubmissionAlert.photoUrl : `${API_BASE.replace(/\/api\/?$/, '')}${newSubmissionAlert.photoUrl}`}
+                alt="Toast preview"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </div>
+            <div>
+              <div style={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}>NEW TRANSMISSION RECEIVED</div>
+              <div style={{ fontSize: '11px', color: 'var(--cyan-primary)' }}>Team: {newSubmissionAlert.team?.name}</div>
+              <div style={{ fontSize: '10px', color: newSubmissionAlert.isCorrect ? '#39FF14' : '#FF6400' }}>
+                RESULT: {newSubmissionAlert.isCorrect ? 'CORRECT (VERIFIED)' : 'INCORRECT'}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Zoom Modal */}
+      {selectedPhoto && (
+        <div
+          onClick={() => setSelectedPhoto(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.92)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            cursor: 'zoom-out',
+            padding: '20px'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              border: '2px solid var(--cyan-primary)',
+              boxShadow: '0 0 30px rgba(0,240,255,0.4)',
+              background: '#010507'
+            }}
+          >
+            <img
+              src={selectedPhoto}
+              alt="Submissions High-Res View"
+              style={{
+                display: 'block',
+                maxWidth: '100%',
+                maxHeight: '85vh',
+                objectFit: 'contain'
+              }}
+            />
+            <button
+              onClick={() => setSelectedPhoto(null)}
+              style={{
+                position: 'absolute',
+                top: '-32px',
+                right: '0',
+                background: 'transparent',
+                border: 'none',
+                color: '#fff',
+                fontSize: '16px',
+                cursor: 'pointer',
+                fontFamily: "'Share Tech Mono', monospace"
+              }}
+            >
+              CLOSE [X]
+            </button>
           </div>
         </div>
       )}

@@ -3,6 +3,7 @@ import Team from "../models/Team.js";
 import Submission from "../models/Submission.js";
 import { predictImage } from "../utils/mlClient.js";
 import { uploadToCloudinary, isCloudinaryConfigured } from "../utils/cloudinary.js";
+import { uploadToSupabase, isSupabaseConfigured } from "../utils/supabase.js";
 import fs from "fs/promises";
 
 // @route   GET /api/clues/current
@@ -46,8 +47,25 @@ export const submitPhoto = async (req, res) => {
   let photoUrl = `/uploads/${req.file.filename}`; 
 
   try {
-    // 1. Upload to Cloudinary if configured
-    if (isCloudinaryConfigured) {
+    // 1. Upload to Supabase if configured (primary cloud storage)
+    if (isSupabaseConfigured) {
+      try {
+        console.log("🌲 Uploading photo to Supabase Storage...");
+        photoUrl = await uploadToSupabase(photoPath);
+        console.log("🌲 Supabase Storage upload successful:", photoUrl);
+      } catch (err) {
+        console.error("❌ Supabase upload failed, trying Cloudinary fallback...", err.message);
+        if (isCloudinaryConfigured) {
+          try {
+            console.log("☁️ Uploading photo to Cloudinary (fallback)...");
+            photoUrl = await uploadToCloudinary(photoPath);
+            console.log("☁️ Cloudinary upload successful:", photoUrl);
+          } catch (cloudErr) {
+            console.error("❌ Cloudinary upload failed, falling back to local storage:", cloudErr.message);
+          }
+        }
+      }
+    } else if (isCloudinaryConfigured) {
       try {
         console.log("☁️ Uploading photo to Cloudinary...");
         photoUrl = await uploadToCloudinary(photoPath);
@@ -89,8 +107,23 @@ export const submitPhoto = async (req, res) => {
     });
     await submission.save();
 
-    // 5. Clean up temporary local file if Cloudinary was used
-    if (isCloudinaryConfigured) {
+    // Emit live submission log to Admin Dashboard via sockets
+    const io = req.app.get("io");
+    if (io) {
+      try {
+        const populatedSubmission = await Submission.findById(submission._id)
+          .populate("team", "name")
+          .populate("clue", "clueId title text order")
+          .lean();
+        io.emit("submission:created", populatedSubmission);
+        console.log("📡 Broadcasted new submission to Admin Dashboard:", submission._id);
+      } catch (socketErr) {
+        console.error("⚠️ Failed to broadcast submission socket event:", socketErr.message);
+      }
+    }
+
+    // 5. Clean up temporary local file if Cloudinary or Supabase was used
+    if (isSupabaseConfigured || isCloudinaryConfigured) {
       try {
         await fs.unlink(photoPath);
         console.log("🗑️ Local temporary file deleted:", photoPath);

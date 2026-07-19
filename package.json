@@ -9,6 +9,8 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "@supabase/server": "^1.4.0",
+    "@supabase/supabase-js": "^2.110.7",
     "axios": "^1.18.1",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.10.0",

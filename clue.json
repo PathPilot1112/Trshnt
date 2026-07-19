@@ -1,0 +1,17 @@
+[
+  {
+    "clueid": "1",
+    "location": "51.3892° N, 30.0997° E (Red Forest Edge)",
+    "clue text": "Proceed to grid coordinates 51.3892° N, 30.0997° E. Find the rusted transponder buried beneath the blackened birch tree. Broadcast key code 402-DELTA-NINER to initiate the protocol."
+  },
+  {
+    "clueid": "2",
+    "location": "51.4052° N, 30.0561° E (Abandoned School Basement)",
+    "clue text": "Establish connection with Pripyat-Central at grid coordinates 51.4052° N, 30.0561° E. Recover the telemetry device from the abandoned school basement. Broadcast key code 88-ALPHA-SIERRA to sync."
+  },
+  {
+    "clueid": "3",
+    "location": "51.3915° N, 30.1034° E (Reactor Perimeter)",
+    "clue text": "Navigate to the reactor perimeter at grid coordinates 51.3915° N, 30.1034° E. Scan the radiation sensor junction box and enter key code 109-OMEGA-ZULU."
+  }
+]
