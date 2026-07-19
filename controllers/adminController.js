@@ -5,6 +5,7 @@ import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import fs from "fs/promises";
 import path from "path";
+import { createClient } from "@supabase/supabase-js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "stalkersecret";
 
@@ -296,5 +297,56 @@ export const getClueLocations = async (req, res) => {
   } catch (err) {
     console.error("❌ Error reading clue.json:", err.message);
     res.status(500).json({ message: "Failed to read clue locations", error: err.message });
+  }
+};
+
+export const clearSubmissions = async (req, res) => {
+  try {
+    const submissions = await Submission.find().lean();
+    
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
+    const supabaseBucket = process.env.SUPABASE_BUCKET || 'images';
+    
+    if (supabaseUrl && supabaseKey && submissions.length > 0) {
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
+      const fileNames = submissions
+        .map((s) => {
+          if (!s.photoUrl) return null;
+          const parts = s.photoUrl.split(`/storage/v1/object/public/${supabaseBucket}/`);
+          if (parts.length > 1) return parts[1];
+          const segments = s.photoUrl.split('/');
+          return segments[segments.length - 1];
+        })
+        .filter(Boolean);
+
+      if (fileNames.length > 0) {
+        console.log("🌲 Deleting files from Supabase Storage:", fileNames);
+        const { data, error } = await supabase.storage.from(supabaseBucket).remove(fileNames);
+        if (error) {
+          console.error("❌ Failed to delete files from Supabase:", error.message);
+        } else {
+          console.log("✅ Successfully deleted files from Supabase:", data);
+        }
+      }
+    }
+
+    // 2. Delete from MongoDB
+    await Submission.deleteMany({});
+    
+    // 3. Clear completedClues and score for all teams
+    await Team.updateMany({}, { completedClues: [], score: 0, currentClueIndex: 0, status: "not_started" });
+
+    // Emit event to update leaderboard and reset dashboards
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("submissions:cleared");
+      io.emit("leaderboard:snapshot", []);
+    }
+
+    res.json({ message: "All submissions and S3 images cleared successfully, teams reset." });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to clear submissions", error: err.message });
   }
 };

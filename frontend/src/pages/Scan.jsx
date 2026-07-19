@@ -31,10 +31,19 @@ const Scan = ({ API_BASE, token, onAbort }) => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' }, width: 1280, height: 720 },
-          audio: false,
-        });
+        pushLog('>> REQUESTING CAMERA FEED...');
+        
+        // Use flexible constraints
+        const constraints = {
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280, max: 1920 },
+            height: { ideal: 720, max: 1080 }
+          },
+          audio: false
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
         streamRef.current = stream;
         setHasCamera(true);
@@ -42,12 +51,57 @@ const Scan = ({ API_BASE, token, onAbort }) => {
         pushLog('>> CAMERA PERMISSION: GRANTED', '>> LIVE OPTIC FEED ONLINE');
 
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+          const video = videoRef.current;
+          video.srcObject = stream;
+          
+          // Force mobile safari playsinline and autoplay attributes programmatically
+          video.setAttribute('playsinline', 'true');
+          video.setAttribute('webkit-playsinline', 'true');
+          video.setAttribute('autoplay', 'true');
+          video.muted = true;
+
+          // Explicitly trigger play method
+          video.play().then(() => {
+            pushLog('>> CAMERA PLAYBACK RUNNING');
+          }).catch((playErr) => {
+            pushLog(`>> PLAYBACK ERROR: ${playErr.message}`);
+            console.error("Camera play error:", playErr);
+          });
         }
-      } catch {
-        setHasCamera(false);
-        setCameraPermission('denied');
-        pushLog('>> CAMERA PERMISSION: DENIED', '>> FALLING BACK TO STATIC VIEWPORT');
+      } catch (err) {
+        console.error("Camera acquisition failed:", err);
+        
+        // Retry fallback with minimal constraints
+        try {
+          pushLog('>> CONSTRAINTS FAILED. RETRYING WITH MINIMAL FEED...');
+          const fallbackStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false
+          });
+          
+          streamRef.current = fallbackStream;
+          setHasCamera(true);
+          setCameraPermission('granted');
+          pushLog('>> CAMERA PERMISSION: GRANTED (FALLBACK)');
+
+          if (videoRef.current) {
+            const video = videoRef.current;
+            video.srcObject = fallbackStream;
+            video.setAttribute('playsinline', 'true');
+            video.setAttribute('webkit-playsinline', 'true');
+            video.setAttribute('autoplay', 'true');
+            video.muted = true;
+            video.play().catch(() => {});
+          }
+        } catch (fallbackErr) {
+          setHasCamera(false);
+          setCameraPermission('denied');
+          pushLog(
+            '>> CAMERA PERMISSION: DENIED',
+            `>> ERROR: ${err.message || fallbackErr.message}`,
+            '>> FALLING BACK TO STATIC VIEWPORT'
+          );
+        }
       }
     };
 

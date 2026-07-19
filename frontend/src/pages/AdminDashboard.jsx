@@ -131,14 +131,20 @@ const AdminDashboard = ({ API_BASE }) => {
       }, 5000);
     };
 
+    const handleSubmissionsCleared = () => {
+      setSubmissions([]);
+    };
+
     socket.on('leaderboard:snapshot', handleSnapshot);
     socket.on('teams:snapshot', handleTeamsSnapshot);
     socket.on('submission:created', handleNewSubmission);
+    socket.on('submissions:cleared', handleSubmissionsCleared);
 
     return () => {
       socket.off('leaderboard:snapshot', handleSnapshot);
       socket.off('teams:snapshot', handleTeamsSnapshot);
       socket.off('submission:created', handleNewSubmission);
+      socket.off('submissions:cleared', handleSubmissionsCleared);
     };
   }, [API_BASE, adminToken]);
 
@@ -201,6 +207,19 @@ const AdminDashboard = ({ API_BASE }) => {
     await fetchDashboardData();
   };
 
+  const handleClearSubmissions = async () => {
+    if (!window.confirm("WARNING: This will permanently delete all submissions from MongoDB, clear all uploaded images from Supabase Storage, and reset all team progress. Are you sure?")) {
+      return;
+    }
+    try {
+      await authedFetch(`${API_BASE}/admin/submissions/clear`, { method: 'POST' });
+      setSubmissions([]);
+      alert("All submissions cleared and teams reset successfully!");
+    } catch (err) {
+      alert("Failed to clear submissions: " + err.message);
+    }
+  };
+
   if (!isAdmin) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#03080a' }}>
@@ -248,6 +267,18 @@ const AdminDashboard = ({ API_BASE }) => {
           <Activity size={14} /> Submissions
         </button>
       </div>
+
+      {activeTab === 'submissions' && (
+        <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+          <button 
+            className="cyber-btn" 
+            style={{ background: '#7f1d1d', border: '1px solid #ef4444', color: '#fca5a5', padding: '8px 16px', fontSize: '11px', cursor: 'pointer' }} 
+            onClick={handleClearSubmissions}
+          >
+            CLEAR ALL SUBMISSIONS & RESET TEAMS
+          </button>
+        </div>
+      )}
 
       {activeTab === 'teams' && (
         <div style={{ display: 'grid', gap: '14px' }}>
