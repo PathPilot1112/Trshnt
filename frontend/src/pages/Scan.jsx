@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Camera, MapPin, RefreshCw, Send, Upload } from 'lucide-react';
 import scannerBg from '../assets/stalker_scan_bg.png';
 
+const API_BASE = import.meta.env.VITE_API_BASE;
+
 const Scan = ({ API_BASE, token, onAbort }) => {
   const [logs, setLogs] = useState([
     'SYSTEM INITIALIZATION OK',

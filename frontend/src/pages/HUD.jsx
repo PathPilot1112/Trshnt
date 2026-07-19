@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { FileText, LayoutGrid, LogOut, Map, MessageSquare, Radio, Scan, Trophy } from 'lucide-react';
 import { getSocket } from '../socket';
 
+const API_BASE = import.meta.env.VITE_API_BASE;
+
 const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) => {
   const [radiation, setRadiation] = useState(0.15);
   const [currentClue, setCurrentClue] = useState(null);

@@ -4,6 +4,8 @@ import { Activity, Eye, Map, Play, Power, QrCode, RefreshCw, Shield, SkipForward
 import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet';
 import { getSocket } from '../socket';
 
+const API_BASE = import.meta.env.VITE_API_BASE;
+
 const DEFAULT_CENTER = [13.0827, 80.2707];
 
 const formatElapsed = (ms = 0) => {
