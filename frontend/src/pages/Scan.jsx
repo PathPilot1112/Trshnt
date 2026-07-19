@@ -266,35 +266,34 @@ const Scan = ({ API_BASE, token, onAbort }) => {
       </div>
 
       <div className="scan-viewport-container">
-        {hasCamera ? (
-          <>
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              style={{
-                position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                opacity: isCaptured ? 0.2 : 1.0,
-              }}
-            />
-            <canvas
-              ref={canvasRef}
-              style={{
-                position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                opacity: isCaptured ? 1.0 : 0,
-              }}
-            />
-          </>
-        ) : (
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            opacity: isCaptured ? 0.2 : (hasCamera ? 1.0 : 0.0),
+            pointerEvents: hasCamera ? 'auto' : 'none',
+          }}
+        />
+        <canvas
+          ref={canvasRef}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            opacity: (isCaptured && hasCamera) ? 1.0 : 0,
+            pointerEvents: (isCaptured && hasCamera) ? 'auto' : 'none',
+          }}
+        />
+        {!hasCamera && (
           <img src={scannerBg} alt="Simulated Viewport" className="camera-feed-bg" />
         )}
 
