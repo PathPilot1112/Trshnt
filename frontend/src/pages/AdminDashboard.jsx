@@ -443,7 +443,7 @@ const AdminDashboard = ({ API_BASE }) => {
       )}
 
       {activeTab === 'submissions' && (
-        <div style={{ display: 'grid', gap: '14px' }}>
+        <div style={{ display: 'grid', gap: '14px', maxHeight: '68vh', overflowY: 'auto', paddingRight: '6px' }}>
           {filteredSubmissions.map((submission) => {
             const isExpanded = !!expandedSubmissions[submission._id];
             const photoUrl = getFullPhotoUrl(submission.photoUrl);
