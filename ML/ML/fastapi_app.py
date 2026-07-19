@@ -69,4 +69,4 @@ async def predict(image: UploadFile = File(...)):
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 # To run this server, use the command:
-# uvicorn fastapi_app:app --host 0.0.0.0 --port 8000
+# uvicorn fastapi_app:app --host 0.0.0.0 --port 5000
