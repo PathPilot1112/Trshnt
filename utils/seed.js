@@ -18,44 +18,42 @@ export const seedDatabase = async () => {
     }
 
     // 2. Seed Default Clues
-    const clueCount = await Clue.countDocuments();
-    if (clueCount === 0) {
-      const defaultClues = [
-        {
-          clueId: "1",
-          order: 1,
-          title: "THE_RED_FOREST_ECHO",
-          text: "Proceed to grid coordinates 51.3892° N, 30.0997° E. Find the rusted transponder buried beneath the blackened birch tree. Broadcast key code 402-DELTA-NINER to initiate the protocol.",
-          hint: "Search near the coordinates on the edge of the forest.",
-          targetLabel: "Artifact_A",
-          confidenceThreshold: 0.75,
-          points: 100
-        },
-        {
-          clueId: "2",
-          order: 2,
-          title: "THE_PRIPIAT_CENTRAL_LINK",
-          text: "Establish connection with Pripyat-Central at grid coordinates 51.4052° N, 30.0561° E. Recover the telemetry device from the abandoned school basement. Broadcast key code 88-ALPHA-SIERRA to sync.",
-          hint: "Look inside the old locker next to the stairwell.",
-          targetLabel: "Artifact_B",
-          confidenceThreshold: 0.75,
-          points: 150
-        },
-        {
-          clueId: "3",
-          order: 3,
-          title: "THE_REACTOR_CORE_DATA",
-          text: "Navigate to the reactor perimeter at grid coordinates 51.3915° N, 30.1034° E. Scan the radiation sensor junction box and enter key code 109-OMEGA-ZULU.",
-          hint: "Behind the concrete shield wall.",
-          targetLabel: "Artifact_C",
-          confidenceThreshold: 0.80,
-          points: 200
-        }
-      ];
+    await Clue.deleteMany({}); // Clear existing clues for testing
+    const defaultClues = [
+      {
+        clueId: "1",
+        order: 1,
+        title: "Clock tower",
+        text: "Clock tower",
+        hint: "Go to the Clock tower",
+        targetLabel: "Clock tower",
+        confidenceThreshold: 0.50,
+        points: 100
+      },
+      {
+        clueId: "2",
+        order: 2,
+        title: "Library",
+        text: "Library",
+        hint: "Go to the Library",
+        targetLabel: "Library",
+        confidenceThreshold: 0.50,
+        points: 150
+      },
+      {
+        clueId: "3",
+        order: 3,
+        title: "Ganesh Temple",
+        text: "Ganesh Temple",
+        hint: "Go to the Ganesh Temple",
+        targetLabel: "Ganesh Temple",
+        confidenceThreshold: 0.50,
+        points: 200
+      }
+    ];
 
-      await Clue.insertMany(defaultClues);
-      console.log("✅ Seeded default Clues");
-    }
+    await Clue.insertMany(defaultClues);
+    console.log("✅ Seeded ML location Clues");
 
     // 3. Seed Default Teams (to populate the Admin Live Telemetry dashboard)
     const teamCount = await Team.countDocuments();
