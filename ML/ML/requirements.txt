@@ -3,6 +3,8 @@ torchvision
 scikit-learn
 Pillow
 tqdm
-
 flask
 werkzeug
+fastapi
+uvicorn
+python-multipart
