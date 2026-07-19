@@ -45,7 +45,7 @@ const Scan = ({ API_BASE, token, onAbort }) => {
         }
 
         pushLog('>> REQUESTING CAMERA FEED...');
-        
+
         // Use flexible constraints
         const constraints = {
           video: {
@@ -66,7 +66,7 @@ const Scan = ({ API_BASE, token, onAbort }) => {
         if (videoRef.current) {
           const video = videoRef.current;
           video.srcObject = stream;
-          
+
           // Force mobile safari playsinline and autoplay attributes programmatically
           video.setAttribute('playsinline', 'true');
           video.setAttribute('webkit-playsinline', 'true');
@@ -83,7 +83,7 @@ const Scan = ({ API_BASE, token, onAbort }) => {
         }
       } catch (err) {
         console.error("Camera acquisition failed:", err);
-        
+
         // Retry fallback with minimal constraints
         try {
           pushLog('>> CONSTRAINTS FAILED. RETRYING WITH MINIMAL FEED...');
@@ -91,7 +91,7 @@ const Scan = ({ API_BASE, token, onAbort }) => {
             video: true,
             audio: false
           });
-          
+
           streamRef.current = fallbackStream;
           setHasCamera(true);
           setCameraPermission('granted');
@@ -104,7 +104,7 @@ const Scan = ({ API_BASE, token, onAbort }) => {
             video.setAttribute('webkit-playsinline', 'true');
             video.setAttribute('autoplay', 'true');
             video.muted = true;
-            video.play().catch(() => {});
+            video.play().catch(() => { });
           }
         } catch (fallbackErr) {
           setHasCamera(false);
