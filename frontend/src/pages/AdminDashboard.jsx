@@ -29,6 +29,28 @@ const AdminDashboard = ({ API_BASE }) => {
   const [clueLocations, setClueLocations] = useState([]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [newSubmissionAlert, setNewSubmissionAlert] = useState(null);
+  const [selectedTeamFilter, setSelectedTeamFilter] = useState('all');
+
+  const getFullPhotoUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    
+    if (API_BASE && API_BASE.startsWith('http')) {
+      const origin = API_BASE.replace(/\/api\/?$/, '');
+      return `${origin}${url}`;
+    }
+    
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return `http://localhost:8000${url}`;
+    }
+    
+    return `${window.location.origin}${url}`;
+  };
+
+  const filteredSubmissions = useMemo(() => {
+    if (selectedTeamFilter === 'all') return submissions;
+    return submissions.filter((s) => String(s.team?._id) === String(selectedTeamFilter));
+  }, [submissions, selectedTeamFilter]);
 
   const getClueLocationText = (clueId) => {
     if (!clueId) return 'N/A';
@@ -269,7 +291,29 @@ const AdminDashboard = ({ API_BASE }) => {
       </div>
 
       {activeTab === 'submissions' && (
-        <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+        <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '12px', color: 'rgba(0,240,255,0.6)' }}>FILTER BY TEAM:</span>
+            <select
+              value={selectedTeamFilter}
+              onChange={(e) => setSelectedTeamFilter(e.target.value)}
+              style={{
+                background: '#020b0d',
+                color: 'var(--cyan-primary)',
+                border: '1px solid var(--cyan-primary)',
+                padding: '6px 12px',
+                fontFamily: "'Share Tech Mono', monospace",
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="all">ALL TEAMS</option>
+              {teams.map((t) => (
+                <option key={t._id} value={t._id}>{t.name}</option>
+              ))}
+            </select>
+          </div>
+
           <button 
             className="cyber-btn" 
             style={{ background: '#7f1d1d', border: '1px solid #ef4444', color: '#fca5a5', padding: '8px 16px', fontSize: '11px', cursor: 'pointer' }} 
@@ -353,10 +397,8 @@ const AdminDashboard = ({ API_BASE }) => {
 
       {activeTab === 'submissions' && (
         <div style={{ display: 'grid', gap: '14px' }}>
-          {submissions.map((submission) => {
-            const photoUrl = submission.photoUrl?.startsWith('http')
-              ? submission.photoUrl
-              : `${API_BASE.replace(/\/api\/?$/, '')}${submission.photoUrl}`;
+          {filteredSubmissions.map((submission) => {
+            const photoUrl = getFullPhotoUrl(submission.photoUrl);
 
             const matchLocation = getClueLocationText(submission.clue?.clueId);
             const clueText = getClueText(submission.clue);
@@ -495,7 +537,7 @@ const AdminDashboard = ({ API_BASE }) => {
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <div style={{ width: '50px', height: '50px', flexShrink: 0, overflow: 'hidden', border: '1px solid rgba(0,240,255,0.3)' }}>
               <img
-                src={newSubmissionAlert.photoUrl?.startsWith('http') ? newSubmissionAlert.photoUrl : `${API_BASE.replace(/\/api\/?$/, '')}${newSubmissionAlert.photoUrl}`}
+                src={getFullPhotoUrl(newSubmissionAlert.photoUrl)}
                 alt="Toast preview"
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
