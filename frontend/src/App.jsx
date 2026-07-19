@@ -160,7 +160,7 @@ function App() {
 
   if (currentRoute === 'scan') {
     return (
-      <div style={{ minHeight: '100vh', background: '#020709', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ height: '100vh', width: '100vw', background: '#020709', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <Scan 
           API_BASE={API_BASE}
           token={token}

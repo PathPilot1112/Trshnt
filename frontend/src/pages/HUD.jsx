@@ -185,8 +185,8 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
   const isNotStarted = localTeam?.status === 'not_started';
 
   return (
-    <div className="hud-page">
-      <div className="stalker-header">
+    <div className="hud-page" style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 0 }}>
+      <div className="stalker-header" style={{ padding: '16px' }}>
         <div className="net-info">
           <div className="net-name">STALKER_NET_V2.1</div>
           <div className="operator-info">OPERATOR: {operatorName} // {localTeam?.name || 'UNASSIGNED'}</div>
@@ -200,114 +200,116 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
         </div>
       </div>
 
-      {chatOpen && (
-        <div style={{ border: '1px solid var(--cyan-primary)', padding: '10px', marginBottom: '10px', background: 'rgba(3,12,15,0.95)' }}>
-          <div style={{ color: 'var(--amber-primary)', marginBottom: '6px' }}>SECURE_COMMS_LINK: ACTIVE</div>
-          <div>[COMMAND]: Team QR is linked. Wait for admin start or continue current mission.</div>
-        </div>
-      )}
-
-      {activeTab === 'hud' && (
-        <>
-          <div className="hud-telemetry" style={{ marginTop: '10px' }}>
-            <div className="telemetry-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span className="telemetry-label">RADIATION</span>
-                <span className="telemetry-value glow-text">{radiation} mSv/h</span>
-              </div>
-              <div className="telemetry-bar-container">
-                <div className="telemetry-bar-fill" style={{ width: `${(radiation / 0.3) * 100}%` }}></div>
-              </div>
-            </div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column' }}>
+        {chatOpen && (
+          <div style={{ border: '1px solid var(--cyan-primary)', padding: '10px', marginBottom: '10px', background: 'rgba(3,12,15,0.95)' }}>
+            <div style={{ color: 'var(--amber-primary)', marginBottom: '6px' }}>SECURE_COMMS_LINK: ACTIVE</div>
+            <div>[COMMAND]: Team QR is linked. Wait for admin start or continue current mission.</div>
           </div>
+        )}
 
-          <div className="clue-panel">
-            {isNotStarted ? (
-              <div style={{ padding: '20px 10px', textAlign: 'center' }}>
-                <div className="glow-text-amber" style={{ fontSize: '16px', marginBottom: '14px' }}>DEPLOYMENT_LOCKED</div>
-                <div style={{ fontSize: '12px', lineHeight: '1.6' }}>
-                  Team linked successfully. The mission timer will start from 00:00:00 when an admin starts the run.
+        {activeTab === 'hud' && (
+          <>
+            <div className="hud-telemetry" style={{ marginTop: '10px' }}>
+              <div className="telemetry-card">
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span className="telemetry-label">RADIATION</span>
+                  <span className="telemetry-value glow-text">{radiation} mSv/h</span>
+                </div>
+                <div className="telemetry-bar-container">
+                  <div className="telemetry-bar-fill" style={{ width: `${(radiation / 0.3) * 100}%` }}></div>
                 </div>
               </div>
-            ) : clueFinished ? (
-              <div style={{ padding: '20px 10px', textAlign: 'center' }}>
-                <div className="glow-text-green" style={{ fontSize: '18px', marginBottom: '12px' }}>ALL OBJECTIVES SECURED</div>
-                <div>SCORE: {localTeam?.score} PTS</div>
-              </div>
-            ) : isLoadingClue ? (
-              <div style={{ padding: '20px 10px', textAlign: 'center' }}>RETRIEVING CLUE DATA...</div>
-            ) : (
-              <>
-                <button className="cyber-btn striped" style={{ marginBottom: '16px', fontSize: '11px', padding: '10px' }}>
-                  <Radio size={12} /> DATA_CORE_ACTIVE // CLUE_{(localTeam?.currentClueIndex || 0) + 1}
-                </button>
+            </div>
 
-                <div className="clue-header">_ACTIVE_CLUE:</div>
-                <div className="clue-title">"{currentClue?.title}"</div>
-
-                <div className="clue-body-box">
-                  <div className="clue-body-corners"></div>
-                  {currentClue?.text}
-                  {currentClue?.hint && (
-                    <div style={{ fontSize: '10px', color: 'var(--amber-primary)', marginTop: '12px' }}>
-                      <strong>HINT:</strong> {currentClue.hint}
-                    </div>
-                  )}
+            <div className="clue-panel">
+              {isNotStarted ? (
+                <div style={{ padding: '20px 10px', textAlign: 'center' }}>
+                  <div className="glow-text-amber" style={{ fontSize: '16px', marginBottom: '14px' }}>DEPLOYMENT_LOCKED</div>
+                  <div style={{ fontSize: '12px', lineHeight: '1.6' }}>
+                    Team linked successfully. The mission timer will start from 00:00:00 when an admin starts the run.
+                  </div>
                 </div>
-              </>
-            )}
+              ) : clueFinished ? (
+                <div style={{ padding: '20px 10px', textAlign: 'center' }}>
+                  <div className="glow-text-green" style={{ fontSize: '18px', marginBottom: '12px' }}>ALL OBJECTIVES SECURED</div>
+                  <div>SCORE: {localTeam?.score} PTS</div>
+                </div>
+              ) : isLoadingClue ? (
+                <div style={{ padding: '20px 10px', textAlign: 'center' }}>RETRIEVING CLUE DATA...</div>
+              ) : (
+                <>
+                  <button className="cyber-btn striped" style={{ marginBottom: '16px', fontSize: '11px', padding: '10px' }}>
+                    <Radio size={12} /> DATA_CORE_ACTIVE // CLUE_{(localTeam?.currentClueIndex || 0) + 1}
+                  </button>
 
-            <div className="mission-expiry-section">
-              <span className="expiry-label">MISSION_TIMER</span>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                <span style={{ fontSize: '8px', color: localTeam?.timerRunning ? 'var(--green-primary)' : 'var(--amber-primary)' }}>
-                  {localTeam?.timerRunning ? 'LIVE' : 'STOPPED'}
-                </span>
-                <span className="expiry-time">{formatElapsed(elapsedMs)}</span>
+                  <div className="clue-header">_ACTIVE_CLUE:</div>
+                  <div className="clue-title">"{currentClue?.title}"</div>
+
+                  <div className="clue-body-box">
+                    <div className="clue-body-corners"></div>
+                    {currentClue?.text}
+                    {currentClue?.hint && (
+                      <div style={{ fontSize: '10px', color: 'var(--amber-primary)', marginTop: '12px' }}>
+                        <strong>HINT:</strong> {currentClue.hint}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              <div className="mission-expiry-section">
+                <span className="expiry-label">MISSION_TIMER</span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                  <span style={{ fontSize: '8px', color: localTeam?.timerRunning ? 'var(--green-primary)' : 'var(--amber-primary)' }}>
+                    {localTeam?.timerRunning ? 'LIVE' : 'STOPPED'}
+                  </span>
+                  <span className="expiry-time">{formatElapsed(elapsedMs)}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="telemetry-card" style={{ marginTop: '10px' }}>
-            <div className="telemetry-label" style={{ marginBottom: '10px' }}>
-              <Trophy size={14} style={{ marginRight: '6px' }} />
-              LIVE LEADERBOARD
+            <div className="telemetry-card" style={{ marginTop: '10px' }}>
+              <div className="telemetry-label" style={{ marginBottom: '10px' }}>
+                <Trophy size={14} style={{ marginRight: '6px' }} />
+                LIVE LEADERBOARD
+              </div>
+              <div style={{ display: 'grid', gap: '8px' }}>
+                {leaderboard.slice(0, 5).map((entry, index) => (
+                  <div key={entry.teamId} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                    <span>{index + 1}. {entry.name}</span>
+                    <span>{entry.score} pts / {formatElapsed(entry.elapsedMs)}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div style={{ display: 'grid', gap: '8px' }}>
-              {leaderboard.slice(0, 5).map((entry, index) => (
-                <div key={entry.teamId} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
-                  <span>{index + 1}. {entry.name}</span>
-                  <span>{entry.score} pts / {formatElapsed(entry.elapsedMs)}</span>
-                </div>
-              ))}
+          </>
+        )}
+
+        {activeTab === 'map' && (
+          <div className="clue-panel" style={{ flex: 1, marginTop: '10px' }}>
+            <div className="clue-header">MAP_MODULE: LIVE_POSITION</div>
+            <div className="clue-title">{liveLocation ? 'LIVE GPS LOCKED' : 'WAITING FOR GPS LOCK'}</div>
+            <div style={{ fontSize: '12px', lineHeight: '1.8' }}>
+              <div>LAT: {liveLocation?.lat?.toFixed?.(6) || 'PENDING'}</div>
+              <div>LNG: {liveLocation?.lng?.toFixed?.(6) || 'PENDING'}</div>
+              <div>UPDATED: {liveLocation?.updatedAt ? new Date(liveLocation.updatedAt).toLocaleTimeString() : 'PENDING'}</div>
             </div>
           </div>
-        </>
-      )}
+        )}
 
-      {activeTab === 'map' && (
-        <div className="clue-panel" style={{ flex: 1, marginTop: '10px' }}>
-          <div className="clue-header">MAP_MODULE: LIVE_POSITION</div>
-          <div className="clue-title">{liveLocation ? 'LIVE GPS LOCKED' : 'WAITING FOR GPS LOCK'}</div>
-          <div style={{ fontSize: '12px', lineHeight: '1.8' }}>
-            <div>LAT: {liveLocation?.lat?.toFixed?.(6) || 'PENDING'}</div>
-            <div>LNG: {liveLocation?.lng?.toFixed?.(6) || 'PENDING'}</div>
-            <div>UPDATED: {liveLocation?.updatedAt ? new Date(liveLocation.updatedAt).toLocaleTimeString() : 'PENDING'}</div>
+        {activeTab === 'logs' && (
+          <div className="clue-panel" style={{ flex: 1, marginTop: '10px' }}>
+            <div className="clue-header">SYS_LOGS: LIVE_STATE</div>
+            <div style={{ display: 'grid', gap: '8px', fontSize: '11px' }}>
+              <div>TEAM_STATUS: {localTeam?.status || 'UNKNOWN'}</div>
+              <div>TIMER_STATE: {localTeam?.timerRunning ? 'RUNNING' : 'STOPPED'}</div>
+              <div>CLUE_INDEX: {localTeam?.currentClueIndex ?? 0}</div>
+              <div>SCORE: {localTeam?.score ?? 0}</div>
+            </div>
           </div>
-        </div>
-      )}
-
-      {activeTab === 'logs' && (
-        <div className="clue-panel" style={{ flex: 1, marginTop: '10px' }}>
-          <div className="clue-header">SYS_LOGS: LIVE_STATE</div>
-          <div style={{ display: 'grid', gap: '8px', fontSize: '11px' }}>
-            <div>TEAM_STATUS: {localTeam?.status || 'UNKNOWN'}</div>
-            <div>TIMER_STATE: {localTeam?.timerRunning ? 'RUNNING' : 'STOPPED'}</div>
-            <div>CLUE_INDEX: {localTeam?.currentClueIndex ?? 0}</div>
-            <div>SCORE: {localTeam?.score ?? 0}</div>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="hud-nav-bar">
         <div className="nav-tab" onClick={() => !isNotStarted && !clueFinished && onNavigate('scan')} style={{ opacity: (isNotStarted || clueFinished) ? 0.3 : 1 }}>

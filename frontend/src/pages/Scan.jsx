@@ -31,6 +31,19 @@ const Scan = ({ API_BASE, token, onAbort }) => {
   useEffect(() => {
     const startCamera = async () => {
       try {
+        // Only trigger camera stream in mobile views
+        const isMobile = window.innerWidth <= 768 || /Mobi|Android|iPhone/i.test(navigator.userAgent);
+        if (!isMobile) {
+          pushLog(
+            '>> DESKTOP SCREEN DETECTED',
+            '>> AUTO OPTIC BYPASSED',
+            '>> LOAD FILE SUBMISSION OR USE MOCK FEED'
+          );
+          setHasCamera(false);
+          setCameraPermission('dismissed');
+          return;
+        }
+
         pushLog('>> REQUESTING CAMERA FEED...');
         
         // Use flexible constraints
@@ -254,7 +267,7 @@ const Scan = ({ API_BASE, token, onAbort }) => {
   };
 
   return (
-    <div className="scan-page">
+    <div className="scan-page" style={{ height: '100%', display: 'flex', flexDirection: 'column', width: '100%', overflow: 'hidden' }}>
       <div className="scan-header">
         <button className="abort-btn" onClick={onAbort}>
           <ArrowLeft size={12} /> ABORT_SCAN
