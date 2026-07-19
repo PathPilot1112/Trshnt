@@ -980,3 +980,52 @@ body {
   99% { clip: rect(3px, 9999px, 120px, 0); }
   100% { clip: rect(60px, 9999px, 90px, 0); }
 }
+
+/* Green Theme overrides for the Admin Dashboard */
+.green-theme {
+  --cyan-primary: var(--green-primary) !important;
+  --cyan-dim: #113f0a !important;
+  --cyan-glow: var(--green-glow) !important;
+  --cyan-dark: #021703 !important;
+  --border-glow: 1px solid rgba(57, 255, 20, 0.3) !important;
+  color: var(--green-primary) !important;
+}
+
+.green-theme input, .green-theme select, .green-theme textarea {
+  border-color: var(--green-primary) !important;
+  color: var(--green-primary) !important;
+}
+
+.green-theme .cyber-btn {
+  background: #113f0a !important;
+  border-color: var(--green-primary) !important;
+  color: #000 !important;
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.3) !important;
+}
+
+.green-theme .cyber-btn.striped {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--green-primary),
+    var(--green-primary) 8px,
+    #2bff00 8px,
+    #2bff00 16px
+  ) !important;
+  color: #000 !important;
+}
+
+.green-theme .cyber-btn:hover {
+  background: var(--green-primary) !important;
+  box-shadow: 0 0 15px var(--green-glow) !important;
+}
+
+.green-theme .cyber-btn-outline {
+  border-color: var(--green-primary) !important;
+  color: var(--green-primary) !important;
+}
+
+.green-theme .cyber-btn-outline:hover {
+  background: rgba(57, 255, 20, 0.1) !important;
+  box-shadow: inset 0 0 8px rgba(57, 255, 20, 0.2) !important;
+}
+

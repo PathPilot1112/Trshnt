@@ -30,6 +30,22 @@ const AdminDashboard = ({ API_BASE }) => {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [newSubmissionAlert, setNewSubmissionAlert] = useState(null);
   const [selectedTeamFilter, setSelectedTeamFilter] = useState('all');
+  const [expandedTeams, setExpandedTeams] = useState({});
+  const [expandedSubmissions, setExpandedSubmissions] = useState({});
+
+  const toggleTeam = (teamId) => {
+    setExpandedTeams((prev) => ({
+      ...prev,
+      [teamId]: !prev[teamId]
+    }));
+  };
+
+  const toggleSubmission = (subId) => {
+    setExpandedSubmissions((prev) => ({
+      ...prev,
+      [subId]: !prev[subId]
+    }));
+  };
 
   const getFullPhotoUrl = (url) => {
     if (!url) return '';
@@ -262,7 +278,7 @@ const AdminDashboard = ({ API_BASE }) => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#020709', color: 'var(--cyan-primary)', padding: '20px', fontFamily: "'Share Tech Mono', monospace" }}>
+    <div className="green-theme" style={{ minHeight: '100vh', background: '#020709', color: 'var(--green-primary)', padding: '20px', fontFamily: "'Share Tech Mono', monospace", overflowY: 'auto', height: 'auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '12px', flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontSize: '22px', color: '#fff' }}>ADMIN DASHBOARD</div>
@@ -326,42 +342,73 @@ const AdminDashboard = ({ API_BASE }) => {
 
       {activeTab === 'teams' && (
         <div style={{ display: 'grid', gap: '14px' }}>
-          {mergedTeams.map((team, index) => (
-            <div key={team._id} style={{ border: '1px solid rgba(0,240,255,0.2)', background: 'rgba(3,12,15,0.75)', padding: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-                <div>
-                  <div style={{ color: '#fff', fontSize: '16px' }}>{index + 1}. {team.name}</div>
-                  <div style={{ fontSize: '11px', marginTop: '6px' }}>
-                    STATUS: {team.status} | SCORE: {team.score || 0} | CLUE: {(team.currentClueIndex || 0) + 1}
+          {mergedTeams.map((team, index) => {
+            const isExpanded = !!expandedTeams[team._id];
+            return (
+              <div key={team._id} style={{ border: '1px solid rgba(57,255,20,0.2)', background: 'rgba(3,12,15,0.75)', padding: '16px' }}>
+                <div 
+                  onClick={() => toggleTeam(team._id)}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
+                >
+                  <div>
+                    <span style={{ color: '#fff', fontSize: '16px', fontWeight: 'bold' }}>{index + 1}. {team.name}</span>
+                    <span style={{ marginLeft: '12px', fontSize: '11px', color: 'rgba(57,255,20,0.6)' }}>
+                      STATUS: {team.status} | SCORE: {team.score || 0} | CLUE: {(team.currentClueIndex || 0) + 1}
+                    </span>
                   </div>
-                  <div style={{ fontSize: '11px', marginTop: '6px' }}>
-                    TIMER: {formatElapsed(team.elapsedMs || team.timerAccumulatedMs || 0)} {team.timerRunning ? '(RUNNING)' : '(STOPPED)'}
-                  </div>
-                  <div style={{ fontSize: '11px', marginTop: '6px' }}>
-                    GPS: {team.location?.lat ? `${team.location.lat.toFixed(5)}, ${team.location.lng.toFixed(5)}` : 'No live coordinates yet'}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--green-primary)' }}>
+                    {isExpanded ? '[- COLLAPSE]' : '[+ EXPAND]'}
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px', minWidth: '320px' }}>
-                  <button className="cyber-btn-outline" onClick={() => setSelectedQR(team)}>
-                    <QrCode size={14} /> VIEW QR
-                  </button>
-                  <button className="cyber-btn striped" onClick={() => runAction(`/admin/teams/${team._id}/start`)}>
-                    <Play size={14} /> START
-                  </button>
-                  <button className="cyber-btn-outline" onClick={() => runAction(`/admin/teams/${team._id}/stop`)}>
-                    <Power size={14} /> STOP TIMER
-                  </button>
-                  <button className="cyber-btn-outline" onClick={() => runAction(`/admin/teams/${team._id}/clue-override`)}>
-                    <SkipForward size={14} /> SKIP CLUE
-                  </button>
-                  <button className="cyber-btn-outline" onClick={() => runAction(`/admin/teams/${team._id}/reset`)}>
-                    <RefreshCw size={14} /> RESET
-                  </button>
-                </div>
+                {isExpanded && (
+                  <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(57,255,20,0.1)', display: 'flex', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+                    <div>
+                      <div style={{ fontSize: '11px', marginTop: '6px' }}>
+                        TIMER: {formatElapsed(team.elapsedMs || team.timerAccumulatedMs || 0)} {team.timerRunning ? '(RUNNING)' : '(STOPPED)'}
+                      </div>
+                      <div style={{ fontSize: '11px', marginTop: '6px' }}>
+                        GPS: {team.location?.lat ? `${team.location.lat.toFixed(5)}, ${team.location.lng.toFixed(5)}` : 'No live coordinates yet'}
+                      </div>
+                      <div style={{ fontSize: '11px', marginTop: '6px', color: '#fff' }}>
+                        MEMBERS: {team.members?.map(m => m.name).join(', ') || 'None'}
+                      </div>
+                      {team.completedClues && team.completedClues.length > 0 && (
+                        <div style={{ marginTop: '10px' }}>
+                          <div style={{ fontSize: '11px', color: 'rgba(57,255,20,0.6)', fontWeight: 'bold' }}>COMPLETED CLUES:</div>
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
+                            {team.completedClues.map((c, i) => (
+                              <span key={i} style={{ fontSize: '9px', padding: '2px 6px', background: 'rgba(57,255,20,0.1)', border: '1px solid rgba(57,255,20,0.3)', color: '#fff' }}>
+                                CLUE {i+1}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px', minWidth: '320px', flex: '1' }}>
+                      <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); setSelectedQR(team); }}>
+                        <QrCode size={14} /> VIEW QR
+                      </button>
+                      <button className="cyber-btn striped" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/start`); }}>
+                        <Play size={14} /> START
+                      </button>
+                      <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/stop`); }}>
+                        <Power size={14} /> STOP TIMER
+                      </button>
+                      <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/clue-override`); }}>
+                        <SkipForward size={14} /> SKIP CLUE
+                      </button>
+                      <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/reset`); }}>
+                        <RefreshCw size={14} /> RESET
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -378,7 +425,7 @@ const AdminDashboard = ({ API_BASE }) => {
                     key={team._id}
                     center={[team.location.lat, team.location.lng]}
                     radius={10}
-                    pathOptions={{ color: team.timerRunning ? '#00f0ff' : '#ffb84d', fillOpacity: 0.75 }}
+                    pathOptions={{ color: team.timerRunning ? '#39ff14' : '#ffb84d', fillOpacity: 0.75 }}
                   >
                     <Popup>
                       <div>
@@ -398,8 +445,8 @@ const AdminDashboard = ({ API_BASE }) => {
       {activeTab === 'submissions' && (
         <div style={{ display: 'grid', gap: '14px' }}>
           {filteredSubmissions.map((submission) => {
+            const isExpanded = !!expandedSubmissions[submission._id];
             const photoUrl = getFullPhotoUrl(submission.photoUrl);
-
             const matchLocation = getClueLocationText(submission.clue?.clueId);
             const clueText = getClueText(submission.clue);
 
@@ -410,88 +457,92 @@ const AdminDashboard = ({ API_BASE }) => {
                   border: `1px solid ${submission.isCorrect ? 'rgba(57,255,20,0.3)' : 'rgba(255,100,0,0.3)'}`,
                   background: 'rgba(4, 18, 23, 0.85)',
                   padding: '16px',
-                  display: 'flex',
-                  gap: '20px',
-                  alignItems: 'flex-start',
-                  flexWrap: 'wrap',
-                  position: 'relative',
                   boxShadow: submission.isCorrect ? '0 0 10px rgba(57,255,20,0.05)' : '0 0 10px rgba(255,100,0,0.05)',
                   transition: 'all 0.3s ease'
                 }}
               >
-                {/* Result Indicator Badge */}
                 <div
-                  style={{
-                    position: 'absolute',
-                    top: '12px',
-                    right: '12px',
-                    fontSize: '9px',
-                    letterSpacing: '1px',
-                    fontWeight: 'bold',
-                    padding: '2px 8px',
-                    background: submission.isCorrect ? 'rgba(57,255,20,0.15)' : 'rgba(255,100,0,0.15)',
-                    color: submission.isCorrect ? '#39FF14' : '#FF6400',
-                    border: `1px solid ${submission.isCorrect ? '#39FF14' : '#FF6400'}`,
-                  }}
+                  onClick={() => toggleSubmission(submission._id)}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
                 >
-                  {submission.isCorrect ? 'VERIFIED' : 'REJECTED'}
-                </div>
-
-                {/* Left Side: Thumbnail with Click to Zoom */}
-                <div
-                  onClick={() => setSelectedPhoto(photoUrl)}
-                  style={{
-                    width: '120px',
-                    height: '120px',
-                    cursor: 'zoom-in',
-                    overflow: 'hidden',
-                    border: `1px solid ${submission.isCorrect ? 'rgba(57,255,20,0.5)' : 'rgba(255,100,0,0.5)'}`,
-                    boxShadow: '0 0 5px rgba(0,240,255,0.1)',
-                    position: 'relative'
-                  }}
-                >
-                  <img
-                    src={photoUrl}
-                    alt="Submission Snapshot"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      transition: 'transform 0.3s ease',
-                    }}
-                    onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.1)')}
-                    onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1.0)')}
-                  />
-                </div>
-
-                {/* Right Side: Meta details */}
-                <div style={{ flex: '1', minWidth: '260px' }}>
-                  <div style={{ color: '#fff', fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>{submission.team?.name || 'Unknown Team'}</span>
-                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 'normal' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <span style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold' }}>{submission.team?.name || 'Unknown Team'}</span>
+                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
                       ({new Date(submission.createdAt).toLocaleTimeString()})
                     </span>
+                    <span style={{ fontSize: '11px', color: 'var(--green-primary)' }}>
+                      CLUE {submission.clue?.order || '?'}: {submission.clue?.title || 'Unknown'}
+                    </span>
                   </div>
-
-                  <div style={{ fontSize: '11px', marginTop: '8px', color: 'var(--cyan-primary)', fontWeight: 'bold' }}>
-                    CLUE {submission.clue?.order || '?'}: {submission.clue?.title || 'Unknown'}
-                  </div>
-
-                  <div style={{ fontSize: '12px', marginTop: '6px', color: '#cbd5e1', fontStyle: 'italic', background: 'rgba(0,0,0,0.3)', padding: '6px 10px', borderLeft: '2px solid var(--cyan-primary)' }}>
-                    &ldquo;{clueText}&rdquo;
-                  </div>
-
-                  <div style={{ fontSize: '11px', marginTop: '8px', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px' }}>
-                    <span style={{ color: 'rgba(0,240,255,0.5)' }}>TARGET LOC:</span>
-                    <span style={{ color: '#ffb84d' }}>{matchLocation}</span>
-
-                    <span style={{ color: 'rgba(0,240,255,0.5)' }}>ML PREDICT:</span>
-                    <span>{submission.mlResult?.predictedLabel || 'N/A'}</span>
-
-                    <span style={{ color: 'rgba(0,240,255,0.5)' }}>CONFIDENCE:</span>
-                    <span>{Math.round((submission.mlResult?.confidence || 0) * 100)}%</span>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span
+                      style={{
+                        fontSize: '9px',
+                        letterSpacing: '1px',
+                        fontWeight: 'bold',
+                        padding: '2px 8px',
+                        background: submission.isCorrect ? 'rgba(57,255,20,0.15)' : 'rgba(255,100,0,0.15)',
+                        color: submission.isCorrect ? '#39FF14' : '#FF6400',
+                        border: `1px solid ${submission.isCorrect ? '#39FF14' : '#FF6400'}`,
+                      }}
+                    >
+                      {submission.isCorrect ? 'VERIFIED' : 'REJECTED'}
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'var(--green-primary)' }}>
+                      {isExpanded ? '[- COLLAPSE]' : '[+ EXPAND]'}
+                    </span>
                   </div>
                 </div>
+
+                {isExpanded && (
+                  <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(57,255,20,0.1)', display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                    {/* Left Side: Thumbnail with Click to Zoom */}
+                    <div
+                      onClick={() => setSelectedPhoto(photoUrl)}
+                      style={{
+                        width: '120px',
+                        height: '120px',
+                        cursor: 'zoom-in',
+                        overflow: 'hidden',
+                        border: `1px solid ${submission.isCorrect ? 'rgba(57,255,20,0.5)' : 'rgba(255,100,0,0.5)'}`,
+                        boxShadow: '0 0 5px rgba(57,255,20,0.1)',
+                        position: 'relative'
+                      }}
+                    >
+                      <img
+                        src={photoUrl}
+                        alt="Submission Snapshot"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          transition: 'transform 0.3s ease',
+                        }}
+                        onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.1)')}
+                        onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1.0)')}
+                      />
+                    </div>
+
+                    {/* Right Side: Meta details */}
+                    <div style={{ flex: '1', minWidth: '260px' }}>
+                      <div style={{ fontSize: '12px', color: '#cbd5e1', fontStyle: 'italic', background: 'rgba(0,0,0,0.3)', padding: '6px 10px', borderLeft: '2px solid var(--green-primary)' }}>
+                        &ldquo;{clueText}&rdquo;
+                      </div>
+
+                      <div style={{ fontSize: '11px', marginTop: '8px', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px' }}>
+                        <span style={{ color: 'rgba(57,255,20,0.5)' }}>TARGET LOC:</span>
+                        <span style={{ color: '#ffb84d' }}>{matchLocation}</span>
+
+                        <span style={{ color: 'rgba(57,255,20,0.5)' }}>ML PREDICT:</span>
+                        <span>{submission.mlResult?.predictedLabel || 'N/A'}</span>
+
+                        <span style={{ color: 'rgba(57,255,20,0.5)' }}>CONFIDENCE:</span>
+                        <span>{Math.round((submission.mlResult?.confidence || 0) * 100)}%</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}

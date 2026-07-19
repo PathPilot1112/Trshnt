@@ -153,9 +153,24 @@ function App() {
     window.location.hash = `#${route}`;
   };
 
-  // Render Admin page separately (without standard PDA device frame to support full desktop/mobile sizes)
+  // Render Admin and Scan pages separately (without standard PDA device frame to support full desktop/mobile sizes)
   if (currentRoute === 'admin') {
     return <AdminDashboard API_BASE={API_BASE} />;
+  }
+
+  if (currentRoute === 'scan') {
+    return (
+      <div style={{ minHeight: '100vh', background: '#020709', display: 'flex', flexDirection: 'column' }}>
+        <Scan 
+          API_BASE={API_BASE}
+          token={token}
+          onAbort={() => {
+            handleRefreshProfile();
+            handleNavigation('hud');
+          }} 
+        />
+      </div>
+    );
   }
 
   return (
