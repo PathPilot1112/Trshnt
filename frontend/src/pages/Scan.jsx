@@ -2,8 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Camera, MapPin, RefreshCw, Send, Upload } from 'lucide-react';
 import scannerBg from '../assets/stalker_scan_bg.png';
 
-const API_BASE = import.meta.env.VITE_API_BASE;
-
 const Scan = ({ API_BASE, token, onAbort }) => {
   const [logs, setLogs] = useState([
     'SYSTEM INITIALIZATION OK',
@@ -31,7 +29,6 @@ const Scan = ({ API_BASE, token, onAbort }) => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        // Only trigger camera stream in mobile views
         const isMobile = window.innerWidth <= 768 || /Mobi|Android|iPhone/i.test(navigator.userAgent);
         if (!isMobile) {
           pushLog(
@@ -46,7 +43,6 @@ const Scan = ({ API_BASE, token, onAbort }) => {
 
         pushLog('>> REQUESTING CAMERA FEED...');
 
-        // Use flexible constraints
         const constraints = {
           video: {
             facingMode: { ideal: 'environment' },
@@ -57,7 +53,6 @@ const Scan = ({ API_BASE, token, onAbort }) => {
         };
 
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
         streamRef.current = stream;
         setHasCamera(true);
         setCameraPermission('granted');
@@ -66,37 +61,24 @@ const Scan = ({ API_BASE, token, onAbort }) => {
         if (videoRef.current) {
           const video = videoRef.current;
           video.srcObject = stream;
-
-          // Force mobile safari playsinline and autoplay attributes programmatically
           video.setAttribute('playsinline', 'true');
           video.setAttribute('webkit-playsinline', 'true');
           video.setAttribute('autoplay', 'true');
           video.muted = true;
-
-          // Explicitly trigger play method
           video.play().then(() => {
             pushLog('>> CAMERA PLAYBACK RUNNING');
           }).catch((playErr) => {
             pushLog(`>> PLAYBACK ERROR: ${playErr.message}`);
-            console.error("Camera play error:", playErr);
           });
         }
       } catch (err) {
-        console.error("Camera acquisition failed:", err);
-
-        // Retry fallback with minimal constraints
         try {
           pushLog('>> CONSTRAINTS FAILED. RETRYING WITH MINIMAL FEED...');
-          const fallbackStream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: false
-          });
-
+          const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
           streamRef.current = fallbackStream;
           setHasCamera(true);
           setCameraPermission('granted');
           pushLog('>> CAMERA PERMISSION: GRANTED (FALLBACK)');
-
           if (videoRef.current) {
             const video = videoRef.current;
             video.srcObject = fallbackStream;
@@ -104,7 +86,7 @@ const Scan = ({ API_BASE, token, onAbort }) => {
             video.setAttribute('webkit-playsinline', 'true');
             video.setAttribute('autoplay', 'true');
             video.muted = true;
-            video.play().catch(() => { });
+            video.play().catch(() => {});
           }
         } catch (fallbackErr) {
           setHasCamera(false);
@@ -131,18 +113,13 @@ const Scan = ({ API_BASE, token, onAbort }) => {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           };
-
           setCoords(nextCoords);
           setLocationPermission('granted');
           pushLog(`>> GPS LOCK: ${nextCoords.lat.toFixed(5)}, ${nextCoords.lng.toFixed(5)}`);
-
           try {
             await fetch(`${API_BASE}/teams/location`, {
               method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-              },
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
               body: JSON.stringify(nextCoords),
             });
           } catch {
@@ -178,11 +155,9 @@ const Scan = ({ API_BASE, token, onAbort }) => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
-
       canvas.width = video.videoWidth || 1280;
       canvas.height = video.videoHeight || 720;
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
       canvas.toBlob((blob) => {
         if (!blob) return;
         setCapturedBlob(blob);
@@ -222,36 +197,25 @@ const Scan = ({ API_BASE, token, onAbort }) => {
   };
 
   const handleTransmit = async () => {
-    if (!capturedBlob) {
-      alert('No image captured yet.');
-      return;
-    }
-
+    if (!capturedBlob) return;
     setIsTransmitting(true);
     pushLog('>> INITIATING ENCRYPTED UPLINK...', '>> SENDING DATA CHUNKS TO COMMAND CORE...');
-
     try {
       const formData = new FormData();
       formData.append('image', capturedBlob, 'pda_scan.jpg');
-
       const response = await fetch(`${API_BASE}/clues/submit`, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Submission failed');
-
       setScanResult({
         success: data.isCorrect,
         message: data.message,
         prediction: data.prediction,
         confidence: Math.round((data.confidence || 0) * 100),
       });
-
       pushLog(
         `>> RESPONSE: ${data.message.toUpperCase()}`,
         `>> PREDICTED LABEL: ${data.prediction || 'UNKNOWN'}`,
@@ -268,187 +232,257 @@ const Scan = ({ API_BASE, token, onAbort }) => {
 
   return (
     <div className="scan-page" style={{ height: '100%', display: 'flex', flexDirection: 'column', width: '100%', overflow: 'hidden' }}>
+
+      {/* ═══════════════ SCAN HEADER ═══════════════ */}
       <div className="scan-header">
         <button className="abort-btn" onClick={onAbort}>
-          <ArrowLeft size={12} /> ABORT_SCAN
+          <ArrowLeft size={11} /> ABORT_SCAN
         </button>
         <div className="scan-status-info">
-          <span>CAM: {cameraPermission.toUpperCase()}</span>
-          <span>GPS: {locationPermission.toUpperCase()}</span>
+          <span>CAM: <span style={{ color: cameraPermission === 'granted' ? 'var(--color-neon-green)' : 'var(--color-amber)' }}>
+            {cameraPermission.toUpperCase()}
+          </span></span>
+          <span>GPS: <span style={{ color: locationPermission === 'granted' ? 'var(--color-neon-green)' : 'var(--color-amber)' }}>
+            {locationPermission.toUpperCase()}
+          </span></span>
         </div>
       </div>
 
+      {/* ═══════════════ VIEWPORT ═══════════════ */}
       <div className="scan-viewport-container">
+        {/* Grid overlay */}
+        <div className="viewport-grid" />
+
+        {/* Camera feed */}
         <video
           ref={videoRef}
-          autoPlay
-          playsInline
-          muted
+          autoPlay playsInline muted
           style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
+            position: 'absolute', inset: 0,
+            width: '100%', height: '100%',
             objectFit: 'cover',
             opacity: isCaptured ? 0.2 : (hasCamera ? 1.0 : 0.0),
             pointerEvents: hasCamera ? 'auto' : 'none',
           }}
         />
+        {/* Canvas (captured frame) */}
         <canvas
           ref={canvasRef}
           style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
+            position: 'absolute', inset: 0,
+            width: '100%', height: '100%',
             objectFit: 'cover',
             opacity: (isCaptured && hasCamera) ? 1.0 : 0,
             pointerEvents: (isCaptured && hasCamera) ? 'auto' : 'none',
           }}
         />
-        {!hasCamera && (
-          <img src={scannerBg} alt="Simulated Viewport" className="camera-feed-bg" />
-        )}
 
-        <div className="viewport-corners"></div>
+        {/* Simulated atmospheric bg when no camera */}
+        {!hasCamera && <img src={scannerBg} alt="Simulated Viewport" className="camera-feed-bg" />}
+
+        {/* Corner brackets + reticle */}
+        <div className="viewport-corners" />
         {!isCaptured && (
           <div className="reticle">
-            <div className="reticle-circle"></div>
+            <div className="reticle-circle" />
           </div>
         )}
-        <div className={`screen-flash ${isFlashing ? 'active' : ''}`}></div>
 
+        {/* Green laser sweep */}
+        {!isCaptured && <div className="laser-beam" />}
+
+        {/* Flash effect */}
+        <div className={`screen-flash ${isFlashing ? 'active' : ''}`} />
+
+        {/* Transmitting overlay */}
         {isTransmitting && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'rgba(2, 10, 13, 0.85)',
-              zIndex: 15,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--cyan-primary)',
-              fontWeight: 'bold',
-            }}
-          >
-            TRANSMITTING DATA...
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'rgba(0, 20, 22, 0.88)',
+            zIndex: 15,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexDirection: 'column', gap: '12px',
+          }}>
+            <div style={{
+              fontFamily: 'var(--font-serif)',
+              fontSize: '14px',
+              letterSpacing: '3px',
+              color: 'var(--color-neon-green)',
+              textShadow: '0 0 10px var(--color-green-glow)',
+              textTransform: 'uppercase',
+            }}>
+              TRANSMITTING DATA...
+            </div>
+            <div className="telemetry-bar-container" style={{ width: '60%' }}>
+              <div className="telemetry-bar-fill" style={{ width: '100%', animation: 'radar-sweep 1.5s infinite linear' }} />
+            </div>
           </div>
         )}
       </div>
 
-      {/* Main Interactive Controls */}
+      {/* ═══════════════ CAPTURE CONTROLS ═══════════════ */}
       {!isCaptured ? (
-        <div style={{ marginTop: '14px', display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: '10px', width: '100%' }}>
+        <div style={{
+          padding: '12px 16px',
+          display: 'grid',
+          gridTemplateColumns: '1fr auto 1fr',
+          alignItems: 'center',
+          gap: '10px',
+          background: 'rgba(0, 20, 22, 0.7)',
+          borderTop: '1px solid rgba(57, 255, 20, 0.15)',
+        }}>
           <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-            <label className="cyber-btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', margin: 0, padding: '8px 14px', fontSize: '11px' }}>
-              <Upload size={12} /> FILE
+            <label className="cyber-btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', padding: '7px 12px', fontSize: '10px' }}>
+              <Upload size={11} /> FILE
               <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLocalFile} />
             </label>
           </div>
 
+          {/* Capture button — circular neon-green */}
           <div>
             <button
               onClick={handleCapture}
-              title="Capture Image"
               style={{
-                width: '56px',
-                height: '56px',
+                width: '54px', height: '54px',
                 borderRadius: '50%',
-                border: '3px solid var(--cyan-primary)',
+                border: '3px solid var(--color-neon-green)',
                 background: 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer',
-                boxShadow: '0 0 12px rgba(0, 240, 255, 0.4)',
+                boxShadow: '0 0 16px var(--color-green-glow), 0 0 4px rgba(57,255,20,0.2)',
                 padding: 0,
               }}
             >
               <div style={{
-                width: '38px',
-                height: '38px',
+                width: '36px', height: '36px',
                 borderRadius: '50%',
-                background: 'var(--cyan-primary)',
-                boxShadow: '0 0 8px var(--cyan-primary)',
-              }}></div>
+                background: 'var(--color-neon-green)',
+                boxShadow: '0 0 10px var(--color-neon-green)',
+              }} />
             </button>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', fontSize: '10px', color: 'rgba(0, 240, 255, 0.7)', fontFamily: 'var(--font-mono)' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-accent)' }}>
             {coords ? `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` : 'NO GPS LOCK'}
           </div>
         </div>
       ) : (
-        <div style={{ marginTop: '14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', width: '100%' }}>
+        <div style={{
+          padding: '12px 16px',
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '10px',
+          background: 'rgba(0, 20, 22, 0.7)',
+          borderTop: '1px solid rgba(57, 255, 20, 0.15)',
+        }}>
           <button className="cyber-btn-outline" onClick={handleRecapture} disabled={isTransmitting}>
-            <RefreshCw size={12} /> RETAKE
+            <RefreshCw size={11} /> RETAKE
           </button>
           <button className="cyber-btn striped" onClick={handleTransmit} disabled={!capturedBlob || isTransmitting}>
-            <Send size={12} /> SUBMIT SCAN
+            <Send size={11} /> SUBMIT SCAN
           </button>
         </div>
       )}
 
-      {/* Simplified Status Indicators */}
-      <div className="telemetry-card" style={{ marginTop: '10px', padding: '8px 12px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'rgba(0, 240, 255, 0.8)' }}>
-          <span>CAM: {cameraPermission.toUpperCase()}</span>
-          <span>GPS: {locationPermission.toUpperCase()}</span>
-          <span>LINK: SECURE</span>
-        </div>
+      {/* ═══════════════ STATUS INDICATORS ═══════════════ */}
+      <div style={{
+        padding: '6px 16px',
+        background: 'rgba(0, 20, 22, 0.9)',
+        borderTop: '1px solid rgba(57, 255, 20, 0.1)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        fontFamily: 'var(--font-mono)',
+        fontSize: '9px',
+        color: 'rgba(155, 168, 168, 0.6)',
+      }}>
+        <span>CAM: <span style={{ color: cameraPermission === 'granted' ? 'var(--color-neon-green)' : 'var(--color-amber)' }}>{cameraPermission.toUpperCase()}</span></span>
+        <span>GPS: <span style={{ color: locationPermission === 'granted' ? 'var(--color-neon-green)' : 'var(--color-amber)' }}>{locationPermission.toUpperCase()}</span></span>
+        <span style={{ color: 'rgba(57, 255, 20, 0.6)' }}>LINK: SECURE</span>
       </div>
 
-      {/* Terminal Log Status Ticker */}
-      <div className="log-entry" style={{
-        marginTop: '10px',
-        padding: '6px 10px',
-        border: '1px solid rgba(0, 240, 255, 0.15)',
-        background: 'rgba(3, 12, 15, 0.4)',
-        fontSize: '9px',
+      {/* ═══════════════ LOG TICKER ═══════════════ */}
+      <div style={{
+        padding: '5px 14px',
+        background: 'rgba(0, 10, 12, 0.85)',
+        borderTop: '1px solid rgba(57, 255, 20, 0.08)',
         fontFamily: 'var(--font-mono)',
+        fontSize: '8px',
         textAlign: 'center',
         overflow: 'hidden',
         whiteSpace: 'nowrap',
         textOverflow: 'ellipsis',
-        color: 'var(--cyan-primary)'
+        color: 'rgba(57, 255, 20, 0.7)',
+        letterSpacing: '1px',
       }}>
         STATUS // {logs[logs.length - 1] || 'SYSTEM ONLINE'}
       </div>
 
+      {/* ═══════════════ RESULT MODAL ═══════════════ */}
       {showModal && scanResult && (
         <div
           onClick={() => setShowModal(false)}
           style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.85)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 100,
-            padding: '20px',
+            position: 'fixed', inset: 0,
+            background: 'rgba(0, 0, 0, 0.9)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 100, padding: '20px',
           }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              width: '100%',
-              maxWidth: '360px',
-              background: '#020b0d',
-              border: '1px solid var(--cyan-primary)',
-              padding: '20px',
-              textAlign: 'center',
+              width: '100%', maxWidth: '360px',
+              background: 'var(--bg-panel-dark)',
+              border: `1px solid ${scanResult.success ? 'var(--color-neon-green)' : 'var(--color-amber)'}`,
+              boxShadow: scanResult.success
+                ? '0 0 30px rgba(57, 255, 20, 0.35)'
+                : '0 0 30px rgba(255, 183, 0, 0.35)',
+              padding: '0',
+              overflow: 'hidden',
             }}
           >
-            <div className={scanResult.success ? 'glow-text-green' : 'glow-text-amber'} style={{ fontSize: '16px', marginBottom: '12px' }}>
-              {scanResult.success ? 'OBJECTIVE VERIFIED' : 'SUBMISSION REJECTED'}
+            {/* Hazard stripe top */}
+            <div className="hazard-bar" />
+
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+              {/* Result header */}
+              <div style={{
+                fontFamily: 'var(--font-serif)',
+                fontSize: '15px',
+                letterSpacing: '3px',
+                textTransform: 'uppercase',
+                fontWeight: 700,
+                marginBottom: '12px',
+                color: scanResult.success ? 'var(--color-neon-green)' : 'var(--color-amber)',
+                textShadow: scanResult.success
+                  ? '0 0 12px var(--color-green-glow)'
+                  : '0 0 12px var(--color-amber-glow)',
+              }}>
+                {scanResult.success ? '✓ OBJECTIVE VERIFIED' : '✗ SUBMISSION REJECTED'}
+              </div>
+
+              {/* Message */}
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--color-text)', marginBottom: '8px', lineHeight: 1.5 }}>
+                {scanResult.message}
+              </div>
+
+              {/* Prediction / confidence */}
+              <div style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '10px',
+                color: 'var(--color-accent)',
+                marginBottom: '18px',
+                padding: '8px',
+                border: '1px solid rgba(155,168,168,0.2)',
+                background: 'rgba(0,39,41,0.5)',
+              }}>
+                {scanResult.prediction} // <span className={scanResult.success ? 'glow-text' : 'glow-text-amber'}>{scanResult.confidence}% CONFIDENCE</span>
+              </div>
+
+              <button className="cyber-btn striped" style={{ width: '100%' }} onClick={onAbort}>
+                RETURN TO HUD
+              </button>
             </div>
-            <div style={{ fontSize: '12px', marginBottom: '6px' }}>{scanResult.message}</div>
-            <div style={{ fontSize: '11px', color: 'rgba(0,240,255,0.7)', marginBottom: '16px' }}>
-              {scanResult.prediction} // {scanResult.confidence}% confidence
-            </div>
-            <button className="cyber-btn striped" onClick={onAbort}>RETURN TO HUD</button>
           </div>
         </div>
       )}
