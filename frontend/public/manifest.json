@@ -1,0 +1,30 @@
+{
+  "short_name": "STALKER_NET",
+  "name": "STALKER_NET Tactical Zone Interface",
+  "description": "STALKER_NET Tactical PDA Terminal Interface for Pripyat and Red Forest Sectors. Real-time radiation tracking, anomaly detection, and satellite uplink connection.",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#002729",
+  "theme_color": "#002729",
+  "display": "standalone",
+  "orientation": "portrait"
+}
