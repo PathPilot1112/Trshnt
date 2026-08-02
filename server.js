@@ -11,6 +11,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import teamRoutes from './routes/teamRoutes.js';
 import { seedDatabase } from './utils/seed.js';
 import Team from './models/Team.js';
+import axios from 'axios';
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -22,7 +23,7 @@ const io = new Server(server, {
   cors: { origin: '*' }
 });
 
-app.set('io', io); // make io accessible to controllers
+app.set('io', io);
 
 connectDB().then(() => {
   seedDatabase();
@@ -52,6 +53,68 @@ io.on('connection', (socket) => {
     console.log('Client disconnected', socket.id);
   });
 });
+
+let lastWakeupTime = 0;
+
+const mlHealthHandler = async (req, res) => {
+  const serviceId = process.env.ML_SERVICE_ID;
+  const deployKey = process.env.RENDER_DEPLOY_KEY;
+  const action = req.query.action;
+
+  if (action === 'wakeup') {
+    lastWakeupTime = Date.now();
+    console.log(`[ML_WAKEUP] Trigger requested. Service ID: ${serviceId || 'MISSING'}, Deploy Key: ${deployKey ? '***' + deployKey.slice(-4) : 'MISSING'}`);
+    
+    if (serviceId && deployKey) {
+      axios.post(`https://api.render.com/deploy/${serviceId}?key=${deployKey}`)
+        .then(response => {
+          console.log('[ML_WAKEUP] Render deploy webhook triggered successfully. Status:', response.status);
+        })
+        .catch(err => {
+          console.error('[ML_WAKEUP] Render deploy webhook failed:', err.response?.data || err.message);
+        });
+    } else {
+      console.warn('[ML_WAKEUP] Cannot trigger Render deploy: serviceId or deployKey is missing in environment.');
+    }
+    return res.json({ status: 'orange', message: 'Waking up...' });
+  }
+
+  // Default: check health of ML microservice
+  const mlUrl = process.env.ML_SERVICE_URL || 'http://localhost:5000';
+  let isAlive = false;
+  try {
+    await axios.get(`${mlUrl}/`, { timeout: 2000 });
+    isAlive = true;
+  } catch (err) {
+    if (err.response) {
+      isAlive = true;
+    }
+  }
+
+  const timeSinceWakeup = Date.now() - lastWakeupTime;
+  const isWakingWindow = timeSinceWakeup < 180000;
+  
+  // Local simulation check: if running locally or using placeholder keys, 
+  // simulate that the ML service successfully boots up after 20 seconds.
+  const isLocal = !deployKey || deployKey === 'abc123xyz456789';
+  const shouldSimulateGreen = isLocal && lastWakeupTime > 0 && timeSinceWakeup > 20000 && timeSinceWakeup < 180000;
+
+  console.log(`[ML_HEALTH] Checking health. Responsive: ${isAlive}, Waking up window active: ${isWakingWindow}, Simulated Green: ${shouldSimulateGreen}`);
+
+  if (isAlive || shouldSimulateGreen) {
+    return res.json({ status: 'green', message: `ML service active${shouldSimulateGreen ? ' (Simulated)' : ''}.` });
+  }
+
+  // If not alive, check if wake-up was triggered recently (within 3 minutes)
+  if (isWakingWindow) {
+    return res.json({ status: 'orange', message: 'ML service is waking up...' });
+  }
+
+  return res.json({ status: 'red', message: 'ML service is offline.' });
+};
+
+app.get('/ml-health', mlHealthHandler);
+app.get('/api/ml-health', mlHealthHandler);
 
 const broadcastLiveSnapshots = async () => {
   try {

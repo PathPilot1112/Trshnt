@@ -32,6 +32,61 @@ const AdminDashboard = ({ API_BASE }) => {
   const [selectedTeamFilter, setSelectedTeamFilter] = useState('all');
   const [expandedTeams, setExpandedTeams] = useState({});
   const [expandedSubmissions, setExpandedSubmissions] = useState({});
+  const [mlStatus, setMlStatus] = useState('red');
+  const [isWaking, setIsWaking] = useState(false);
+
+  const checkMLStatus = async () => {
+    try {
+      const url = API_BASE ? `${API_BASE}/ml-health` : '/ml-health';
+      const res = await fetch(url);
+      if (res.ok) {
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          setMlStatus(data.status || 'red');
+          if (data.status === 'green') {
+            setIsWaking(false);
+          }
+        } else {
+          const text = await res.text();
+          if (text.includes("APi working")) {
+            setMlStatus('orange');
+          } else {
+            setMlStatus('red');
+          }
+        }
+      } else {
+        setMlStatus('red');
+      }
+    } catch (err) {
+      setMlStatus('red');
+    }
+  };
+
+  const handleWakeupML = async () => {
+    setIsWaking(true);
+    setMlStatus('orange');
+    try {
+      const url = API_BASE ? `${API_BASE}/ml-health?action=wakeup` : '/ml-health?action=wakeup';
+      const res = await fetch(url);
+      if (res.ok) {
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          setMlStatus(data.status || 'orange');
+        }
+      }
+    } catch (err) {
+      console.error("Failed to wakeup ML:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    checkMLStatus();
+    const interval = setInterval(checkMLStatus, 10000);
+    return () => clearInterval(interval);
+  }, [API_BASE, isAdmin]);
 
   const toggleTeam = (teamId) => {
     setExpandedTeams((prev) => ({
@@ -284,7 +339,66 @@ const AdminDashboard = ({ API_BASE }) => {
           <div style={{ fontSize: '22px', color: '#fff' }}>ADMIN DASHBOARD</div>
           <div style={{ fontSize: '11px', color: 'rgba(0,240,255,0.6)' }}>Live QR onboarding, sockets, timers, map telemetry</div>
         </div>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* ML Core status indicator */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: 'rgba(2, 20, 24, 0.6)',
+            border: '1px solid rgba(57, 255, 20, 0.25)',
+            padding: '6px 12px',
+            fontFamily: "'Share Tech Mono', monospace",
+            fontSize: '11px',
+            color: 'var(--green-primary)',
+            boxShadow: '0 0 10px rgba(57, 255, 20, 0.05)',
+            marginRight: '10px'
+          }}>
+            <span>ML_CORE_STATUS:</span>
+            <span style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: mlStatus === 'green' ? '#39ff14' : mlStatus === 'orange' ? '#ffaa00' : '#ff3333',
+              boxShadow: mlStatus === 'green'
+                ? '0 0 8px #39ff14'
+                : mlStatus === 'orange'
+                ? '0 0 8px #ffaa00'
+                : '0 0 8px #ff3333',
+              animation: mlStatus === 'orange' ? 'ml-status-pulse 1s infinite alternate' : 'none'
+            }} />
+            <span style={{
+              fontWeight: 'bold',
+              color: mlStatus === 'green' ? '#39ff14' : mlStatus === 'orange' ? '#ffaa00' : '#ff3333'
+            }}>
+              {mlStatus.toUpperCase()}
+            </span>
+            {mlStatus !== 'green' && (
+              <button
+                className="cyber-btn-outline"
+                onClick={handleWakeupML}
+                disabled={mlStatus === 'orange' || isWaking}
+                style={{
+                  padding: '2px 8px',
+                  fontSize: '9px',
+                  borderColor: mlStatus === 'orange' ? '#ffaa00' : 'var(--green-primary)',
+                  color: mlStatus === 'orange' ? '#ffaa00' : 'var(--green-primary)',
+                  marginLeft: '10px',
+                  cursor: (mlStatus === 'orange' || isWaking) ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {mlStatus === 'orange' ? 'WAKING...' : 'WAKE UP ML'}
+              </button>
+            )}
+          </div>
+
+          <style>{`
+            @keyframes ml-status-pulse {
+              from { opacity: 0.3; }
+              to { opacity: 1; }
+            }
+          `}</style>
+
           <button className="cyber-btn-outline" onClick={fetchDashboardData}>
             <RefreshCw size={14} /> REFRESH
           </button>
