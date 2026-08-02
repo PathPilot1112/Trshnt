@@ -360,6 +360,12 @@ const Scan = ({ API_BASE, token, onAbort }) => {
     setScanResult(null);
     setRotation(0);
     setCropBox({ x: 0, y: 0, width: 100, height: 100 });
+    if (videoRef.current && streamRef.current) {
+      if (videoRef.current.srcObject !== streamRef.current) {
+        videoRef.current.srcObject = streamRef.current;
+      }
+      videoRef.current.play().catch(() => {});
+    }
     pushLog('>> CAMERA RESET. FEED REACTIVATED.');
   };
 
@@ -429,20 +435,18 @@ const Scan = ({ API_BASE, token, onAbort }) => {
       {/* ═══════════════ VIEWPORT ═══════════════ */}
       <div className="scan-viewport-container" ref={viewportRef} style={{ position: 'relative', overflow: 'hidden' }}>
 
-        {/* Camera feed (when live) */}
-        {!isCaptured && (
-          <video
-            ref={videoRef}
-            autoPlay playsInline muted
-            style={{
-              position: 'absolute', inset: 0,
-              width: '100%', height: '100%',
-              objectFit: 'cover',
-              opacity: hasCamera ? 1.0 : 0.0,
-              pointerEvents: hasCamera ? 'auto' : 'none',
-            }}
-          />
-        )}
+        {/* Camera feed (always mounted) */}
+        <video
+          ref={videoRef}
+          autoPlay playsInline muted
+          style={{
+            position: 'absolute', inset: 0,
+            width: '100%', height: '100%',
+            objectFit: 'cover',
+            opacity: (!isCaptured && hasCamera) ? 1.0 : 0.0,
+            pointerEvents: (!isCaptured && hasCamera) ? 'auto' : 'none',
+          }}
+        />
 
         {/* Offscreen Canvas for capture fallback */}
         <canvas ref={canvasRef} style={{ display: 'none' }} />

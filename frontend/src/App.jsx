@@ -5,7 +5,6 @@ import Scan from './pages/Scan';
 import AdminDashboard from './pages/AdminDashboard';
 import ScanlineOverlay from './components/ScanlineOverlay';
 import BackgroundCanvas from './components/BackgroundCanvas';
-import FogLayer from './components/FogLayer';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
@@ -197,7 +196,6 @@ function App() {
     <div style={{ position: 'relative', width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
       {/* === Full-screen atmospheric background layers === */}
       <BackgroundCanvas />
-      <FogLayer />
       <div className="noise-overlay" />
       <div className="scanlines" />
 
