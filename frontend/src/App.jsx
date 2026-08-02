@@ -147,10 +147,7 @@ function App() {
   // Admin page — full screen, no PDA frame
   if (currentRoute === 'admin') {
     return (
-      <>
-        <CustomCursor />
-        <AdminDashboard API_BASE={API_BASE} />
-      </>
+      <AdminDashboard API_BASE={API_BASE} />
     );
   }
 
@@ -169,7 +166,6 @@ function App() {
         {/* Atmospheric layers behind scan UI */}
         <BackgroundCanvas />
         <FogLayer />
-        <CustomCursor />
         <div className="noise-overlay" />
         <div className="scanlines" />
 
@@ -195,7 +191,6 @@ function App() {
       {/* === Full-screen atmospheric background layers === */}
       <BackgroundCanvas />
       <FogLayer />
-      <CustomCursor />
       <div className="noise-overlay" />
       <div className="scanlines" />
 
