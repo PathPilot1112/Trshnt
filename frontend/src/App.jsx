@@ -174,9 +174,7 @@ function App() {
       }}>
         {/* Atmospheric layers behind scan UI */}
         <BackgroundCanvas />
-        <FogLayer />
         <div className="noise-overlay" />
-        <div className="scanlines" />
 
         {/* Scan content */}
         <div style={{ position: 'relative', zIndex: 10, height: '100%', display: 'flex', flexDirection: 'column' }}>

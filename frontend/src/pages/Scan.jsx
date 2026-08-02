@@ -8,7 +8,7 @@ const getCroppedRotatedBlob = (imageBlob, rotation, crop) => {
     const url = URL.createObjectURL(imageBlob);
     img.onload = () => {
       URL.revokeObjectURL(url);
-      
+
       // 1. First canvas for rotation
       const rotCanvas = document.createElement('canvas');
       const rotCtx = rotCanvas.getContext('2d');
@@ -251,7 +251,7 @@ const Scan = ({ API_BASE, token, onAbort }) => {
             video.setAttribute('webkit-playsinline', 'true');
             video.setAttribute('autoplay', 'true');
             video.muted = true;
-            video.play().catch(() => {});
+            video.play().catch(() => { });
           }
         } catch (fallbackErr) {
           setHasCamera(false);
@@ -428,8 +428,6 @@ const Scan = ({ API_BASE, token, onAbort }) => {
 
       {/* ═══════════════ VIEWPORT ═══════════════ */}
       <div className="scan-viewport-container" ref={viewportRef} style={{ position: 'relative', overflow: 'hidden' }}>
-        {/* Grid overlay */}
-        <div className="viewport-grid" />
 
         {/* Camera feed (when live) */}
         {!isCaptured && (
@@ -530,9 +528,6 @@ const Scan = ({ API_BASE, token, onAbort }) => {
           </div>
         )}
 
-        {/* Green laser sweep */}
-        {!isCaptured && <div className="laser-beam" />}
-
         {/* Flash effect */}
         <div className={`screen-flash ${isFlashing ? 'active' : ''}`} />
 
@@ -573,12 +568,7 @@ const Scan = ({ API_BASE, token, onAbort }) => {
           background: 'rgba(0, 20, 22, 0.7)',
           borderTop: '1px solid rgba(57, 255, 20, 0.15)',
         }}>
-          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-            <label className="cyber-btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', padding: '7px 12px', fontSize: '10px' }}>
-              <Upload size={11} /> FILE
-              <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLocalFile} />
-            </label>
-          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-start' }} />
 
           {/* Capture button — circular neon-green */}
           <div>
