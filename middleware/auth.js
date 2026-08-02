@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import Team from "../models/Team.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "stalkersecret";
 
@@ -13,6 +14,14 @@ export const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = await User.findById(decoded.id).select("-password");
     if (!user) return res.status(401).json({ message: "User no longer exists" });
+
+    if (user.team && decoded.sessionToken) {
+      const team = await Team.findById(user.team);
+      if (team && team.activeSessionToken && team.activeSessionToken !== decoded.sessionToken) {
+        return res.status(403).json({ message: "Session invalidated or active on another device" });
+      }
+    }
+
     req.user = user;
     next();
   } catch (err) {

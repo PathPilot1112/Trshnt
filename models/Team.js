@@ -26,6 +26,7 @@ const teamSchema = new mongoose.Schema(
       enum: ["not_started", "in_progress", "finished", "disqualified"],
       default: "not_started",
     },
+    activeSessionToken: { type: String, default: null },
 
     
     location: {

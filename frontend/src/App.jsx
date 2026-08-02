@@ -5,7 +5,6 @@ import Scan from './pages/Scan';
 import AdminDashboard from './pages/AdminDashboard';
 import ScanlineOverlay from './components/ScanlineOverlay';
 import BackgroundCanvas from './components/BackgroundCanvas';
-import CustomCursor from './components/CustomCursor';
 import FogLayer from './components/FogLayer';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
@@ -132,7 +131,17 @@ function App() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (token) {
+      try {
+        await fetch(`${API_BASE}/teams/logout`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } catch (err) {
+        console.error("Failed to release session lock:", err);
+      }
+    }
     setToken('');
     setOperatorName('');
     setTeamInfo(null);

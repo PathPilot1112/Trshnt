@@ -1,11 +1,12 @@
 import Team from "../models/Team.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
 const JWT_SECRET = process.env.JWT_SECRET || "stalkersecret";
 
-const buildToken = (userId, role) =>
-  jwt.sign({ id: userId, role }, JWT_SECRET, { expiresIn: "7d" });
+const buildToken = (userId, role, sessionToken = null) =>
+  jwt.sign({ id: userId, role, sessionToken }, JWT_SECRET, { expiresIn: "7d" });
 
 const buildTeamPayload = (team) => ({
   id: team._id,
@@ -124,6 +125,10 @@ export const loginWithQr = async (req, res) => {
       return res.status(404).json({ message: "QR is not mapped to any team" });
     }
 
+    if (team.activeSessionToken) {
+      return res.status(403).json({ message: "Team already has an active session." });
+    }
+
     const email = `qr_${team._id}@stalker.net`;
     let user = await User.findOne({ email });
 
@@ -142,10 +147,13 @@ export const loginWithQr = async (req, res) => {
 
     if (!team.members.some((memberId) => String(memberId) === String(user._id))) {
       team.members.push(user._id);
-      await team.save();
     }
 
-    const token = buildToken(user._id, user.role);
+    const sessionToken = crypto.randomUUID();
+    team.activeSessionToken = sessionToken;
+    await team.save();
+
+    const token = buildToken(user._id, user.role, sessionToken);
 
     res.json({
       token,
@@ -159,6 +167,17 @@ export const loginWithQr = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ message: "Server error during QR login", error: err.message });
+  }
+};
+
+export const logout = async (req, res) => {
+  try {
+    if (req.user?.team) {
+      await Team.findByIdAndUpdate(req.user.team, { activeSessionToken: null });
+    }
+    res.json({ message: "Logged out successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Error logging out", error: err.message });
   }
 };
 

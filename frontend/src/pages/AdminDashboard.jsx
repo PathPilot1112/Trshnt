@@ -315,7 +315,7 @@ const AdminDashboard = ({ API_BASE }) => {
 
   if (!isAdmin) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#03080a' }}>
+      <div className="admin-dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#03080a' }}>
         <form onSubmit={handleAdminLogin} style={{ width: '100%', maxWidth: '420px', padding: '24px', border: '1px solid var(--cyan-primary)', background: '#010608' }}>
           <div style={{ textAlign: 'center', fontSize: '18px', marginBottom: '20px', color: 'var(--cyan-primary)' }}>
             STALKER_NET // ADMIN_GATE
@@ -333,7 +333,7 @@ const AdminDashboard = ({ API_BASE }) => {
   }
 
   return (
-    <div className="green-theme" style={{ minHeight: '100vh', background: '#020709', color: 'var(--green-primary)', padding: '20px', fontFamily: "'Share Tech Mono', monospace", overflowY: 'auto', height: 'auto' }}>
+    <div className="green-theme admin-dashboard" style={{ minHeight: '100vh', background: '#020709', color: 'var(--green-primary)', padding: '20px', fontFamily: "'Share Tech Mono', monospace", overflowY: 'auto', height: 'auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '12px', flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontSize: '22px', color: '#fff' }}>ADMIN DASHBOARD</div>

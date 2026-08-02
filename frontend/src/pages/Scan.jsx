@@ -1,6 +1,50 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Camera, MapPin, RefreshCw, Send, Upload } from 'lucide-react';
+import { ArrowLeft, Camera, MapPin, RefreshCw, Send, Upload, RotateCcw, RotateCw, Crop, Check } from 'lucide-react';
 import scannerBg from '../assets/stalker_scan_bg.png';
+
+const getCroppedRotatedBlob = (imageBlob, rotation, crop) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(imageBlob);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      
+      // 1. First canvas for rotation
+      const rotCanvas = document.createElement('canvas');
+      const rotCtx = rotCanvas.getContext('2d');
+      const isRotated90or270 = (rotation / 90) % 2 !== 0;
+
+      rotCanvas.width = isRotated90or270 ? img.height : img.width;
+      rotCanvas.height = isRotated90or270 ? img.width : img.height;
+
+      rotCtx.translate(rotCanvas.width / 2, rotCanvas.height / 2);
+      rotCtx.rotate((rotation * Math.PI) / 180);
+      rotCtx.drawImage(img, -img.width / 2, -img.height / 2);
+
+      // 2. Second canvas for cropping
+      const cropCanvas = document.createElement('canvas');
+      const cropCtx = cropCanvas.getContext('2d');
+
+      const cropX = Math.round((crop.x / 100) * rotCanvas.width);
+      const cropY = Math.round((crop.y / 100) * rotCanvas.height);
+      const cropW = Math.round((crop.width / 100) * rotCanvas.width);
+      const cropH = Math.round((crop.height / 100) * rotCanvas.height);
+
+      cropCanvas.width = Math.max(1, cropW);
+      cropCanvas.height = Math.max(1, cropH);
+
+      cropCtx.drawImage(
+        rotCanvas,
+        cropX, cropY, cropW, cropH,
+        0, 0, cropCanvas.width, cropCanvas.height
+      );
+
+      cropCanvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.9);
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+};
 
 const Scan = ({ API_BASE, token, onAbort }) => {
   const [logs, setLogs] = useState([
@@ -11,6 +55,9 @@ const Scan = ({ API_BASE, token, onAbort }) => {
   const [hasCamera, setHasCamera] = useState(false);
   const [isCaptured, setIsCaptured] = useState(false);
   const [capturedBlob, setCapturedBlob] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [rotation, setRotation] = useState(0);
+  const [cropBox, setCropBox] = useState({ x: 0, y: 0, width: 100, height: 100 });
   const [isFlashing, setIsFlashing] = useState(false);
   const [isTransmitting, setIsTransmitting] = useState(false);
   const [scanResult, setScanResult] = useState(null);
@@ -23,8 +70,126 @@ const Scan = ({ API_BASE, token, onAbort }) => {
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const watchIdRef = useRef(null);
+  const viewportRef = useRef(null);
+
+  const isDraggingRef = useRef(false);
+  const dragTypeRef = useRef(null);
+  const dragStartRef = useRef({ mouseX: 0, mouseY: 0, cropX: 0, cropY: 0, cropW: 0, cropH: 0 });
 
   const pushLog = (...entries) => setLogs((prev) => [...prev, ...entries]);
+
+  // Derived preview URL when capturedBlob changes
+  useEffect(() => {
+    if (!capturedBlob) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(capturedBlob);
+    setPreviewUrl(url);
+    setRotation(0);
+    setCropBox({ x: 0, y: 0, width: 100, height: 100 });
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [capturedBlob]);
+
+  // Drag handlers for crop overlay box
+  const handleDragStart = (e, type) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isDraggingRef.current = true;
+    dragTypeRef.current = type;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    dragStartRef.current = {
+      mouseX: clientX,
+      mouseY: clientY,
+      cropX: cropBox.x,
+      cropY: cropBox.y,
+      cropW: cropBox.width,
+      cropH: cropBox.height,
+    };
+  };
+
+  useEffect(() => {
+    const handleMove = (e) => {
+      if (!isDraggingRef.current || !viewportRef.current) return;
+      const rect = viewportRef.current.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      const dxPct = ((clientX - dragStartRef.current.mouseX) / rect.width) * 100;
+      const dyPct = ((clientY - dragStartRef.current.mouseY) / rect.height) * 100;
+
+      const type = dragTypeRef.current;
+      const start = dragStartRef.current;
+
+      setCropBox((prev) => {
+        let newX = start.cropX;
+        let newY = start.cropY;
+        let newW = start.cropW;
+        let newH = start.cropH;
+
+        const MIN_SIZE = 10;
+
+        if (type === 'move') {
+          newX = Math.max(0, Math.min(100 - start.cropW, start.cropX + dxPct));
+          newY = Math.max(0, Math.min(100 - start.cropH, start.cropY + dyPct));
+        } else if (type === 'nw') {
+          const maxDx = start.cropW - MIN_SIZE;
+          const maxDy = start.cropH - MIN_SIZE;
+          const actualDx = Math.min(maxDx, Math.max(-start.cropX, dxPct));
+          const actualDy = Math.min(maxDy, Math.max(-start.cropY, dyPct));
+          newX = start.cropX + actualDx;
+          newW = start.cropW - actualDx;
+          newY = start.cropY + actualDy;
+          newH = start.cropH - actualDy;
+        } else if (type === 'ne') {
+          const maxDx = 100 - start.cropX - start.cropW;
+          const maxDy = start.cropH - MIN_SIZE;
+          const actualDx = Math.min(maxDx, Math.max(-start.cropW + MIN_SIZE, dxPct));
+          const actualDy = Math.min(maxDy, Math.max(-start.cropY, dyPct));
+          newW = start.cropW + actualDx;
+          newY = start.cropY + actualDy;
+          newH = start.cropH - actualDy;
+        } else if (type === 'sw') {
+          const maxDx = start.cropW - MIN_SIZE;
+          const maxDy = 100 - start.cropY - start.cropH;
+          const actualDx = Math.min(maxDx, Math.max(-start.cropX, dxPct));
+          const actualDy = Math.min(maxDy, Math.max(-start.cropH + MIN_SIZE, dyPct));
+          newX = start.cropX + actualDx;
+          newW = start.cropW - actualDx;
+          newH = start.cropY + actualDy;
+        } else if (type === 'se') {
+          const maxDx = 100 - start.cropX - start.cropW;
+          const maxDy = 100 - start.cropY - start.cropH;
+          const actualDx = Math.min(maxDx, Math.max(-start.cropW + MIN_SIZE, dxPct));
+          const actualDy = Math.min(maxDy, Math.max(-start.cropH + MIN_SIZE, dyPct));
+          newW = start.cropW + actualDx;
+          newH = start.cropH + actualDy;
+        }
+
+        return { x: newX, y: newY, width: newW, height: newH };
+      });
+    };
+
+    const handleEnd = () => {
+      isDraggingRef.current = false;
+      dragTypeRef.current = null;
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove);
+    window.addEventListener('touchend', handleEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+    };
+  }, []);
 
   useEffect(() => {
     const startCamera = async () => {
@@ -165,7 +330,7 @@ const Scan = ({ API_BASE, token, onAbort }) => {
         pushLog(
           '>> IMAGE FRAME FROZEN',
           `>> DATA SIZE: ${Math.round(blob.size / 1024)} KB`,
-          '>> SCAN READY FOR TRANSMISSION'
+          '>> SCAN READY FOR EDITING & TRANSMISSION'
         );
       }, 'image/jpeg', 0.9);
       return;
@@ -176,7 +341,7 @@ const Scan = ({ API_BASE, token, onAbort }) => {
       .then((blob) => {
         setCapturedBlob(blob);
         setIsCaptured(true);
-        pushLog('>> SIMULATED CAPTURE STORED', '>> SCAN READY FOR TRANSMISSION');
+        pushLog('>> SIMULATED CAPTURE STORED', '>> SCAN READY FOR EDITING & TRANSMISSION');
       });
   };
 
@@ -186,23 +351,36 @@ const Scan = ({ API_BASE, token, onAbort }) => {
     setCapturedBlob(file);
     setIsCaptured(true);
     setScanResult(null);
-    pushLog(`>> LOCAL FILE LOADED: ${file.name}`, '>> SCAN READY FOR TRANSMISSION');
+    pushLog(`>> LOCAL FILE LOADED: ${file.name}`, '>> SCAN READY FOR EDITING & TRANSMISSION');
   };
 
   const handleRecapture = () => {
     setIsCaptured(false);
     setCapturedBlob(null);
     setScanResult(null);
+    setRotation(0);
+    setCropBox({ x: 0, y: 0, width: 100, height: 100 });
     pushLog('>> CAMERA RESET. FEED REACTIVATED.');
+  };
+
+  const handleRotateCcw = () => {
+    setRotation((prev) => (prev + 270) % 360);
+    pushLog('>> IMAGE ROTATED 90° CCW');
+  };
+
+  const handleRotateCw = () => {
+    setRotation((prev) => (prev + 90) % 360);
+    pushLog('>> IMAGE ROTATED 90° CW');
   };
 
   const handleTransmit = async () => {
     if (!capturedBlob) return;
     setIsTransmitting(true);
-    pushLog('>> INITIATING ENCRYPTED UPLINK...', '>> SENDING DATA CHUNKS TO COMMAND CORE...');
+    pushLog('>> PROCESSING CROP & ROTATION...', '>> INITIATING ENCRYPTED UPLINK...');
     try {
+      const finalBlob = await getCroppedRotatedBlob(capturedBlob, rotation, cropBox);
       const formData = new FormData();
-      formData.append('image', capturedBlob, 'pda_scan.jpg');
+      formData.append('image', finalBlob, 'pda_scan.jpg');
       const response = await fetch(`${API_BASE}/clues/submit`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
@@ -249,39 +427,103 @@ const Scan = ({ API_BASE, token, onAbort }) => {
       </div>
 
       {/* ═══════════════ VIEWPORT ═══════════════ */}
-      <div className="scan-viewport-container">
+      <div className="scan-viewport-container" ref={viewportRef} style={{ position: 'relative', overflow: 'hidden' }}>
         {/* Grid overlay */}
         <div className="viewport-grid" />
 
-        {/* Camera feed */}
-        <video
-          ref={videoRef}
-          autoPlay playsInline muted
-          style={{
-            position: 'absolute', inset: 0,
-            width: '100%', height: '100%',
-            objectFit: 'cover',
-            opacity: isCaptured ? 0.2 : (hasCamera ? 1.0 : 0.0),
-            pointerEvents: hasCamera ? 'auto' : 'none',
-          }}
-        />
-        {/* Canvas (captured frame) */}
-        <canvas
-          ref={canvasRef}
-          style={{
-            position: 'absolute', inset: 0,
-            width: '100%', height: '100%',
-            objectFit: 'cover',
-            opacity: (isCaptured && hasCamera) ? 1.0 : 0,
-            pointerEvents: (isCaptured && hasCamera) ? 'auto' : 'none',
-          }}
-        />
+        {/* Camera feed (when live) */}
+        {!isCaptured && (
+          <video
+            ref={videoRef}
+            autoPlay playsInline muted
+            style={{
+              position: 'absolute', inset: 0,
+              width: '100%', height: '100%',
+              objectFit: 'cover',
+              opacity: hasCamera ? 1.0 : 0.0,
+              pointerEvents: hasCamera ? 'auto' : 'none',
+            }}
+          />
+        )}
 
-        {/* Simulated atmospheric bg when no camera */}
-        {!hasCamera && <img src={scannerBg} alt="Simulated Viewport" className="camera-feed-bg" />}
+        {/* Offscreen Canvas for capture fallback */}
+        <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+        {/* Simulated atmospheric bg when no camera and not captured */}
+        {!hasCamera && !isCaptured && (
+          <img src={scannerBg} alt="Simulated Viewport" className="camera-feed-bg" />
+        )}
+
+        {/* Captured image editor preview with rotation & crop box overlay */}
+        {isCaptured && previewUrl && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
+            <img
+              src={previewUrl}
+              alt="Captured Frame"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain',
+                transform: `rotate(${rotation}deg)`,
+                transition: 'transform 0.2s ease',
+              }}
+            />
+
+            {/* Dark mask outside crop box */}
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: `${cropBox.y}%`, background: 'rgba(0,0,0,0.55)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: `${100 - cropBox.y - cropBox.height}%`, background: 'rgba(0,0,0,0.55)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', top: `${cropBox.y}%`, left: 0, width: `${cropBox.x}%`, height: `${cropBox.height}%`, background: 'rgba(0,0,0,0.55)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', top: `${cropBox.y}%`, right: 0, width: `${100 - cropBox.x - cropBox.width}%`, height: `${cropBox.height}%`, background: 'rgba(0,0,0,0.55)', pointerEvents: 'none' }} />
+
+            {/* Interactive Crop Frame */}
+            <div
+              onMouseDown={(e) => handleDragStart(e, 'move')}
+              onTouchStart={(e) => handleDragStart(e, 'move')}
+              style={{
+                position: 'absolute',
+                top: `${cropBox.y}%`,
+                left: `${cropBox.x}%`,
+                width: `${cropBox.width}%`,
+                height: `${cropBox.height}%`,
+                border: '2px solid var(--color-neon-green)',
+                boxShadow: '0 0 12px var(--color-green-glow)',
+                cursor: 'move',
+                boxSizing: 'border-box',
+              }}
+            >
+              {/* Inner Rule-of-Thirds Grid */}
+              <div style={{ position: 'absolute', top: '33.33%', left: 0, right: 0, height: '1px', background: 'rgba(57,255,20,0.25)', pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', top: '66.66%', left: 0, right: 0, height: '1px', background: 'rgba(57,255,20,0.25)', pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', left: '33.33%', top: 0, bottom: 0, width: '1px', background: 'rgba(57,255,20,0.25)', pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', left: '66.66%', top: 0, bottom: 0, width: '1px', background: 'rgba(57,255,20,0.25)', pointerEvents: 'none' }} />
+
+              {/* Corner Handles */}
+              <div
+                onMouseDown={(e) => handleDragStart(e, 'nw')}
+                onTouchStart={(e) => handleDragStart(e, 'nw')}
+                style={{ position: 'absolute', top: '-6px', left: '-6px', width: '14px', height: '14px', background: 'var(--color-neon-green)', cursor: 'nwse-resize', boxShadow: '0 0 6px #000' }}
+              />
+              <div
+                onMouseDown={(e) => handleDragStart(e, 'ne')}
+                onTouchStart={(e) => handleDragStart(e, 'ne')}
+                style={{ position: 'absolute', top: '-6px', right: '-6px', width: '14px', height: '14px', background: 'var(--color-neon-green)', cursor: 'nesw-resize', boxShadow: '0 0 6px #000' }}
+              />
+              <div
+                onMouseDown={(e) => handleDragStart(e, 'sw')}
+                onTouchStart={(e) => handleDragStart(e, 'sw')}
+                style={{ position: 'absolute', bottom: '-6px', left: '-6px', width: '14px', height: '14px', background: 'var(--color-neon-green)', cursor: 'nesw-resize', boxShadow: '0 0 6px #000' }}
+              />
+              <div
+                onMouseDown={(e) => handleDragStart(e, 'se')}
+                onTouchStart={(e) => handleDragStart(e, 'se')}
+                style={{ position: 'absolute', bottom: '-6px', right: '-6px', width: '14px', height: '14px', background: 'var(--color-neon-green)', cursor: 'nwse-resize', boxShadow: '0 0 6px #000' }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Corner brackets + reticle */}
-        <div className="viewport-corners" />
+        <div className="viewport-corners" style={{ pointerEvents: 'none' }} />
         {!isCaptured && (
           <div className="reticle">
             <div className="reticle-circle" />
@@ -320,7 +562,7 @@ const Scan = ({ API_BASE, token, onAbort }) => {
         )}
       </div>
 
-      {/* ═══════════════ CAPTURE CONTROLS ═══════════════ */}
+      {/* ═══════════════ CAPTURE & EDIT CONTROLS ═══════════════ */}
       {!isCaptured ? (
         <div style={{
           padding: '12px 16px',
@@ -368,19 +610,40 @@ const Scan = ({ API_BASE, token, onAbort }) => {
         </div>
       ) : (
         <div style={{
-          padding: '12px 16px',
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '10px',
-          background: 'rgba(0, 20, 22, 0.7)',
-          borderTop: '1px solid rgba(57, 255, 20, 0.15)',
+          padding: '10px 14px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          background: 'rgba(0, 20, 22, 0.9)',
+          borderTop: '1px solid rgba(57, 255, 20, 0.2)',
         }}>
-          <button className="cyber-btn-outline" onClick={handleRecapture} disabled={isTransmitting}>
-            <RefreshCw size={11} /> RETAKE
-          </button>
-          <button className="cyber-btn striped" onClick={handleTransmit} disabled={!capturedBlob || isTransmitting}>
-            <Send size={11} /> SUBMIT SCAN
-          </button>
+          {/* Rotate & Edit Toolbar */}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px' }}>
+            <button className="cyber-btn-outline" onClick={handleRotateCcw} style={{ padding: '5px 10px', fontSize: '10px' }} title="Rotate 90° Counter-Clockwise">
+              <RotateCcw size={12} /> CCW
+            </button>
+            <button className="cyber-btn-outline" onClick={handleRotateCw} style={{ padding: '5px 10px', fontSize: '10px' }} title="Rotate 90° Clockwise">
+              <RotateCw size={12} /> CW
+            </button>
+            <button
+              className="cyber-btn-outline"
+              onClick={() => setCropBox({ x: 0, y: 0, width: 100, height: 100 })}
+              style={{ padding: '5px 10px', fontSize: '10px' }}
+              title="Reset Crop Box"
+            >
+              <Crop size={12} /> RESET CROP
+            </button>
+          </div>
+
+          {/* Action Row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <button className="cyber-btn-outline" onClick={handleRecapture} disabled={isTransmitting}>
+              <RefreshCw size={11} /> RETAKE
+            </button>
+            <button className="cyber-btn striped" onClick={handleTransmit} disabled={!capturedBlob || isTransmitting}>
+              <Send size={11} /> SUBMIT SCAN
+            </button>
+          </div>
         </div>
       )}
 
