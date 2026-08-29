@@ -18,7 +18,7 @@ model_state = {
     "is_training": False
 }
 MODEL_DIR = "artifacts/location_model"
-UPLOAD_FOLDER = "Treasure hunt Photos"
+UPLOAD_FOLDER = "Treasure hunt Photos/Photos/Photos_for_ML_training"
 
 def init_model():
     """Load the model into memory."""
@@ -59,9 +59,15 @@ def predict_api():
             model_state["class_names"], 
             model_state["threshold"]
         )
+        if label == "no match":
+            zone, location = "no match", "no match"
+        else:
+            zone, location = label.split(" - ", 1) if " - " in label else ("Unknown", label)
+            
         os.remove(temp_path)
         return jsonify({
-            "prediction": label,
+            "zone": zone,
+            "location": location,
             "confidence": round(score, 4)
         })
     except Exception as e:
@@ -99,17 +105,18 @@ def train_api():
 @app.route('/add_image', methods=['POST'])
 def add_image():
     """Uploads an image to the training dataset for future retraining."""
-    if 'image' not in request.files or 'label' not in request.form:
-        return jsonify({"error": "Missing image or label"}), 400
+    if 'image' not in request.files or 'zone' not in request.form or 'location' not in request.form:
+        return jsonify({"error": "Missing image, zone, or location"}), 400
         
     file = request.files['image']
-    label = request.form['label']
+    zone = request.form['zone']
+    location = request.form['location']
     
     if file.filename == '':
         return jsonify({"error": "No image provided"}), 400
         
     # Ensure label directory exists
-    label_dir = os.path.join(UPLOAD_FOLDER, secure_filename(label))
+    label_dir = os.path.join(UPLOAD_FOLDER, secure_filename(zone), secure_filename(location))
     os.makedirs(label_dir, exist_ok=True)
     
     # Save the file

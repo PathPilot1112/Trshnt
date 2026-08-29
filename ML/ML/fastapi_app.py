@@ -36,10 +36,10 @@ def startup_event():
         # 3. Load the saved weights
         model.load_state_dict(package["model_state_dict"])
         model.eval() # Set to evaluation mode
-        print("✅ Model loaded successfully!")
+        print("SUCCESS: Model loaded successfully!")
         
     except Exception as e:
-        print(f"❌ Failed to load model: {e}")
+        print(f"FAILED: Failed to load model: {e}")
 
 @app.post("/predict")
 async def predict(image: UploadFile = File(...)):
@@ -61,9 +61,11 @@ async def predict(image: UploadFile = File(...)):
         
         # Apply confidence threshold
         if score.item() < threshold:
-            return {"prediction": "no match", "confidence": round(score.item(), 4)}
+            return {"zone": "no match", "location": "no match", "confidence": round(score.item(), 4)}
             
-        return {"prediction": class_names[idx.item()], "confidence": round(score.item(), 4)}
+        prediction = class_names[idx.item()]
+        zone, location = prediction.split(" - ", 1) if " - " in prediction else ("Unknown", prediction)
+        return {"zone": zone, "location": location, "confidence": round(score.item(), 4)}
         
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})

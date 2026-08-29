@@ -1,5 +1,5 @@
 {
-  "data_dir": "Treasure hunt Photos",
+  "data_dir": "Treasure hunt Photos/Photos/Photos_for_ML_training",
   "output_dir": "artifacts/location_model",
   "image_size": 224,
   "batch_size": 16,

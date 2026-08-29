@@ -57,13 +57,18 @@ def set_seed(seed):
 
 def collect_samples(data_dir):
     data_dir = Path(data_dir)
-    classes = sorted([p.name for p in data_dir.iterdir() if p.is_dir()])
-    class_to_idx = {name: idx for idx, name in enumerate(classes)}
+    classes = []
+    class_to_idx = {}
     samples = []
-    for cls in classes:
-        for path in (data_dir / cls).iterdir():
-            if path.is_file() and path.suffix.lower() in IMG_EXTS:
-                samples.append((str(path), class_to_idx[cls]))
+    for zone_dir in sorted([p for p in data_dir.iterdir() if p.is_dir()]):
+        for loc_dir in sorted([p for p in zone_dir.iterdir() if p.is_dir()]):
+            class_name = f"{zone_dir.name} - {loc_dir.name}"
+            if class_name not in class_to_idx:
+                class_to_idx[class_name] = len(classes)
+                classes.append(class_name)
+            for path in loc_dir.iterdir():
+                if path.is_file() and path.suffix.lower() in IMG_EXTS:
+                    samples.append((str(path), class_to_idx[class_name]))
     return samples, classes, class_to_idx
 
 
@@ -138,7 +143,7 @@ def save_artifacts(output_dir, model, class_names, config, weights_name):
 
 def main():
     parser = argparse.ArgumentParser(description="Train a location classifier from folder-structured images.")
-    parser.add_argument("--data-dir", default="Treasure hunt Photos")
+    parser.add_argument("--data-dir", default="Treasure hunt Photos/Photos/Photos_for_ML_training")
     parser.add_argument("--output-dir", default="artifacts/location_model")
     parser.add_argument("--epochs", type=int, default=25)
     parser.add_argument("--batch-size", type=int, default=16)

@@ -51,7 +51,13 @@ def main():
 
     model, tf, class_names, threshold = load_model(args.model_dir)
     label, score = predict(model, tf, args.image, class_names, threshold)
-    print(json.dumps({"prediction": label, "confidence": round(score, 4)}, indent=2))
+    
+    if label == "no match":
+        zone, location = "no match", "no match"
+    else:
+        zone, location = label.split(" - ", 1) if " - " in label else ("Unknown", label)
+        
+    print(json.dumps({"zone": zone, "location": location, "confidence": round(score, 4)}, indent=2))
 
 
 if __name__ == "__main__":

@@ -24,7 +24,7 @@ def create_pkl():
     with open("location_model.pkl", "wb") as f:
         pickle.dump(model_package, f)
         
-    print("✅ Success! Model bundled into location_model.pkl")
+    print("SUCCESS! Model bundled into location_model.pkl")
 
 if __name__ == "__main__":
     create_pkl()

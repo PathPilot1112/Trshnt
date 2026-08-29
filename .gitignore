@@ -1,3 +1,8 @@
 .env
 .gitignore
 node_modules/
+
+# ML Dataset and Cache
+ML/ML/Treasure hunt Photos/
+ML/ML/__pycache__/
+ML/ML/artifacts/
