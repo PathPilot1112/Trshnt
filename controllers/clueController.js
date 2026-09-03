@@ -83,15 +83,27 @@ export const submitPhoto = async (req, res) => {
       console.warn("⚠️ ML Service offline, executing simulated verification fallback:", err.message);
       mlResponse = {
         prediction: currentClue.targetLabel,
+        location: currentClue.title,
         confidence: 0.92,
         simulated: true
       };
     }
     
-    // 3. Validate against current clue
-    const isLabelMatch = mlResponse.prediction === currentClue.targetLabel;
-    const isConfident = mlResponse.confidence >= currentClue.confidenceThreshold;
-    const isCorrect = isLabelMatch && isConfident;
+    // 3. Determine predicted label string and validate against current clue
+    const predictedLabel = mlResponse.prediction || mlResponse.location || (mlResponse.zone && mlResponse.location ? `${mlResponse.zone} - ${mlResponse.location}` : "") || "unknown";
+    const confidence = typeof mlResponse.confidence === "number" ? mlResponse.confidence : 0.9;
+
+    // Helper to normalize strings for robust location matching
+    const cleanStr = (s) => (s || "").toLowerCase().replace(/^zone\s*\d+\s*[-_:]?\s*/, "").replace(/[^a-z0-9]/g, "");
+    
+    const targetClean = cleanStr(currentClue.targetLabel) || cleanStr(currentClue.title);
+    const predictedClean = cleanStr(predictedLabel);
+
+    const isLabelMatch = predictedClean.length > 0 && targetClean.length > 0 &&
+      (predictedClean === targetClean || predictedClean.includes(targetClean) || targetClean.includes(predictedClean));
+
+    const isConfident = confidence >= (currentClue.confidenceThreshold || 0.50);
+    const isCorrect = Boolean(isLabelMatch && isConfident);
 
     // 4. Log Submission
     const submission = new Submission({
@@ -99,8 +111,8 @@ export const submitPhoto = async (req, res) => {
       clue: currentClue._id,
       photoUrl,
       mlResult: {
-        predictedLabel: mlResponse.prediction,
-        confidence: mlResponse.confidence,
+        predictedLabel,
+        confidence,
         raw: mlResponse
       },
       isCorrect
@@ -113,10 +125,10 @@ export const submitPhoto = async (req, res) => {
       try {
         const populatedSubmission = await Submission.findById(submission._id)
           .populate("team", "name")
-          .populate("clue", "clueId title text order")
+          .populate("clue", "clueId title text order targetLabel zone")
           .lean();
         io.emit("submission:created", populatedSubmission);
-        console.log("📡 Broadcasted new submission to Admin Dashboard:", submission._id);
+        console.log("📡 Broadcasted new submission to Admin Dashboard:", submission._id, "isCorrect:", isCorrect);
       } catch (socketErr) {
         console.error("⚠️ Failed to broadcast submission socket event:", socketErr.message);
       }
@@ -132,7 +144,7 @@ export const submitPhoto = async (req, res) => {
       }
     }
 
-    // 6. Update Team Progress if Correct
+    // 6. Update Team Progress ONLY IF Correct
     if (isCorrect) {
       team.completedClues.push({
         clue: currentClue._id,
@@ -158,7 +170,6 @@ export const submitPhoto = async (req, res) => {
       await team.save();
 
       // Emit live leaderboard update via socket
-      const io = req.app.get("io");
       if (io) {
         io.emit("leaderboard:update", {
           teamId: team._id,
@@ -173,17 +184,17 @@ export const submitPhoto = async (req, res) => {
       return res.json({ 
         message: "Clue solved successfully!", 
         isCorrect: true, 
-        prediction: mlResponse.prediction,
-        confidence: mlResponse.confidence
+        prediction: predictedLabel,
+        confidence
       });
     }
 
-    // If incorrect
+    // If incorrect: reject submission, do not advance team
     return res.json({ 
-      message: "Incorrect submission", 
+      message: "Incorrect submission - location mismatch or low confidence", 
       isCorrect: false,
-      prediction: mlResponse.prediction,
-      confidence: mlResponse.confidence 
+      prediction: predictedLabel,
+      confidence 
     });
 
   } catch (error) {

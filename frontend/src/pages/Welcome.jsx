@@ -271,6 +271,24 @@ const Welcome = ({ onQrLogin }) => {
           >
             <Radio size={15} /> Scan QR to Begin Mission
           </button>
+
+          <button
+            className="cyber-btn striped register-btn"
+            onClick={() => window.location.hash = '#register'}
+            style={{
+              width: '100%',
+              maxWidth: '300px',
+              marginTop: '12px',
+              padding: '10px 16px',
+              fontSize: '12px',
+              zIndex: 3,
+              borderColor: 'rgba(155, 168, 168, 0.6)',
+              color: 'var(--color-text)',
+              background: 'transparent'
+            }}
+          >
+            <UserPlus size={15} /> Register Research Unit
+          </button>
         </div>
 
 

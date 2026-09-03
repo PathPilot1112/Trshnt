@@ -1,6 +1,8 @@
 import Clue from "../models/Clue.js";
 import Team from "../models/Team.js";
 import User from "../models/User.js";
+import fs from "fs/promises";
+import path from "path";
 
 export const seedDatabase = async () => {
   try {
@@ -17,43 +19,30 @@ export const seedDatabase = async () => {
       console.log("✅ Seeded Admin User:", adminEmail);
     }
 
-    // 2. Seed Default Clues
-    await Clue.deleteMany({}); // Clear existing clues for testing
-    const defaultClues = [
-      {
-        clueId: "1",
-        order: 1,
-        title: "Clock tower",
-        text: "Clock tower",
-        hint: "Go to the Clock tower",
-        targetLabel: "Clock tower",
-        confidenceThreshold: 0.50,
-        points: 100
-      },
-      {
-        clueId: "2",
-        order: 2,
-        title: "Library",
-        text: "Library",
-        hint: "Go to the Library",
-        targetLabel: "Library",
-        confidenceThreshold: 0.50,
-        points: 150
-      },
-      {
-        clueId: "3",
-        order: 3,
-        title: "Ganesh Temple",
-        text: "Ganesh Temple",
-        hint: "Go to the Ganesh Temple",
-        targetLabel: "Ganesh Temple",
-        confidenceThreshold: 0.50,
-        points: 200
-      }
-    ];
+    // 2. Seed Clues from clue.json (generated from Treasure Hunt Clues.xlsx)
+    const clueCount = await Clue.countDocuments();
+    if (clueCount === 0 || clueCount < 25) {
+      await Clue.deleteMany({});
+      const jsonPath = path.join(process.cwd(), "clue.json");
+      const fileData = await fs.readFile(jsonPath, "utf8");
+      const clueJsonData = JSON.parse(fileData);
 
-    await Clue.insertMany(defaultClues);
-    console.log("✅ Seeded ML location Clues");
+      const cluesToInsert = clueJsonData.map((item, index) => ({
+        clueId: item.clueid || String(index + 1),
+        order: item.order || index + 1,
+        title: item.title || item.location,
+        text: item["clue text"] || item.text || item.clue_text,
+        hint: item.hint || `Find location: ${item.title}`,
+        zone: item.zone || "",
+        targetLabel: item.targetLabel || item.title,
+        confidenceThreshold: item.confidenceThreshold || 0.55,
+        points: item.points || 100,
+        clueVariations: item.clueVariations || []
+      }));
+
+      await Clue.insertMany(cluesToInsert);
+      console.log(`✅ Seeded ${cluesToInsert.length} ML location Clues from clue.json`);
+    }
 
     // 3. Seed Default Teams (to populate the Admin Live Telemetry dashboard)
     const teamCount = await Team.countDocuments();

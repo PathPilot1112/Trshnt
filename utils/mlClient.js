@@ -18,6 +18,7 @@ export const predictImage = async (imagePath) => {
       headers: {
         ...formData.getHeaders(),
       },
+      timeout: 3000,
     });
 
     return response.data;

@@ -1,0 +1,579 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&family=Share+Tech+Mono&display=swap');
+
+:root {
+  /* Premium Dark Teal & Gold/Champagne aesthetic */
+  --color-bg: #002729; 
+  --color-text: #D9E0E0; /* Premium champagne/parchment */
+  --color-accent: #9BA8A8; /* Bronze/Gold */
+  --color-dark-accent: #004d40;
+  
+  --font-serif: 'Cinzel', serif;
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  cursor: auto;
+}
+
+html, body {
+  cursor: auto !important;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* Global scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-left: none;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-accent);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  text-transform: uppercase;
+  color: var(--color-accent);
+  letter-spacing: 2px;
+  font-weight: 400;
+}
+
+/* Base App structure */
+.app-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Premium noise overlay (very subtle) */
+.noise-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.03;
+  background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+  mix-blend-mode: overlay;
+}
+
+/* Section styling */
+section {
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 5rem 4rem;
+  z-index: 10;
+}
+
+/* Faded background dividers for continuous scroll effect */
+section::before,
+section::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 15vh;
+  pointer-events: none;
+  z-index: 5;
+}
+
+section::before {
+  top: 0;
+  background: linear-gradient(to bottom, var(--color-bg) 0%, transparent 100%);
+}
+
+section::after {
+  bottom: 0;
+  background: linear-gradient(to top, var(--color-bg) 0%, transparent 100%);
+}
+
+/* Premium typography helpers */
+.premium-label {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  color: rgba(217, 224, 224, 0.6);
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.premium-value {
+  font-family: var(--font-sans);
+  font-size: 1.5rem;
+  color: var(--color-text);
+  font-weight: 300;
+  margin-bottom: 1.5rem;
+}
+
+.premium-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(155, 168, 168, 0.3);
+  margin: 2rem 0;
+}
+
+/* --- MOBILE RESPONSIVE STYLES --- */
+@media (max-width: 768px) {
+  /* Global section padding */
+  section {
+    padding: 4rem 1.5rem !important;
+  }
+
+  /* Home Section */
+  .home-title {
+    font-size: clamp(3rem, 15vw, 8rem) !important;
+  }
+  .home-subtitle {
+    font-size: clamp(1rem, 5vw, 2rem) !important;
+  }
+  .radiation-container {
+    width: 200px !important;
+    height: 200px !important;
+    bottom: 1rem !important;
+    right: 1rem !important;
+  }
+
+  /* History Section */
+  .history-section {
+    padding: 4rem 1.5rem !important;
+  }
+  .history-header {
+    flex-direction: column !important;
+    gap: 1rem !important;
+    text-align: center !important;
+  }
+  .history-header span {
+    font-size: 0.9rem !important;
+  }
+  .history-content {
+    flex-direction: column !important;
+  }
+  .history-right {
+    align-items: flex-start !important;
+    text-align: left !important;
+  }
+  .history-title {
+    font-size: 3rem !important;
+  }
+
+  /* Story Section */
+  .story-container {
+    flex-direction: column !important;
+    padding: 4rem 1.5rem !important;
+    gap: 2rem !important;
+  }
+  .story-left {
+    min-width: 100% !important;
+  }
+  .story-right {
+    border-left: none !important;
+    border-top: 1px solid rgba(155, 168, 168, 0.3) !important;
+    padding-left: 0 !important;
+    padding-top: 2rem !important;
+    width: 100% !important;
+    flex: auto !important;
+  }
+
+  /* Rulebooks Section */
+  .rulebooks-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .rulebooks-left {
+    padding: 4rem 1.5rem !important;
+  }
+  .rulebooks-right {
+    min-height: 50vh !important;
+    height: 50vh !important;
+  }
+  .rulebooks-title {
+    font-size: 2.5rem !important;
+  }
+
+  /* Image Section */
+  .image-text {
+    font-size: 1rem !important;
+    letter-spacing: 2px !important;
+  }
+  .image-text-container {
+    padding: 2rem 1rem 1.5rem 1rem !important;
+  }
+
+  /* Registration Form */
+  .terminal-form {
+    padding: 1.5rem !important;
+  }
+
+  /* Navigation */
+  .nav-container {
+    padding: 1rem !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+  .nav-links {
+    gap: 1rem !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+  }
+  .nav-title {
+    font-size: 1.2rem !important;
+  }
+}
+
+/* --- THRILLER & CHERNOBYL THEME EFFECTS --- */
+
+/* Dense Fog / Gas Leakage Effect */
+.fog-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 85; /* Below vignette (90) */
+  overflow: hidden;
+  opacity: 0.9; /* Dense fog */
+}
+
+.fog-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300vw;
+  height: 100vh;
+  background: transparent url('https://raw.githubusercontent.com/danielstuart14/CSS_FOG_ANIMATION/master/fog1.png') repeat-x;
+  background-size: 100vw 100vh;
+  animation: fog-drift 45s linear infinite;
+  mix-blend-mode: screen;
+  filter: brightness(2.5) contrast(1.2) blur(2px);
+}
+
+.fog-layer.layer-2 {
+  background: transparent url('https://raw.githubusercontent.com/danielstuart14/CSS_FOG_ANIMATION/master/fog2.png') repeat-x;
+  background-size: 100vw 100vh;
+  animation: fog-drift 35s linear infinite reverse;
+  opacity: 0.8;
+  filter: brightness(2.5) contrast(1.4) blur(4px);
+}
+
+/* Add a third layer for extra density and gas-like swirling */
+.fog-layer.layer-3 {
+  background: transparent url('https://raw.githubusercontent.com/danielstuart14/CSS_FOG_ANIMATION/master/fog1.png') repeat-x;
+  background-size: 150vw 100vh;
+  animation: fog-drift-fast 25s linear infinite;
+  opacity: 0.6;
+  filter: brightness(3) contrast(1.1) blur(5px);
+  transform: scaleY(-1); /* Flip vertically for variety */
+}
+
+@keyframes fog-drift {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100vw); }
+}
+
+@keyframes fog-drift-fast {
+  0% { transform: translateX(0) scaleY(-1); }
+  100% { transform: translateX(-150vw) scaleY(-1); }
+}
+
+/* CRT Scanlines */
+.scanlines {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0),
+    rgba(255,255,255,0) 50%,
+    rgba(0,0,0,0.15) 50%,
+    rgba(0,0,0,0.15)
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Hazard Warning Borders */
+.hazard-border-top, .hazard-border-bottom {
+  position: absolute;
+  left: 0; right: 0;
+  height: 15px;
+  background: repeating-linear-gradient(
+    45deg,
+    #000000,
+    #000000 15px,
+    #d1a900 15px,
+    #d1a900 30px
+  );
+  z-index: 99;
+}
+.hazard-border-top { top: 0; }
+.hazard-border-bottom { bottom: 0; }
+
+/* Glitch Chromatic Aberration */
+.glitch-text {
+  position: relative;
+  display: inline-block;
+  color: var(--color-text);
+  text-shadow: 2px 2px 0px var(--color-dark-accent);
+}
+.glitch-text::before, .glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  opacity: 0.8;
+  pointer-events: none;
+}
+.glitch-text::before {
+  color: #39FF14;
+  z-index: -1;
+  animation: glitch-anim-1 2.5s infinite linear alternate-reverse;
+}
+.glitch-text::after {
+  color: #ff003c;
+  z-index: -2;
+  animation: glitch-anim-2 3s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim-1 {
+  0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 1px); }
+  20% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
+  40% { clip-path: inset(40% 0 50% 0); transform: translate(-2px, 2px); }
+  60% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
+  80% { clip-path: inset(10% 0 70% 0); transform: translate(-1px, 1px); }
+  100% { clip-path: inset(30% 0 50% 0); transform: translate(1px, -1px); }
+}
+@keyframes glitch-anim-2 {
+  0% { clip-path: inset(10% 0 60% 0); transform: translate(2px, -1px); }
+  20% { clip-path: inset(30% 0 20% 0); transform: translate(-2px, 2px); }
+  40% { clip-path: inset(70% 0 10% 0); transform: translate(1px, -1px); }
+  60% { clip-path: inset(20% 0 50% 0); transform: translate(-1px, 2px); }
+  80% { clip-path: inset(50% 0 30% 0); transform: translate(2px, -2px); }
+  100% { clip-path: inset(5% 0 80% 0); transform: translate(-2px, 1px); }
+}
+
+/* Flicker Effect */
+.flicker-box {
+  animation: flicker 4s infinite;
+}
+@keyframes flicker {
+  0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% { opacity: 1; }
+  20%, 21.999%, 63%, 63.999%, 65%, 69.999% { opacity: 0; }
+}
+
+/* Neon Green Accents */
+.text-neon-green {
+  color: #39FF14;
+}
+.redacted {
+  background-color: #000;
+  color: #000;
+  user-select: none;
+  display: inline-block;
+}
+.redacted::selection {
+  background: transparent;
+}
+
+
+
+/* Helper to hide heavy 3D elements on mobile */
+@media (max-width: 1024px) {
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+/* --- REGISTRATION SUCCESS PAGE --- */
+
+.registration-success-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 2rem;
+  position: relative;
+  z-index: 100;
+  background-color: var(--color-bg);
+  background-image: radial-gradient(#111 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.success-content {
+  max-width: 800px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.success-header h1 {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.team-info {
+  display: flex;
+  justify-content: space-around;
+  border: 1px solid var(--color-accent);
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.info-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.info-label {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--color-accent);
+  margin-bottom: 0.5rem;
+}
+
+.info-value {
+  font-family: var(--font-sans);
+  font-size: 1.5rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.members-roster {
+  margin-top: 1rem;
+}
+
+.roster-title {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  border-bottom: 1px solid var(--color-accent);
+  padding-bottom: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.members-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 1rem;
+  border-left: 2px solid var(--color-accent);
+  background: linear-gradient(90deg, rgba(155,168,168,0.1) 0%, transparent 100%);
+}
+
+.dotted-profile {
+  opacity: 0.8;
+}
+
+.member-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.member-name {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: var(--color-text);
+}
+
+.member-role {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--color-accent);
+  margin-top: 0.2rem;
+}
+
+.rules-reminder {
+  border: 2px solid #cc0000;
+  background: rgba(204, 0, 0, 0.1);
+  padding: 2rem;
+  text-align: center;
+  position: relative;
+  margin-top: 2rem;
+}
+
+.warning-icon {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-bg);
+  padding: 0 1rem;
+  color: #cc0000;
+  font-weight: bold;
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+}
+
+.rules-title {
+  color: #cc0000;
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+}
+
+.rules-text {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  line-height: 1.5;
+  color: #ffcccc;
+}
+
+.btn-return {
+  align-self: center;
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-text);
+  padding: 1rem 2rem;
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 2rem;
+}
+
+.btn-return:hover {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
+@media (max-width: 768px) {
+  .team-info {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .success-header h1 {
+    font-size: 2rem;
+  }
+  .member-name {
+    font-size: 1.2rem;
+  }
+}

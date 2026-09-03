@@ -123,17 +123,20 @@ const AdminDashboard = ({ API_BASE }) => {
     return submissions.filter((s) => String(s.team?._id) === String(selectedTeamFilter));
   }, [submissions, selectedTeamFilter]);
 
-  const getClueLocationText = (clueId) => {
-    if (!clueId) return 'N/A';
-    const found = clueLocations.find((loc) => String(loc.clueid) === String(clueId));
-    return found ? found.location : 'Unknown Grid coordinates';
+  const getClueLocationText = (clue) => {
+    if (typeof clue === 'object' && clue?.targetLabel) return clue.targetLabel;
+    const cid = typeof clue === 'object' ? (clue?.clueId || clue?.order) : clue;
+    if (!cid) return 'N/A';
+    const found = clueLocations.find((loc) => String(loc.clueid) === String(cid) || String(loc.order) === String(cid));
+    return found ? (found.targetLabel || found.location || found.title) : 'Target Location';
   };
 
   const getClueText = (clue) => {
-    if (clue?.text) return clue.text;
-    if (!clue?.clueId) return 'N/A';
-    const found = clueLocations.find((loc) => String(loc.clueid) === String(clue.clueId));
-    return found ? found['clue text'] : 'N/A';
+    if (typeof clue === 'object' && clue?.text) return clue.text;
+    const cid = typeof clue === 'object' ? (clue?.clueId || clue?.order) : clue;
+    if (!cid) return 'N/A';
+    const found = clueLocations.find((loc) => String(loc.clueid) === String(cid) || String(loc.order) === String(cid));
+    return found ? (found['clue text'] || found.clue_text || found.text) : 'N/A';
   };
 
   const clearAdminSession = () => {
@@ -561,7 +564,7 @@ const AdminDashboard = ({ API_BASE }) => {
           {filteredSubmissions.map((submission) => {
             const isExpanded = !!expandedSubmissions[submission._id];
             const photoUrl = getFullPhotoUrl(submission.photoUrl);
-            const matchLocation = getClueLocationText(submission.clue?.clueId);
+            const matchLocation = getClueLocationText(submission.clue);
             const clueText = getClueText(submission.clue);
 
             return (

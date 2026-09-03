@@ -8,9 +8,12 @@ const clueSchema = new mongoose.Schema(
     text: { type: String, required: true }, 
     hint: { type: String },
 
+    zone: { type: String },
+    clueVariations: [{ type: String }],
+
     targetLabel: { type: String, required: true },
 
-    confidenceThreshold: { type: Number, default: 0.75 },
+    confidenceThreshold: { type: Number, default: 0.55 },
 
     points: { type: Number, default: 100 },
     isActive: { type: Boolean, default: true },

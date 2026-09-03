@@ -3,6 +3,8 @@ import Welcome from './pages/Welcome';
 import HUD from './pages/HUD';
 import Scan from './pages/Scan';
 import AdminDashboard from './pages/AdminDashboard';
+import RegistrationPage from './pages/RegistrationPage';
+import RegistrationSuccess from './pages/RegistrationSuccess';
 import ScanlineOverlay from './components/ScanlineOverlay';
 import BackgroundCanvas from './components/BackgroundCanvas';
 
@@ -14,6 +16,7 @@ function App() {
   const [token, setToken] = useState(() => localStorage.getItem('stalker_token') || '');
   const [currentRoute, setCurrentRoute] = useState('welcome');
   const [isLoading, setIsLoading] = useState(true);
+  const [registeredTeam, setRegisteredTeam] = useState(null);
 
   // Parse initial route from URL hash
   useEffect(() => {
@@ -25,6 +28,10 @@ function App() {
         setCurrentRoute('hud');
       } else if (hash === '#scan') {
         setCurrentRoute('scan');
+      } else if (hash === '#register') {
+        setCurrentRoute('register');
+      } else if (hash === '#registration-success') {
+        setCurrentRoute('registration-success');
       } else {
         setCurrentRoute('welcome');
       }
@@ -70,6 +77,15 @@ function App() {
 
     verifyToken();
   }, [token]);
+
+  const handleRegisterSuccess = (token, user, team) => {
+    setToken(token);
+    setOperatorName(user.name);
+    setTeamInfo(team);
+    setRegisteredTeam(team);
+    localStorage.setItem('stalker_token', token);
+    window.location.hash = '#registration-success';
+  };
 
   const handleLogin = async (name) => {
     try {
@@ -259,6 +275,21 @@ function App() {
             <>
               {currentRoute === 'welcome' && (
                 <Welcome onQrLogin={handleQrLogin} />
+              )}
+
+              {currentRoute === 'register' && (
+                <RegistrationPage 
+                  API_BASE={API_BASE}
+                  onRegisterSuccess={handleRegisterSuccess}
+                  onCancel={() => window.location.hash = '#welcome'}
+                />
+              )}
+
+              {currentRoute === 'registration-success' && (
+                <RegistrationSuccess
+                  team={registeredTeam || teamInfo}
+                  onDone={() => window.location.hash = '#hud'}
+                />
               )}
 
               {currentRoute === 'hud' && (
