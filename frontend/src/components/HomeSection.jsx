@@ -37,7 +37,7 @@ const HomeSection = () => {
       <div style={{
         position: 'absolute',
         top: 0, left: 0, right: 0, bottom: 0,
-        background: 'radial-gradient(circle at 50% 40%, rgba(57, 255, 20, 0.08) 0%, rgba(0, 39, 41, 0.95) 70%)',
+        background: 'radial-gradient(circle at 50% 40%, rgba(57, 255, 20, 0.08) 0%, rgba(8, 16, 17, 0.95) 75%)',
         pointerEvents: 'none'
       }} />
 
@@ -45,7 +45,7 @@ const HomeSection = () => {
       <div style={{
         position: 'absolute',
         top: 0, left: 0, right: 0, bottom: 0,
-        backgroundImage: 'linear-gradient(rgba(57, 255, 20, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(57, 255, 20, 0.05) 1px, transparent 1px)',
+        backgroundImage: 'linear-gradient(rgba(57, 255, 20, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(57, 255, 20, 0.04) 1px, transparent 1px)',
         backgroundSize: '40px 40px',
         pointerEvents: 'none',
         opacity: 0.6
@@ -149,7 +149,7 @@ const HomeSection = () => {
       <div style={{
         maxWidth: '580px',
         width: '100%',
-        backgroundColor: 'rgba(0, 39, 41, 0.9)',
+        backgroundColor: 'rgba(8, 20, 22, 0.92)',
         padding: '16px 20px',
         border: '2px solid rgba(155, 168, 168, 0.4)',
         fontFamily: "'Share Tech Mono', monospace",
@@ -180,7 +180,7 @@ const HomeSection = () => {
             flex: '1 1 200px',
             padding: '16px 24px',
             background: '#39FF14',
-            color: '#002729',
+            color: '#081011',
             border: 'none',
             fontFamily: "'Share Tech Mono', monospace",
             fontSize: '1rem',
@@ -201,7 +201,7 @@ const HomeSection = () => {
           style={{
             flex: '1 1 200px',
             padding: '16px 24px',
-            background: 'rgba(0, 39, 41, 0.95)',
+            background: 'rgba(8, 20, 22, 0.95)',
             color: '#39FF14',
             border: '2px solid #39FF14',
             fontFamily: "'Share Tech Mono', monospace",

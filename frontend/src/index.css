@@ -6,8 +6,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&family=Share+Tech+Mono&display=swap');
 
 :root {
-  /* === Core Palette — matches Registration === */
-  --color-bg: #002729;
+  /* === Core Palette — Sleek Dark Tactical Theme === */
+  --color-bg: #081011;
   --color-text: #D9E0E0;
   --color-accent: #9BA8A8;
   --color-dark-accent: #004d40;
@@ -26,8 +26,8 @@
   /* === Borders / Glow === */
   --border-green: 1px solid rgba(57, 255, 20, 0.3);
   --border-accent: 1px solid rgba(155, 168, 168, 0.3);
-  --bg-panel: rgba(0, 39, 41, 0.85);
-  --bg-panel-dark: rgba(0, 20, 22, 0.9);
+  --bg-panel: rgba(8, 20, 22, 0.92);
+  --bg-panel-dark: rgba(4, 12, 14, 0.95);
 }
 
 /* ============================================================
@@ -41,7 +41,7 @@
 }
 
 body {
-  background-color: #001c1e;
+  background-color: #081011;
   color: var(--color-text);
   font-family: var(--font-mono);
   overflow-x: hidden;
