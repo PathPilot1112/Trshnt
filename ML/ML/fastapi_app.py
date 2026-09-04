@@ -42,6 +42,7 @@ def startup_event():
         print(f"FAILED: Failed to load model: {e}")
 
 @app.get("/health")
+@app.head("/health")
 def health_check():
     return {"status": "ok"}
 
