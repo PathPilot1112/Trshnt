@@ -13,7 +13,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 function App() {
   const [operatorName, setOperatorName] = useState('');
   const [teamInfo, setTeamInfo] = useState(null);
-  const [token, setToken] = useState(() => localStorage.getItem('stalker_token') || '');
+  const [token, setToken] = useState(() => localStorage.getItem('chernobyl_token') || localStorage.getItem('stalker_token') || '');
   const [currentRoute, setCurrentRoute] = useState('welcome');
   const [isLoading, setIsLoading] = useState(true);
   const [registeredTeam, setRegisteredTeam] = useState(null);
@@ -83,7 +83,7 @@ function App() {
     setOperatorName(user.name);
     setTeamInfo(team);
     setRegisteredTeam(team);
-    localStorage.setItem('stalker_token', token);
+    localStorage.setItem('chernobyl_token', token);
     window.location.hash = '#registration-success';
   };
 
@@ -100,7 +100,7 @@ function App() {
         setToken(data.token);
         setOperatorName(data.user.name);
         setTeamInfo(data.team);
-        localStorage.setItem('stalker_token', data.token);
+        localStorage.setItem('chernobyl_token', data.token);
         window.location.hash = '#hud';
       } else {
         const errData = await response.json();
@@ -108,7 +108,7 @@ function App() {
       }
     } catch (err) {
       console.error("Login request failed:", err);
-      alert("Failed to contact STALKER Net. Check if backend is running.");
+      alert("Failed to contact Chernobyl Net. Check if backend is running.");
     }
   };
 
@@ -127,7 +127,7 @@ function App() {
     setToken(data.token);
     setOperatorName(data.user.name);
     setTeamInfo(data.team);
-    localStorage.setItem('stalker_token', data.token);
+    localStorage.setItem('chernobyl_token', data.token);
     window.location.hash = '#hud';
   };
 
@@ -160,6 +160,7 @@ function App() {
     setToken('');
     setOperatorName('');
     setTeamInfo(null);
+    localStorage.removeItem('chernobyl_token');
     localStorage.removeItem('stalker_token');
     window.location.hash = '#welcome';
   };
@@ -241,7 +242,7 @@ function App() {
                 ZONE_ACCESS_PROTOCOL
               </div>
 
-              <div className="glitch-text" data-text="STALKER_NET" style={{
+              <div className="glitch-text" data-text="CHERNOBYL-TRSHNT" style={{
                 fontFamily: 'var(--font-serif)',
                 fontSize: '20px',
                 fontWeight: 700,
@@ -249,7 +250,7 @@ function App() {
                 color: 'var(--color-accent)',
                 textTransform: 'uppercase',
               }}>
-                STALKER_NET
+                CHERNOBYL-TRSHNT
               </div>
 
               <div className="flicker" style={{

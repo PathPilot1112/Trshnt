@@ -19,8 +19,8 @@ const formatElapsed = (ms = 0) => {
 const AdminDashboard = ({ API_BASE }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [adminToken, setAdminToken] = useState(() => localStorage.getItem('stalker_admin_token') || '');
-  const [isAdmin, setIsAdmin] = useState(Boolean(localStorage.getItem('stalker_admin_token')));
+  const [adminToken, setAdminToken] = useState(() => localStorage.getItem('chernobyl_admin_token') || localStorage.getItem('stalker_admin_token') || '');
+  const [isAdmin, setIsAdmin] = useState(Boolean(localStorage.getItem('chernobyl_admin_token') || localStorage.getItem('stalker_admin_token')));
   const [teams, setTeams] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
@@ -140,6 +140,7 @@ const AdminDashboard = ({ API_BASE }) => {
   };
 
   const clearAdminSession = () => {
+    localStorage.removeItem('chernobyl_admin_token');
     localStorage.removeItem('stalker_admin_token');
     setAdminToken('');
     setIsAdmin(false);
@@ -289,7 +290,7 @@ const AdminDashboard = ({ API_BASE }) => {
       return;
     }
 
-    localStorage.setItem('stalker_admin_token', data.token);
+    localStorage.setItem('chernobyl_admin_token', data.token);
     setAdminToken(data.token);
     setIsAdmin(true);
   };
@@ -321,10 +322,10 @@ const AdminDashboard = ({ API_BASE }) => {
       <div className="admin-dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#03080a' }}>
         <form onSubmit={handleAdminLogin} style={{ width: '100%', maxWidth: '420px', padding: '24px', border: '1px solid var(--cyan-primary)', background: '#010608' }}>
           <div style={{ textAlign: 'center', fontSize: '18px', marginBottom: '20px', color: 'var(--cyan-primary)' }}>
-            STALKER_NET // ADMIN_GATE
+            CHERNOBYL_TRSHNT // ADMIN_GATE
           </div>
           <div style={{ display: 'grid', gap: '14px' }}>
-            <input className="id-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@stalker.net" required />
+            <input className="id-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@chernobyl.net" required />
             <input className="id-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="password" required />
             <button className="cyber-btn striped" type="submit" style={{ color: 'var(--bg-darkest)' }}>
               <Shield size={14} /> AUTHORIZE ACCESS
@@ -518,7 +519,10 @@ const AdminDashboard = ({ API_BASE }) => {
                         <SkipForward size={14} /> SKIP CLUE
                       </button>
                       <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/reset`); }}>
-                        <RefreshCw size={14} /> RESET
+                        <RefreshCw size={14} /> RESET MISSION
+                      </button>
+                      <button className="cyber-btn-outline" style={{ borderColor: '#f59e0b', color: '#fbbf24' }} onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/reset-session`); }}>
+                        <RefreshCw size={14} /> RESET IP/SESSION
                       </button>
                     </div>
                   </div>

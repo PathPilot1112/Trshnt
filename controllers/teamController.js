@@ -3,7 +3,7 @@ import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
-const JWT_SECRET = process.env.JWT_SECRET || "stalkersecret";
+const JWT_SECRET = process.env.JWT_SECRET || "chernobylsecret";
 
 const buildToken = (userId, role, sessionToken = null) =>
   jwt.sign({ id: userId, role, sessionToken }, JWT_SECRET, { expiresIn: "7d" });
@@ -111,7 +111,7 @@ export const joinGame = async (req, res) => {
     }
 
     try {
-      const email = `${operatorName.toLowerCase()}@stalker.net`;
+      const email = `${operatorName.toLowerCase()}@chernobyl.net`;
       let user = await User.findOne({ email });
       let team;
 
@@ -327,11 +327,13 @@ export const loginWithQr = async (req, res) => {
       return res.status(404).json({ message: "QR is not mapped to any team" });
     }
 
-    if (team.activeSessionToken) {
+    if (team.status === "not_started" || req.body.force) {
+      team.activeSessionToken = null;
+    } else if (team.activeSessionToken) {
       return res.status(403).json({ message: "Team already has an active session." });
     }
 
-    const email = `qr_${team._id}@stalker.net`;
+    const email = `qr_${team._id}@chernobyl.net`;
     let user = await User.findOne({ email });
 
     if (!user) {

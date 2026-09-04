@@ -1,7 +1,7 @@
 {
-  "short_name": "STALKER_NET",
-  "name": "STALKER_NET Tactical Zone Interface",
-  "description": "STALKER_NET Tactical PDA Terminal Interface for Pripyat and Red Forest Sectors. Real-time radiation tracking, anomaly detection, and satellite uplink connection.",
+  "short_name": "Chernobyl-trshnt",
+  "name": "Chernobyl-trshnt Tactical Zone Interface",
+  "description": "Chernobyl-trshnt Tactical PDA Terminal Interface for Pripyat and Red Forest Sectors. Real-time radiation tracking, anomaly detection, and satellite uplink connection.",
   "icons": [
     {
       "src": "/favicon.svg",

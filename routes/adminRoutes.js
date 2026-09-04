@@ -14,7 +14,8 @@ import {
   getLeaderboardSnapshot,
   stopTeamTimer,
   getClueLocations,
-  clearSubmissions
+  clearSubmissions,
+  resetTeamSession
 } from "../controllers/adminController.js";
 import { protect, adminOnly } from "../middleware/auth.js";
 
@@ -36,6 +37,7 @@ router.get("/:id", protect, adminOnly, getTeam);
 router.post("/teams/:id/start", protect, adminOnly, startTeamMission);
 router.post("/teams/:id/stop", protect, adminOnly, stopTeamTimer);
 router.post("/teams/:id/reset", protect, adminOnly, resetTeamMission);
+router.post("/teams/:id/reset-session", protect, adminOnly, resetTeamSession);
 router.post("/teams/:id/clue-override", protect, adminOnly, clueOverride);
 
 export default router;

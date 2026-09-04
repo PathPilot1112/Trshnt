@@ -7,7 +7,7 @@ import fs from "fs/promises";
 import path from "path";
 import { createClient } from "@supabase/supabase-js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "stalkersecret";
+const JWT_SECRET = process.env.JWT_SECRET || "chernobylsecret";
 
 const computeElapsedMs = (team) => {
   const base = team.timerAccumulatedMs || 0;
@@ -210,17 +210,37 @@ export const resetTeamMission = async (req, res) => {
     team.timerStoppedAt = undefined;
     team.timerAccumulatedMs = 0;
     team.timerRunning = false;
+    team.activeSessionToken = null;
     await team.save();
 
     const io = req.app.get("io");
     if (io) {
-      io.emit("team:status", { teamId: team._id, status: "not_started" });
+      io.emit("team:status", { teamId: team._id, status: "not_started", activeSessionToken: null });
       io.emit("leaderboard:update", { teamId: team._id, name: team.name, score: 0, currentClueIndex: 0 });
     }
 
     res.json({ message: "Mission reset successfully", team });
   } catch (err) {
     res.status(500).json({ message: "Error resetting mission", error: err.message });
+  }
+};
+
+export const resetTeamSession = async (req, res) => {
+  try {
+    const team = await Team.findById(req.params.id);
+    if (!team) return res.status(404).json({ message: "Team not found" });
+
+    team.activeSessionToken = null;
+    await team.save();
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("team:status", { teamId: team._id, status: team.status, activeSessionToken: null });
+    }
+
+    res.json({ message: "Team session lock & active IP reset successfully", team });
+  } catch (err) {
+    res.status(500).json({ message: "Error resetting session", error: err.message });
   }
 };
 
@@ -335,8 +355,8 @@ export const clearSubmissions = async (req, res) => {
     // 2. Delete from MongoDB
     await Submission.deleteMany({});
     
-    // 3. Clear completedClues and score for all teams
-    await Team.updateMany({}, { completedClues: [], score: 0, currentClueIndex: 0, status: "not_started" });
+    // 3. Clear completedClues, score, and activeSessionToken for all teams
+    await Team.updateMany({}, { completedClues: [], score: 0, currentClueIndex: 0, status: "not_started", activeSessionToken: null });
 
     // Emit event to update leaderboard and reset dashboards
     const io = req.app.get("io");

@@ -178,7 +178,7 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
       <div className="stalker-header">
         <div className="net-info">
           <div className="net-name" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span>STALKER_NET V2.1</span>
+            <span>CHERNOBYL-TRSHNT V2.1</span>
             <span className="red-stamp-mini" style={{ fontSize: '0.55rem', padding: '0 0.2rem' }}>CONFIDENTIAL</span>
           </div>
           <div className="operator-info">

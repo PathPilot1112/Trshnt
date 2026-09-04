@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stalkernet-dynamic-v1';
+const CACHE_NAME = 'chernobyl-dynamic-v1';
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();

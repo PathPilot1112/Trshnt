@@ -58,7 +58,7 @@ const RegistrationPage = () => {
             marginBottom: '2rem',
             maxWidth: '550px'
           }}>
-            STALKER_NET Tactical Interface and bio-hazard trackers can only run on dedicated mobile terminals as a Progressive Web App (PWA). Scan the QR code below with your mobile camera to establish secure connection, download the app, and join the mission.
+            Chernobyl-trshnt Tactical Interface and bio-hazard trackers can only run on dedicated mobile terminals as a Progressive Web App (PWA). Scan the QR code below with your mobile camera to establish secure connection, download the app, and join the mission.
           </p>
 
           {/* QR Code Container */}

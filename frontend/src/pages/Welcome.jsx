@@ -21,7 +21,7 @@ const Welcome = ({ onQrLogin }) => {
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      const dismissed = localStorage.getItem('stalker_pwa_dismissed') === 'true';
+      const dismissed = localStorage.getItem('chernobyl_pwa_dismissed') === 'true' || localStorage.getItem('stalker_pwa_dismissed') === 'true';
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
       if (!dismissed && !isStandalone) {
         setShowInstallBanner(true);
@@ -33,7 +33,7 @@ const Welcome = ({ onQrLogin }) => {
     // Dynamic banner fallback after 3 seconds if not standalone and not dismissed
     const fallbackTimer = setTimeout(() => {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-      const dismissed = localStorage.getItem('stalker_pwa_dismissed') === 'true';
+      const dismissed = localStorage.getItem('chernobyl_pwa_dismissed') === 'true' || localStorage.getItem('stalker_pwa_dismissed') === 'true';
       if (!isStandalone && !dismissed && !deferredPrompt) {
         setShowInstallBanner(true);
       }
@@ -58,7 +58,7 @@ const Welcome = ({ onQrLogin }) => {
   };
 
   const handleDismissInstall = () => {
-    localStorage.setItem('stalker_pwa_dismissed', 'true');
+    localStorage.setItem('chernobyl_pwa_dismissed', 'true');
     setShowInstallBanner(false);
   };
 
@@ -209,7 +209,7 @@ const Welcome = ({ onQrLogin }) => {
             <div className="pwa-alert-icon">⚠️</div>
             <div className="pwa-notification-text">
               <div className="pwa-notification-title">UPLINK_ALERT // PWA_DOWNLOAD_AVAILABLE</div>
-              <div>STALKER_NET Tactical Interface can be downloaded to your terminal for offline mission data access.</div>
+              <div>Chernobyl-trshnt Tactical Interface can be downloaded to your terminal for offline mission data access.</div>
             </div>
           </div>
           <div className="pwa-notification-actions">
@@ -226,7 +226,7 @@ const Welcome = ({ onQrLogin }) => {
       {/* === Top classified header === */}
       <div className="stalker-header">
         <div className="net-info">
-          <div className="net-name glitch-text" data-text="STALKER_NET">STALKER_NET</div>
+          <div className="net-name glitch-text" data-text="CHERNOBYL-TRSHNT">CHERNOBYL-TRSHNT</div>
           <div className="operator-info">PRIPYAT EXCLUSION ZONE // DEPT OF BIO-RESEARCH</div>
         </div>
         <div className="header-icons" style={{ gap: '8px' }}>
