@@ -18,9 +18,10 @@ export const predictImage = async (imagePath) => {
       headers: {
         ...formData.getHeaders(),
       },
-      timeout: 3000,
+      timeout: 45000,
     });
 
+    console.log('🤖 ML Service prediction response:', response.data);
     return response.data;
   } catch (error) {
     console.error('ML Service Error [predict]:', error?.response?.data || error.message);
