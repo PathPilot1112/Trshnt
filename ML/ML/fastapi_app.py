@@ -41,6 +41,10 @@ def startup_event():
     except Exception as e:
         print(f"FAILED: Failed to load model: {e}")
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
 @app.post("/predict")
 async def predict(image: UploadFile = File(...)):
     if model is None:
