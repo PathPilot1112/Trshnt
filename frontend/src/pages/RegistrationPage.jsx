@@ -416,16 +416,16 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
         }
 
         .registration-wrapper {
-          min-height: 100vh;
+          height: 100%;
           display: flex;
           flex-direction: column;
-          justify-content: center;
+          justify-content: flex-start;
           align-items: center;
-          padding: 2rem;
+          padding: 2rem 1rem;
           position: relative;
           z-index: 100;
           overflow-y: auto;
-          width: 100vw;
+          width: 100%;
           box-sizing: border-box;
         }
 

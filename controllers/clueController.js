@@ -80,13 +80,17 @@ export const submitPhoto = async (req, res) => {
     try {
       mlResponse = await predictImage(photoPath);
     } catch (err) {
-      console.warn("⚠️ ML Service offline, executing simulated verification fallback:", err.message);
-      mlResponse = {
-        prediction: currentClue.targetLabel,
-        location: currentClue.title,
-        confidence: 0.92,
-        simulated: true
-      };
+      console.warn("⚠️ ML Service offline, rejecting submission:", err.message);
+      
+      if (isSupabaseConfigured || isCloudinaryConfigured) {
+        try {
+          await fs.unlink(photoPath);
+        } catch (unlinkErr) {}
+      }
+      
+      return res.status(503).json({ 
+        message: "Scanning system is currently offline. Please try again later."
+      });
     }
     
     // 3. Determine predicted label string and validate against current clue
