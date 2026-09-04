@@ -8,4 +8,3 @@ werkzeug
 fastapi
 uvicorn
 python-multipart
-gradio
