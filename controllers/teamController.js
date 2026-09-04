@@ -331,9 +331,15 @@ export const loginWithQr = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (!user) {
+      const randomNum = Math.floor(10000 + Math.random() * 90000);
       user = new User({
         name: `${team.name}_QR`,
         email,
+        registerNumber: `QR-${team._id.toString().slice(-6)}-${randomNum}`,
+        yearOfGraduation: "2026",
+        course: "B.Tech",
+        specialization: "Tactical",
+        contactNumber: `+9190000${randomNum}`,
         role: "player",
         team: team._id,
       });
