@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Expose the port the app runs on
-EXPOSE 5000
+EXPOSE 7860
 
 # Command to run the FastAPI server when the container starts
-CMD ["uvicorn", "fastapi_app:app", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["uvicorn", "fastapi_app:app", "--host", "0.0.0.0", "--port", "7860"]
