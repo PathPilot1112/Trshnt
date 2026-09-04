@@ -416,31 +416,39 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
         }
 
         .registration-wrapper {
-          height: 100%;
+          height: 100vh;
+          height: 100dvh;
+          min-height: 0;
           display: flex;
           flex-direction: column;
           justify-content: flex-start;
-          align-items: center;
-          padding: 2rem 1rem;
+          align-items: stretch;
+          padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
           position: relative;
           z-index: 100;
-          overflow-y: auto;
+          overflow: hidden;
           width: 100%;
+          max-width: 720px;
+          margin: 0 auto;
           box-sizing: border-box;
+          font-family: var(--font-sans);
         }
 
         .back-btn-doc {
-          margin-bottom: 1.5rem;
-          background: transparent;
+          margin-bottom: 0.75rem;
+          background: rgba(8, 20, 22, 0.8);
+          backdrop-filter: blur(8px);
           border: 1px solid var(--color-accent);
           color: var(--color-text);
           font-family: var(--font-mono);
-          font-size: 0.9rem;
+          font-size: 0.85rem;
           font-weight: bold;
           cursor: pointer;
           text-transform: uppercase;
           transition: all 0.3s ease;
           padding: 0.6rem 1.2rem;
+          border-radius: 8px;
+          flex-shrink: 0;
         }
 
         .back-btn-doc:hover {
@@ -451,16 +459,28 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
 
         .document-container {
           width: 100%;
-          max-width: 800px;
+          flex: 1;
+          min-height: 0;
           background-color: #fdfbf7;
           background-image: radial-gradient(#e0dcd3 1px, transparent 1px);
           background-size: 20px 20px;
           box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
           position: relative;
           color: #1a1a1a;
-          overflow: hidden;
-          padding-bottom: 2rem;
+          overflow-y: auto;
+          overflow-x: hidden;
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior: contain;
+          padding-bottom: max(24px, env(safe-area-inset-bottom));
           border: 1px solid #1a1a1a;
+          border-radius: 12px;
+        }
+
+        .document-container input,
+        .document-container select,
+        .document-container textarea {
+          user-select: text;
+          -webkit-user-select: text;
         }
 
         .hazard-bar {
@@ -630,9 +650,15 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
         .form-actions {
           display: flex;
           justify-content: space-between;
+          gap: 0.8rem;
           margin-top: 1.5rem;
           padding-top: 1.5rem;
+          padding-bottom: 0.5rem;
           border-top: 2px dashed #1a1a1a;
+          position: sticky;
+          bottom: 0;
+          background: #fdfbf7;
+          z-index: 2;
         }
 
         .btn-doc-primary {
@@ -680,24 +706,26 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
         }
 
         @media (max-width: 768px) {
-          .registration-wrapper { padding: 1rem; }
+          .registration-wrapper { padding: 8px; }
           .back-btn-doc { 
             width: 100%;
-            margin-bottom: 1rem; 
-            font-size: 0.8rem;
+            margin-bottom: 0.75rem; 
+            font-size: 0.75rem;
+            flex-shrink: 0;
           }
-          .doc-header { padding: 1.5rem 1rem 1rem 1rem; }
-          .doc-title { font-size: 1.3rem; }
-          .doc-meta { font-size: 0.7rem; }
+          .doc-header { padding: 2.4rem 1rem 0.8rem 1rem; }
+          .doc-title { font-size: 1.15rem; padding-right: 0; }
+          .doc-meta { font-size: 0.65rem; }
           .red-stamp { 
-            top: 0.5rem; 
+            top: 0.35rem; 
             right: 0.5rem; 
-            font-size: 1rem; 
+            font-size: 0.7rem; 
             border-width: 2px; 
             padding: 0.1rem 0.3rem;
           }
           .doc-progress-container, form { padding: 0 1rem; }
           .doc-error { margin: 0 1rem 1rem 1rem; font-size: 0.85rem; }
+          .input-row input, .doc-select-underline { font-size: 16px; }
           
           .signature-section > div:last-child {
             flex-direction: column;

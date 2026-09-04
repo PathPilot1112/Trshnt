@@ -227,6 +227,27 @@ function App() {
     );
   }
 
+  // Registration — full viewport so the form always scrolls on phones
+  if (currentRoute === 'register') {
+    return (
+      <div className="register-route">
+        <BackgroundCanvas />
+        <div className="noise-overlay" />
+        <div className="register-route-inner">
+          {isLoading ? (
+            <div className="hud-copy" style={{ padding: 24 }}>Connecting…</div>
+          ) : (
+            <RegistrationPage
+              API_BASE={API_BASE}
+              onRegisterSuccess={handleRegisterSuccess}
+              onCancel={() => { window.location.hash = '#home'; }}
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // Scan page — full screen camera view
   if (currentRoute === 'scan') {
     return (
@@ -327,14 +348,6 @@ function App() {
             <>
               {currentRoute === 'welcome' && (
                 <Welcome onQrLogin={handleQrLogin} />
-              )}
-
-              {currentRoute === 'register' && (
-                <RegistrationPage 
-                  API_BASE={API_BASE}
-                  onRegisterSuccess={handleRegisterSuccess}
-                  onCancel={() => window.location.hash = '#home'}
-                />
               )}
 
               {currentRoute === 'registration-success' && (

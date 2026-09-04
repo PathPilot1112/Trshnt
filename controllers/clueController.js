@@ -4,7 +4,17 @@ import Submission from "../models/Submission.js";
 import { predictImage } from "../utils/mlClient.js";
 import { uploadToCloudinary, isCloudinaryConfigured } from "../utils/cloudinary.js";
 import { uploadToSupabase, isSupabaseConfigured } from "../utils/supabase.js";
+import { ensureCluePath, publicCluePayload } from "../utils/cluePath.js";
 import fs from "fs/promises";
+
+const getTeamClue = async (team) => {
+  const clues = await Clue.find();
+  await ensureCluePath(team, clues);
+  const step = team.cluePath[team.currentClueIndex];
+  if (!step) return { clues, currentClue: null, finished: true };
+  const currentClue = clues.find((c) => String(c._id) === String(step.clue));
+  return { clues, currentClue, finished: !currentClue };
+};
 
 // @route   GET /api/clues/current
 // @desc    Get the current clue for the logged-in user's team
@@ -12,21 +22,9 @@ export const getCurrentClue = async (req, res) => {
   const team = await Team.findById(req.user.team);
   if (!team) return res.status(404).json({ message: "Team not found" });
 
-  const clues = await Clue.find().sort({ order: 1 });
-  if (team.currentClueIndex >= clues.length) {
-    return res.json({ message: "All clues completed", finished: true });
-  }
-
-  const currentClue = clues[team.currentClueIndex];
-  
-  // Do not expose targetLabel or other sensitive info to the player
-  res.json({
-    clueId: currentClue.clueId,
-    title: currentClue.title,
-    text: currentClue.text,
-    hint: currentClue.hint,
-    points: currentClue.points
-  });
+  const clues = await Clue.find();
+  await ensureCluePath(team, clues);
+  return res.json(publicCluePayload(team, clues));
 };
 
 // @route   POST /api/clues/submit
@@ -37,12 +35,10 @@ export const submitPhoto = async (req, res) => {
   const team = await Team.findById(req.user.team);
   if (!team) return res.status(404).json({ message: "Team not found" });
 
-  const clues = await Clue.find().sort({ order: 1 });
-  if (team.currentClueIndex >= clues.length) {
+  const { clues, currentClue, finished } = await getTeamClue(team);
+  if (finished || !currentClue) {
     return res.status(400).json({ message: "All clues already completed" });
   }
-
-  const currentClue = clues[team.currentClueIndex];
   const photoPath = req.file.path; // from multer
   let photoUrl = `/uploads/${req.file.filename}`; 
 
@@ -157,7 +153,7 @@ export const submitPhoto = async (req, res) => {
       team.score += currentClue.points;
       team.currentClueIndex += 1;
 
-      if (team.currentClueIndex >= clues.length) {
+      if (team.currentClueIndex >= team.cluePath.length) {
         team.status = "finished";
         team.finishedAt = new Date();
         if (team.timerRunning && team.timerStartedAt) {
@@ -185,20 +181,16 @@ export const submitPhoto = async (req, res) => {
         });
       }
 
-      return res.json({ 
-        message: "Clue solved successfully!", 
-        isCorrect: true, 
-        prediction: predictedLabel,
-        confidence
+      return res.json({
+        message: "Scan accepted.",
+        isCorrect: true,
+        nextClue: publicCluePayload(team, clues),
       });
     }
 
-    // If incorrect: reject submission, do not advance team
-    return res.json({ 
-      message: "Incorrect submission - location mismatch or low confidence", 
+    return res.json({
+      message: "Scan not accepted. Capture the location again.",
       isCorrect: false,
-      prediction: predictedLabel,
-      confidence 
     });
 
   } catch (error) {

@@ -9,6 +9,12 @@ import App from './App.jsx'
 // Register GSAP ScrollTrigger globally to prevent runtime missing plugin exceptions
 gsap.registerPlugin(ScrollTrigger);
 
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  window.__pwaInstallPrompt = e;
+  window.dispatchEvent(new Event('pwa-install-ready'));
+});
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />
@@ -17,8 +23,6 @@ createRoot(document.getElementById('root')).render(
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(reg => console.log('Chernobyl-trshnt SW registered:', reg.scope))
-      .catch(err => console.error('Chernobyl-trshnt SW registration failed:', err));
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
   });
 }

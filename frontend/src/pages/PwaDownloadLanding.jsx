@@ -1,63 +1,70 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Shield, Smartphone, Radio, CheckCircle2, Lock } from 'lucide-react';
+import { Download, Smartphone, Share, PlusSquare, CheckCircle, ArrowRight } from 'lucide-react';
 import BackgroundCanvas from '../components/BackgroundCanvas';
 
 const PwaDownloadLanding = ({ onOpenRegister, onOpenLogin }) => {
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showIosGuide, setShowIosGuide] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(() => window.__pwaInstallPrompt || null);
+  const [showGuide, setShowGuide] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [installStatus, setInstallStatus] = useState('');
   const [isIos, setIsIos] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
-    // Detect iOS
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    const iosDevice = /iphone|ipad|ipod/.test(userAgent);
+    const ua = window.navigator.userAgent.toLowerCase();
+    const iosDevice = /iphone|ipad|ipod/.test(ua);
     setIsIos(iosDevice);
+    
+    const standaloneMode = Boolean(
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true ||
+      document.referrer.includes('android-app://')
+    );
+    setIsStandalone(standaloneMode);
 
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-
-    const handleAppInstalled = () => {
-      setInstallStatus('✅ App installed on home screen! Open Chernobyl-trshnt app to enter.');
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', handleAppInstalled);
+    const syncPrompt = () => setDeferredPrompt(window.__pwaInstallPrompt || null);
+    window.addEventListener('pwa-install-ready', syncPrompt);
+    window.addEventListener('beforeinstallprompt', syncPrompt);
+    window.addEventListener('appinstalled', () => {
+      setInstallStatus('App Installed Successfully! Open Chernobyl from your home screen.');
+      window.__pwaInstallPrompt = null;
+      setDeferredPrompt(null);
+    });
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
+      window.removeEventListener('pwa-install-ready', syncPrompt);
+      window.removeEventListener('beforeinstallprompt', syncPrompt);
     };
   }, []);
 
   const handleDownloadClick = async () => {
-    setIsInstalling(true);
-    setInstallStatus('Opening installation package...');
-
-    if (deferredPrompt) {
+    const promptEvent = deferredPrompt || window.__pwaInstallPrompt;
+    if (promptEvent) {
+      setIsInstalling(true);
       try {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
+        promptEvent.prompt();
+        const { outcome } = await promptEvent.userChoice;
         if (outcome === 'accepted') {
-          setInstallStatus('✅ App added to your device! Open Chernobyl-trshnt from your home screen.');
+          setInstallStatus('App Installed! Launch from home screen.');
         } else {
-          setInstallStatus('Installation prompt dismissed.');
+          setInstallStatus('Installation deferred.');
         }
+        window.__pwaInstallPrompt = null;
         setDeferredPrompt(null);
-      } catch (err) {
-        console.error('Install prompt error:', err);
-        setInstallStatus('Installation prompt triggered. Follow device prompt.');
+      } catch {
+        setShowGuide(true);
       } finally {
         setIsInstalling(false);
       }
-    } else {
-      setShowIosGuide(true);
-      setIsInstalling(false);
+      return;
     }
+    setShowGuide(true);
   };
+
+  if (isStandalone) {
+    window.location.hash = '#home';
+    return null;
+  }
 
   return (
     <div style={{
@@ -65,240 +72,214 @@ const PwaDownloadLanding = ({ onOpenRegister, onOpenLogin }) => {
       minHeight: '100vh',
       minHeight: '100dvh',
       width: '100vw',
-      background: '#081011',
-      color: '#D9E0E0',
-      fontFamily: "'Share Tech Mono', 'Inter', monospace",
       display: 'flex',
-      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      overflowX: 'hidden',
-      padding: 'max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))',
+      padding: '24px 16px',
+      background: 'var(--color-bg)',
+      color: '#fff',
+      fontFamily: 'var(--font-sans)',
+      overflowY: 'auto'
     }}>
-      {/* Atmospheric Background Layers */}
       <BackgroundCanvas />
       <div className="noise-overlay" />
-      <div className="scanlines" />
 
-      {/* Top Header Bar */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        padding: 'max(12px, env(safe-area-inset-top)) 24px 12px 24px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        background: 'linear-gradient(180deg, rgba(0,25,27,0.95) 0%, rgba(0,25,27,0) 100%)',
-        zIndex: 20
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Radio size={16} style={{ color: '#39FF14' }} />
-          <span style={{ fontSize: '13px', letterSpacing: '2px', color: '#39FF14', fontWeight: 'bold' }}>
-            CHERNOBYL_PWA_PORTAL
-          </span>
-        </div>
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <span className="red-stamp-mini">TOP SECRET</span>
-        </div>
-      </div>
-
-      {/* Main Hero Card */}
+      {/* Main Glassmorphic Card (Apple HIG Aesthetics) */}
       <div style={{
         position: 'relative',
         zIndex: 10,
-        maxWidth: '620px',
         width: '100%',
-        background: 'rgba(8, 20, 22, 0.95)',
-        backdropFilter: 'blur(16px)',
-        border: '2px solid rgba(155, 168, 168, 0.35)',
-        boxShadow: '0 0 45px rgba(0, 0, 0, 0.95), 0 0 25px rgba(57, 255, 20, 0.15)',
-        padding: '36px 24px',
+        maxWidth: '440px',
+        background: 'rgba(12, 22, 24, 0.85)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+        border: '1px solid rgba(57, 255, 20, 0.3)',
+        borderRadius: '24px',
+        padding: '36px 28px',
+        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(57, 255, 20, 0.12)',
         textAlign: 'center',
-        margin: '60px auto 20px auto',
-        borderRadius: '4px'
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '16px'
       }}>
-        {/* Corner Brackets */}
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '16px', height: '16px', borderTop: '3px solid #39FF14', borderLeft: '3px solid #39FF14' }} />
-        <div style={{ position: 'absolute', top: 0, right: 0, width: '16px', height: '16px', borderTop: '3px solid #39FF14', borderRight: '3px solid #39FF14' }} />
-        <div style={{ position: 'absolute', bottom: 0, left: 0, width: '16px', height: '16px', borderBottom: '3px solid #39FF14', borderLeft: '3px solid #39FF14' }} />
-        <div style={{ position: 'absolute', bottom: 0, right: 0, width: '16px', height: '16px', borderBottom: '3px solid #39FF14', borderRight: '3px solid #39FF14' }} />
-
-        {/* Subtitle */}
-        <div style={{ fontSize: '11px', letterSpacing: '3px', color: '#39FF14', marginBottom: '8px' }}>
-          ZONE OPERATIVE APPLICATION // PRIPYAT SECTOR
-        </div>
-
-        <h1 className="glitch-text" data-text="CHERNOBYL-TRSHNT" style={{
-          fontFamily: "'Cinzel', serif",
-          fontSize: 'clamp(2.2rem, 7vw, 3.6rem)',
-          fontWeight: 700,
-          color: '#D9E0E0',
-          letterSpacing: '4px',
-          margin: '0 0 6px 0',
-          textShadow: '0 0 20px rgba(217, 224, 224, 0.4)'
-        }}>
-          CHERNOBYL-TRSHNT
-        </h1>
-
+        {/* App Icon / Badge */}
         <div style={{
-          fontSize: '13px',
-          color: '#9BA8A8',
-          letterSpacing: '3px',
-          marginBottom: '24px',
-          fontFamily: "'Share Tech Mono', monospace"
-        }}>
-          TACTICAL PWA MOBILE TERMINAL INTERFACE
-        </div>
-
-        <p style={{
-          fontSize: '14px',
-          color: '#c5d0d0',
-          lineHeight: '1.7',
-          maxWidth: '520px',
-          margin: '0 auto 28px auto',
-          fontFamily: "'Inter', sans-serif"
-        }}>
-          Official Progressive Web Application (PWA) for field terminals. Download and install onto your mobile device to launch the application and enter the exclusion zone.
-        </p>
-
-        {/* Big Download PWA Button */}
-        <div style={{ marginBottom: '16px' }}>
-          <button
-            onClick={handleDownloadClick}
-            disabled={isInstalling}
-            style={{
-              width: '100%',
-              maxWidth: '500px',
-              padding: '20px 24px',
-              background: 'linear-gradient(135deg, #39FF14 0%, #004d40 100%)',
-              border: '2px solid #39FF14',
-              color: '#002729',
-              fontFamily: "'Share Tech Mono', monospace",
-              fontSize: '18px',
-              fontWeight: 'bold',
-              letterSpacing: '2px',
-              cursor: isInstalling ? 'wait' : 'pointer',
-              textTransform: 'uppercase',
-              boxShadow: '0 0 30px rgba(57, 255, 20, 0.5)',
-              transition: 'all 0.3s ease',
-              display: 'inline-flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              borderRadius: '3px'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.02)';
-              e.currentTarget.style.boxShadow = '0 0 40px rgba(57, 255, 20, 0.8)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 0 30px rgba(57, 255, 20, 0.5)';
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Download size={24} style={{ animation: 'bounce 1.5s infinite' }} />
-              <span>⚡ DOWNLOAD &amp; INSTALL PWA APP</span>
-            </div>
-            <span style={{ fontSize: '10px', opacity: 0.95, letterSpacing: '1.5px', textTransform: 'uppercase' }}>
-              [ AUTOMATIC INSTALLATION FOR ANDROID &amp; IOS ]
-            </span>
-          </button>
-
-          {installStatus && (
-            <div style={{ fontSize: '13px', color: '#39FF14', marginTop: '14px', fontWeight: 'bold', textShadow: '0 0 8px rgba(57,255,20,0.5)' }}>
-              {installStatus}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* iOS & Manual Installation Modal Guide */}
-      {showIosGuide && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          background: 'rgba(0, 0, 0, 0.88)',
-          backdropFilter: 'blur(10px)',
-          zIndex: 1000,
+          width: '72px',
+          height: '72px',
+          borderRadius: '18px',
+          background: 'linear-gradient(135deg, #0a292d 0%, #001214 100%)',
+          border: '1.5px solid var(--color-neon-green)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '20px'
+          boxShadow: '0 0 20px var(--color-green-glow)',
+          fontSize: '28px',
+          fontWeight: 'bold',
+          color: 'var(--color-neon-green)'
         }}>
-          <div style={{
-            maxWidth: '480px',
+          ☢
+        </div>
+
+        <div style={{ fontSize: '11px', letterSpacing: '3px', color: 'var(--color-neon-green)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+          Tactical PWA Installation
+        </div>
+
+        <h1 style={{
+          fontSize: '28px',
+          fontWeight: '700',
+          color: '#ffffff',
+          letterSpacing: '0.5px',
+          margin: 0,
+          fontFamily: 'var(--font-sans)'
+        }}>
+          Chernobyl-trshnt
+        </h1>
+
+        <p style={{
+          fontSize: '14px',
+          lineHeight: '1.6',
+          color: 'rgba(217, 224, 224, 0.82)',
+          margin: 0,
+          maxWidth: '360px'
+        }}>
+          {isIos
+            ? 'Install directly on your iPhone for offline access and full camera tactical scan features.'
+            : 'Download and install directly to your home screen in 1 click for real-time mission updates.'}
+        </p>
+
+        {/* Primary Action Button */}
+        <button
+          onClick={handleDownloadClick}
+          disabled={isInstalling}
+          style={{
             width: '100%',
-            background: '#081011',
-            border: '2px solid #39FF14',
-            padding: '24px',
-            position: 'relative',
-            boxShadow: '0 0 35px rgba(57, 255, 20, 0.4)',
-            borderRadius: '4px'
+            padding: '16px',
+            marginTop: '8px',
+            background: 'var(--color-neon-green)',
+            color: '#040d0e',
+            border: 'none',
+            borderRadius: '14px',
+            fontSize: '15px',
+            fontWeight: '700',
+            fontFamily: 'var(--font-sans)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            boxShadow: '0 0 24px var(--color-green-glow), 0 4px 12px rgba(0,0,0,0.4)',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <Download size={20} />
+          {isInstalling ? 'Installing PWA…' : isIos ? 'Install on iPhone' : '1-Click Install App'}
+        </button>
+
+        {installStatus && (
+          <div style={{
+            fontSize: '13px',
+            color: 'var(--color-neon-green)',
+            background: 'rgba(57, 255, 20, 0.1)',
+            border: '1px solid rgba(57, 255, 20, 0.3)',
+            borderRadius: '10px',
+            padding: '8px 12px',
+            width: '100%'
           }}>
-            <div style={{ fontSize: '16px', color: '#39FF14', fontWeight: 'bold', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Smartphone size={20} /> PWA INSTALLATION GUIDE ({isIos ? 'IOS' : 'ANDROID'})
-            </div>
-            
-            <p style={{ fontSize: '13px', color: '#D9E0E0', lineHeight: '1.6', marginBottom: '16px' }}>
-              To install <strong>Chernobyl-trshnt</strong> app directly on your home screen:
-            </p>
+            <CheckCircle size={14} style={{ display: 'inline', marginRight: '6px' }} />
+            {installStatus}
+          </div>
+        )}
 
-            <ol style={{ fontSize: '13px', color: '#9BA8A8', paddingLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
-              {isIos ? (
-                <>
-                  <li>Tap the <strong>Share button</strong> (square with arrow) in Safari navigation bar.</li>
-                  <li>Scroll down and select <strong>"Add to Home Screen"</strong> (＋).</li>
-                  <li>Tap <strong>Add</strong> in the top right corner.</li>
-                  <li>Open <strong>Chernobyl-trshnt</strong> from your home screen!</li>
-                </>
-              ) : (
-                <>
-                  <li>Tap the <strong>three dots (⋮)</strong> menu in Chrome.</li>
-                  <li>Select <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.</li>
-                  <li>Confirm installation.</li>
-                  <li>Open the app from your home screen!</li>
-                </>
-              )}
-            </ol>
+        {/* Secondary navigation to Web App */}
+        <div style={{ marginTop: '12px', display: 'flex', gap: '16px', fontSize: '13px' }}>
+          <button
+            onClick={() => window.location.hash = '#home'}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--color-accent)',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              fontFamily: 'var(--font-sans)'
+            }}
+          >
+            Continue in Browser <ArrowRight size={12} style={{ display: 'inline' }} />
+          </button>
+        </div>
+      </div>
 
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={() => setShowIosGuide(false)}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  background: '#39FF14',
-                  border: 'none',
-                  color: '#002729',
-                  fontWeight: 'bold',
-                  fontFamily: "'Share Tech Mono', monospace",
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  letterSpacing: '1px'
-                }}
-              >
-                CLOSE GUIDE
-              </button>
+      {/* iPhone Apple HIG Installation Guide Modal */}
+      {showGuide && (
+        <div
+          onClick={() => setShowGuide(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '380px',
+              background: '#0d181a',
+              border: '1px solid var(--color-neon-green)',
+              borderRadius: '20px',
+              padding: '28px 24px',
+              boxShadow: '0 0 35px var(--color-green-glow)',
+              textAlign: 'left'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', fontWeight: '700', color: '#fff', marginBottom: '16px' }}>
+              <Smartphone size={22} color="var(--color-neon-green)" />
+              {isIos ? 'Install on iPhone' : 'Install on Android'}
             </div>
+
+            {isIos ? (
+              <ol style={{ paddingLeft: '20px', margin: 0, lineHeight: '1.8', fontSize: '14px', color: 'rgba(217, 224, 224, 0.9)' }}>
+                <li>Tap the <strong>Share</strong> button in Safari <Share size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />.</li>
+                <li>Scroll down and select <strong>Add to Home Screen</strong> <PlusSquare size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />.</li>
+                <li>Tap <strong>Add</strong> at top right, then launch <strong>Chernobyl</strong> from your Home Screen.</li>
+              </ol>
+            ) : (
+              <ol style={{ paddingLeft: '20px', margin: 0, lineHeight: '1.8', fontSize: '14px', color: 'rgba(217, 224, 224, 0.9)' }}>
+                <li>Tap the browser options menu (<strong>⋮</strong>).</li>
+                <li>Select <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
+                <li>Confirm, then launch Chernobyl from your apps grid.</li>
+              </ol>
+            )}
+
+            <button
+              onClick={() => setShowGuide(false)}
+              style={{
+                width: '100%',
+                marginTop: '24px',
+                padding: '12px',
+                background: 'var(--color-neon-green)',
+                color: '#000',
+                border: 'none',
+                borderRadius: '12px',
+                fontWeight: '700',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
+            >
+              Got it
+            </button>
           </div>
         </div>
       )}
-
-      <style>{`
-        @keyframes bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-4px); }
-        }
-      `}</style>
     </div>
   );
 };
 
 export default PwaDownloadLanding;
+

@@ -2,6 +2,7 @@ import Clue from "../models/Clue.js";
 import Team from "../models/Team.js";
 import Submission from "../models/Submission.js";
 import User from "../models/User.js";
+import { buildRandomCluePath } from "../utils/cluePath.js";
 import jwt from "jsonwebtoken";
 import fs from "fs/promises";
 import path from "path";
@@ -138,12 +139,17 @@ export const startTeamMission = async (req, res) => {
     const team = await Team.findById(req.params.id);
     if (!team) return res.status(404).json({ message: "Team not found" });
 
+    const clues = await Clue.find();
     team.status = "in_progress";
     team.startedAt = new Date();
     team.timerStartedAt = new Date();
     team.timerStoppedAt = undefined;
     team.timerAccumulatedMs = 0;
     team.timerRunning = true;
+    team.currentClueIndex = 0;
+    team.completedClues = [];
+    team.score = 0;
+    team.cluePath = buildRandomCluePath(clues);
     await team.save();
 
     const io = req.app.get("io");
@@ -204,6 +210,7 @@ export const resetTeamMission = async (req, res) => {
     team.score = 0;
     team.currentClueIndex = 0;
     team.completedClues = [];
+    team.cluePath = [];
     team.startedAt = undefined;
     team.finishedAt = undefined;
     team.timerStartedAt = undefined;
@@ -249,11 +256,14 @@ export const clueOverride = async (req, res) => {
     const team = await Team.findById(req.params.id);
     if (!team) return res.status(404).json({ message: "Team not found" });
 
-    const clues = await Clue.find().sort({ order: 1 });
+    const clues = await Clue.find();
+    if (!team.cluePath?.length) {
+      team.cluePath = buildRandomCluePath(clues);
+    }
     team.currentClueIndex += 1;
-    team.score += 100; // Award points for manual skip
+    team.score += 100;
 
-    if (team.currentClueIndex >= clues.length) {
+    if (team.currentClueIndex >= team.cluePath.length) {
       team.status = "finished";
       team.finishedAt = new Date();
     }
@@ -356,7 +366,7 @@ export const clearSubmissions = async (req, res) => {
     await Submission.deleteMany({});
     
     // 3. Clear completedClues, score, and activeSessionToken for all teams
-    await Team.updateMany({}, { completedClues: [], score: 0, currentClueIndex: 0, status: "not_started", activeSessionToken: null });
+    await Team.updateMany({}, { completedClues: [], cluePath: [], score: 0, currentClueIndex: 0, status: "not_started", activeSessionToken: null });
 
     // Emit event to update leaderboard and reset dashboards
     const io = req.app.get("io");

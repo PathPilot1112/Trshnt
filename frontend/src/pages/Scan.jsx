@@ -71,6 +71,9 @@ const Scan = ({ API_BASE, token, onAbort }) => {
   const streamRef = useRef(null);
   const watchIdRef = useRef(null);
   const viewportRef = useRef(null);
+  const previewImgRef = useRef(null);
+  const [imageBox, setImageBox] = useState({ left: 0, top: 0, width: 100, height: 100 });
+  const [cropActive, setCropActive] = useState(true);
 
   const isDraggingRef = useRef(false);
   const dragTypeRef = useRef(null);
@@ -88,10 +91,34 @@ const Scan = ({ API_BASE, token, onAbort }) => {
     setPreviewUrl(url);
     setRotation(0);
     setCropBox({ x: 0, y: 0, width: 100, height: 100 });
+    setCropActive(true);
     return () => {
       URL.revokeObjectURL(url);
     };
   }, [capturedBlob]);
+
+  useEffect(() => {
+    if (!isCaptured) return;
+    const id = requestAnimationFrame(measureImageBox);
+    window.addEventListener('resize', measureImageBox);
+    return () => {
+      cancelAnimationFrame(id);
+      window.removeEventListener('resize', measureImageBox);
+    };
+  }, [isCaptured, rotation, previewUrl]);
+
+  const measureImageBox = () => {
+    if (!viewportRef.current || !previewImgRef.current) return;
+    const view = viewportRef.current.getBoundingClientRect();
+    const img = previewImgRef.current.getBoundingClientRect();
+    if (!view.width || !view.height) return;
+    setImageBox({
+      left: ((img.left - view.left) / view.width) * 100,
+      top: ((img.top - view.top) / view.height) * 100,
+      width: (img.width / view.width) * 100,
+      height: (img.height / view.height) * 100,
+    });
+  };
 
   // Drag handlers for crop overlay box
   const handleDragStart = (e, type) => {
@@ -114,12 +141,15 @@ const Scan = ({ API_BASE, token, onAbort }) => {
   useEffect(() => {
     const handleMove = (e) => {
       if (!isDraggingRef.current || !viewportRef.current) return;
+      if (e.cancelable) e.preventDefault();
       const rect = viewportRef.current.getBoundingClientRect();
+      const imgW = (imageBox.width / 100) * rect.width;
+      const imgH = (imageBox.height / 100) * rect.height;
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-      const dxPct = ((clientX - dragStartRef.current.mouseX) / rect.width) * 100;
-      const dyPct = ((clientY - dragStartRef.current.mouseY) / rect.height) * 100;
+      const dxPct = ((clientX - dragStartRef.current.mouseX) / Math.max(1, imgW)) * 100;
+      const dyPct = ((clientY - dragStartRef.current.mouseY) / Math.max(1, imgH)) * 100;
 
       const type = dragTypeRef.current;
       const start = dragStartRef.current;
@@ -180,7 +210,7 @@ const Scan = ({ API_BASE, token, onAbort }) => {
 
     window.addEventListener('mousemove', handleMove);
     window.addEventListener('mouseup', handleEnd);
-    window.addEventListener('touchmove', handleMove);
+    window.addEventListener('touchmove', handleMove, { passive: false });
     window.addEventListener('touchend', handleEnd);
 
     return () => {
@@ -189,7 +219,7 @@ const Scan = ({ API_BASE, token, onAbort }) => {
       window.removeEventListener('touchmove', handleMove);
       window.removeEventListener('touchend', handleEnd);
     };
-  }, []);
+  }, [imageBox.width, imageBox.height]);
 
   useEffect(() => {
     const startCamera = async () => {
@@ -384,7 +414,11 @@ const Scan = ({ API_BASE, token, onAbort }) => {
     setIsTransmitting(true);
     pushLog('>> PROCESSING CROP & ROTATION...', '>> INITIATING ENCRYPTED UPLINK...');
     try {
-      const finalBlob = await getCroppedRotatedBlob(capturedBlob, rotation, cropBox);
+      const finalBlob = await getCroppedRotatedBlob(
+        capturedBlob,
+        rotation,
+        cropActive ? cropBox : { x: 0, y: 0, width: 100, height: 100 }
+      );
       const formData = new FormData();
       formData.append('image', finalBlob, 'pda_scan.jpg');
       const response = await fetch(`${API_BASE}/clues/submit`, {
@@ -397,14 +431,9 @@ const Scan = ({ API_BASE, token, onAbort }) => {
       setScanResult({
         success: data.isCorrect,
         message: data.message,
-        prediction: data.prediction,
-        confidence: Math.round((data.confidence || 0) * 100),
+        nextClue: data.nextClue || null,
       });
-      pushLog(
-        `>> RESPONSE: ${data.message.toUpperCase()}`,
-        `>> PREDICTED LABEL: ${data.prediction || 'UNKNOWN'}`,
-        `>> CONFIDENCE: ${Math.round((data.confidence || 0) * 100)}%`
-      );
+      pushLog(`>> RESPONSE: ${data.isCorrect ? 'ACCEPTED' : 'NOT ACCEPTED'}`);
       setShowModal(true);
     } catch (err) {
       pushLog(`>> TRANSMISSION ERROR: ${err.message}`);
@@ -460,67 +489,63 @@ const Scan = ({ API_BASE, token, onAbort }) => {
         {isCaptured && previewUrl && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
             <img
+              ref={previewImgRef}
               src={previewUrl}
               alt="Captured Frame"
+              onLoad={measureImageBox}
               style={{
                 maxWidth: '100%',
                 maxHeight: '100%',
                 objectFit: 'contain',
                 transform: `rotate(${rotation}deg)`,
-                transition: 'transform 0.2s ease',
+                transition: cropActive ? 'none' : 'transform 0.2s ease',
               }}
             />
 
-            {/* Dark mask outside crop box */}
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: `${cropBox.y}%`, background: 'rgba(0,0,0,0.55)', pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: `${100 - cropBox.y - cropBox.height}%`, background: 'rgba(0,0,0,0.55)', pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', top: `${cropBox.y}%`, left: 0, width: `${cropBox.x}%`, height: `${cropBox.height}%`, background: 'rgba(0,0,0,0.55)', pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', top: `${cropBox.y}%`, right: 0, width: `${100 - cropBox.x - cropBox.width}%`, height: `${cropBox.height}%`, background: 'rgba(0,0,0,0.55)', pointerEvents: 'none' }} />
+            {cropActive && (
+              <div
+                className="crop-layer"
+                style={{
+                  position: 'absolute',
+                  left: `${imageBox.left}%`,
+                  top: `${imageBox.top}%`,
+                  width: `${imageBox.width}%`,
+                  height: `${imageBox.height}%`,
+                  touchAction: 'none',
+                }}
+              >
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: `${cropBox.y}%`, background: 'rgba(0,0,0,0.55)', pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: `${100 - cropBox.y - cropBox.height}%`, background: 'rgba(0,0,0,0.55)', pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', top: `${cropBox.y}%`, left: 0, width: `${cropBox.x}%`, height: `${cropBox.height}%`, background: 'rgba(0,0,0,0.55)', pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', top: `${cropBox.y}%`, right: 0, width: `${100 - cropBox.x - cropBox.width}%`, height: `${cropBox.height}%`, background: 'rgba(0,0,0,0.55)', pointerEvents: 'none' }} />
 
-            {/* Interactive Crop Frame */}
-            <div
-              onMouseDown={(e) => handleDragStart(e, 'move')}
-              onTouchStart={(e) => handleDragStart(e, 'move')}
-              style={{
-                position: 'absolute',
-                top: `${cropBox.y}%`,
-                left: `${cropBox.x}%`,
-                width: `${cropBox.width}%`,
-                height: `${cropBox.height}%`,
-                border: '2px solid var(--color-neon-green)',
-                boxShadow: '0 0 12px var(--color-green-glow)',
-                cursor: 'move',
-                boxSizing: 'border-box',
-              }}
-            >
-              {/* Inner Rule-of-Thirds Grid */}
-              <div style={{ position: 'absolute', top: '33.33%', left: 0, right: 0, height: '1px', background: 'rgba(57,255,20,0.25)', pointerEvents: 'none' }} />
-              <div style={{ position: 'absolute', top: '66.66%', left: 0, right: 0, height: '1px', background: 'rgba(57,255,20,0.25)', pointerEvents: 'none' }} />
-              <div style={{ position: 'absolute', left: '33.33%', top: 0, bottom: 0, width: '1px', background: 'rgba(57,255,20,0.25)', pointerEvents: 'none' }} />
-              <div style={{ position: 'absolute', left: '66.66%', top: 0, bottom: 0, width: '1px', background: 'rgba(57,255,20,0.25)', pointerEvents: 'none' }} />
-
-              {/* Corner Handles */}
-              <div
-                onMouseDown={(e) => handleDragStart(e, 'nw')}
-                onTouchStart={(e) => handleDragStart(e, 'nw')}
-                style={{ position: 'absolute', top: '-6px', left: '-6px', width: '14px', height: '14px', background: 'var(--color-neon-green)', cursor: 'nwse-resize', boxShadow: '0 0 6px #000' }}
-              />
-              <div
-                onMouseDown={(e) => handleDragStart(e, 'ne')}
-                onTouchStart={(e) => handleDragStart(e, 'ne')}
-                style={{ position: 'absolute', top: '-6px', right: '-6px', width: '14px', height: '14px', background: 'var(--color-neon-green)', cursor: 'nesw-resize', boxShadow: '0 0 6px #000' }}
-              />
-              <div
-                onMouseDown={(e) => handleDragStart(e, 'sw')}
-                onTouchStart={(e) => handleDragStart(e, 'sw')}
-                style={{ position: 'absolute', bottom: '-6px', left: '-6px', width: '14px', height: '14px', background: 'var(--color-neon-green)', cursor: 'nesw-resize', boxShadow: '0 0 6px #000' }}
-              />
-              <div
-                onMouseDown={(e) => handleDragStart(e, 'se')}
-                onTouchStart={(e) => handleDragStart(e, 'se')}
-                style={{ position: 'absolute', bottom: '-6px', right: '-6px', width: '14px', height: '14px', background: 'var(--color-neon-green)', cursor: 'nwse-resize', boxShadow: '0 0 6px #000' }}
-              />
-            </div>
+                <div
+                  onMouseDown={(e) => handleDragStart(e, 'move')}
+                  onTouchStart={(e) => handleDragStart(e, 'move')}
+                  className="crop-frame"
+                  style={{
+                    position: 'absolute',
+                    top: `${cropBox.y}%`,
+                    left: `${cropBox.x}%`,
+                    width: `${cropBox.width}%`,
+                    height: `${cropBox.height}%`,
+                  }}
+                >
+                  <div className="crop-grid-h" style={{ top: '33.33%' }} />
+                  <div className="crop-grid-h" style={{ top: '66.66%' }} />
+                  <div className="crop-grid-v" style={{ left: '33.33%' }} />
+                  <div className="crop-grid-v" style={{ left: '66.66%' }} />
+                  {['nw', 'ne', 'sw', 'se'].map((handle) => (
+                    <div
+                      key={handle}
+                      className={`crop-handle crop-handle-${handle}`}
+                      onMouseDown={(e) => handleDragStart(e, handle)}
+                      onTouchStart={(e) => handleDragStart(e, handle)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -612,30 +637,48 @@ const Scan = ({ API_BASE, token, onAbort }) => {
           borderTop: '1px solid rgba(57, 255, 20, 0.2)',
         }}>
           {/* Rotate & Edit Toolbar */}
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px' }}>
-            <button className="cyber-btn-outline" onClick={handleRotateCcw} style={{ padding: '5px 10px', fontSize: '10px' }} title="Rotate 90° Counter-Clockwise">
-              <RotateCcw size={12} /> CCW
-            </button>
-            <button className="cyber-btn-outline" onClick={handleRotateCw} style={{ padding: '5px 10px', fontSize: '10px' }} title="Rotate 90° Clockwise">
-              <RotateCw size={12} /> CW
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <button className="cyber-btn-outline" onClick={handleRotateCcw} style={{ padding: '10px 14px', fontSize: '12px', minHeight: '44px' }} title="Rotate left">
+              <RotateCcw size={16} /> Rotate 90°
             </button>
             <button
-              className="cyber-btn-outline"
-              onClick={() => setCropBox({ x: 0, y: 0, width: 100, height: 100 })}
-              style={{ padding: '5px 10px', fontSize: '10px' }}
-              title="Reset Crop Box"
+              className={cropActive ? 'cyber-btn striped' : 'cyber-btn-outline'}
+              onClick={() => {
+                setCropActive((prev) => !prev);
+                requestAnimationFrame(measureImageBox);
+              }}
+              style={{ padding: '10px 18px', fontSize: '13px', minHeight: '48px', minWidth: '130px', fontWeight: 700, borderRadius: '8px' }}
+              title="Crop photo"
             >
-              <Crop size={12} /> RESET CROP
+              <Crop size={18} /> {cropActive ? 'Crop Active' : 'Enable Crop'}
+            </button>
+            {cropActive && (
+              <button
+                className="cyber-btn-outline"
+                onClick={() => setCropBox({ x: 0, y: 0, width: 100, height: 100 })}
+                style={{ padding: '10px 12px', fontSize: '11px', minHeight: '44px' }}
+                title="Reset crop frame to full"
+              >
+                Reset Crop
+              </button>
+            )}
+            <button className="cyber-btn-outline" onClick={handleRotateCw} style={{ padding: '10px 14px', fontSize: '12px', minHeight: '44px' }} title="Rotate right">
+              <RotateCw size={16} /> Rotate 90°
             </button>
           </div>
+          {cropActive && (
+            <div style={{ textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: '12px', color: 'var(--color-neon-green)', letterSpacing: '0.5px' }}>
+              Drag glowing corner handles to frame photo. Tap SUBMIT when ready.
+            </div>
+          )}
 
           {/* Action Row */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            <button className="cyber-btn-outline" onClick={handleRecapture} disabled={isTransmitting}>
-              <RefreshCw size={11} /> RETAKE
+            <button className="cyber-btn-outline" onClick={handleRecapture} disabled={isTransmitting} style={{ borderRadius: '8px' }}>
+              <RefreshCw size={14} /> RETAKE
             </button>
-            <button className="cyber-btn striped" onClick={handleTransmit} disabled={!capturedBlob || isTransmitting}>
-              <Send size={11} /> SUBMIT SCAN
+            <button className="cyber-btn striped" onClick={handleTransmit} disabled={!capturedBlob || isTransmitting} style={{ borderRadius: '8px', fontWeight: 700 }}>
+              <Send size={14} /> SUBMIT SCAN
             </button>
           </div>
         </div>
@@ -704,40 +747,29 @@ const Scan = ({ API_BASE, token, onAbort }) => {
             <div style={{ padding: '20px', textAlign: 'center' }}>
               {/* Result header */}
               <div style={{
-                fontFamily: 'var(--font-serif)',
-                fontSize: '15px',
-                letterSpacing: '3px',
-                textTransform: 'uppercase',
-                fontWeight: 700,
+                fontFamily: 'var(--font-sans)',
+                fontSize: '17px',
+                fontWeight: 600,
                 marginBottom: '12px',
                 color: scanResult.success ? 'var(--color-neon-green)' : 'var(--color-amber)',
-                textShadow: scanResult.success
-                  ? '0 0 12px var(--color-green-glow)'
-                  : '0 0 12px var(--color-amber-glow)',
               }}>
-                {scanResult.success ? '✓ OBJECTIVE VERIFIED' : '✗ SUBMISSION REJECTED'}
+                {scanResult.success ? 'Scan accepted' : 'Try again'}
               </div>
 
-              {/* Message */}
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--color-text)', marginBottom: '8px', lineHeight: 1.5 }}>
-                {scanResult.message}
-              </div>
-
-              {/* Prediction / confidence */}
-              <div style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '10px',
-                color: 'var(--color-accent)',
-                marginBottom: '18px',
-                padding: '8px',
-                border: '1px solid rgba(155,168,168,0.2)',
-                background: 'rgba(0,39,41,0.5)',
-              }}>
-                {scanResult.prediction} // <span className={scanResult.success ? 'glow-text' : 'glow-text-amber'}>{scanResult.confidence}% CONFIDENCE</span>
-              </div>
+              {scanResult.success && scanResult.nextClue && !scanResult.nextClue.finished && (
+                <div className="hud-clue-text" style={{ textAlign: 'left', marginBottom: '16px' }}>
+                  {scanResult.nextClue.text}
+                </div>
+              )}
+              {scanResult.success && scanResult.nextClue?.finished && (
+                <div className="hud-copy" style={{ marginBottom: '16px' }}>All clues complete.</div>
+              )}
+              {!scanResult.success && (
+                <div className="hud-copy" style={{ marginBottom: '16px' }}>{scanResult.message}</div>
+              )}
 
               <button className="cyber-btn striped" style={{ width: '100%' }} onClick={onAbort}>
-                RETURN TO HUD
+                Continue
               </button>
             </div>
           </div>

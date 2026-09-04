@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import QRCode from 'react-qr-code';
-import { Activity, Eye, Map, Play, Power, QrCode, RefreshCw, Shield, SkipForward, Users } from 'lucide-react';
+import { Activity, Map, Play, Power, QrCode, RefreshCw, Shield, SkipForward, Users } from 'lucide-react';
 import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet';
 import { getSocket } from '../socket';
+import ToastStack from '../components/ToastStack';
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
@@ -34,6 +35,17 @@ const AdminDashboard = ({ API_BASE }) => {
   const [expandedSubmissions, setExpandedSubmissions] = useState({});
   const [mlStatus, setMlStatus] = useState('red');
   const [isWaking, setIsWaking] = useState(false);
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = (title, message = '', type = 'success') => {
+    const id = `${Date.now()}-${Math.random()}`;
+    setToasts((prev) => [...prev.slice(-4), { id, title, message, type }]);
+    window.setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3800);
+  };
+
+  const dismissToast = (id) => setToasts((prev) => prev.filter((t) => t.id !== id));
 
   const checkMLStatus = async () => {
     try {
@@ -74,10 +86,11 @@ const AdminDashboard = ({ API_BASE }) => {
         if (contentType && contentType.includes('application/json')) {
           const data = await res.json();
           setMlStatus(data.status || 'orange');
+          showToast('ML core', 'Wake request sent.', 'info');
         }
       }
     } catch (err) {
-      console.error("Failed to wakeup ML:", err);
+      showToast('ML core', err.message, 'error');
     }
   };
 
@@ -221,11 +234,15 @@ const AdminDashboard = ({ API_BASE }) => {
         return [newSub, ...prev];
       });
 
-      // Show toast alert
-      setNewSubmissionAlert(newSub);
-      setTimeout(() => {
-        setNewSubmissionAlert((current) => (current?._id === newSub._id ? null : current));
-      }, 5000);
+      setToasts((prev) => [...prev.slice(-4), {
+        id: `sub-${newSub._id}`,
+        title: 'New scan',
+        message: `${newSub.team?.name || 'Team'} — ${newSub.isCorrect ? 'accepted' : 'rejected'}`,
+        type: newSub.isCorrect ? 'success' : 'info',
+      }]);
+      window.setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== `sub-${newSub._id}`));
+      }, 4200);
     };
 
     const handleSubmissionsCleared = () => {
@@ -286,7 +303,7 @@ const AdminDashboard = ({ API_BASE }) => {
 
     const data = await response.json();
     if (!response.ok) {
-      alert(data.message || 'Login failed');
+      showToast('Sign in failed', data.message || 'Check your credentials.', 'error');
       return;
     }
 
@@ -299,9 +316,14 @@ const AdminDashboard = ({ API_BASE }) => {
     clearAdminSession();
   };
 
-  const runAction = async (path) => {
-    await authedFetch(`${API_BASE}${path}`, { method: 'POST' });
-    await fetchDashboardData();
+  const runAction = async (path, successTitle) => {
+    try {
+      await authedFetch(`${API_BASE}${path}`, { method: 'POST' });
+      await fetchDashboardData();
+      showToast(successTitle || 'Updated');
+    } catch (err) {
+      showToast('Action failed', err.message, 'error');
+    }
   };
 
   const handleClearSubmissions = async () => {
@@ -311,27 +333,26 @@ const AdminDashboard = ({ API_BASE }) => {
     try {
       await authedFetch(`${API_BASE}/admin/submissions/clear`, { method: 'POST' });
       setSubmissions([]);
-      alert("All submissions cleared and teams reset successfully!");
+      showToast('Reset complete', 'Submissions cleared and teams reset.');
     } catch (err) {
-      alert("Failed to clear submissions: " + err.message);
+      showToast('Reset failed', err.message, 'error');
     }
   };
 
   if (!isAdmin) {
     return (
-      <div className="admin-dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#03080a' }}>
-        <form onSubmit={handleAdminLogin} style={{ width: '100%', maxWidth: '420px', padding: '24px', border: '1px solid var(--cyan-primary)', background: '#010608' }}>
-          <div style={{ textAlign: 'center', fontSize: '18px', marginBottom: '20px', color: 'var(--cyan-primary)' }}>
-            CHERNOBYL_TRSHNT // ADMIN_GATE
-          </div>
+      <div className="admin-apple admin-dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--color-bg)' }}>
+        <form onSubmit={handleAdminLogin} className="admin-login-card">
+          <div className="admin-login-title">Admin</div>
           <div style={{ display: 'grid', gap: '14px' }}>
-            <input className="id-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@chernobyl.net" required />
-            <input className="id-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="password" required />
-            <button className="cyber-btn striped" type="submit" style={{ color: 'var(--bg-darkest)' }}>
-              <Shield size={14} /> AUTHORIZE ACCESS
+            <input className="id-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required />
+            <input className="id-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required />
+            <button className="cyber-btn striped" type="submit">
+              <Shield size={14} /> Sign in
             </button>
           </div>
         </form>
+        <ToastStack toasts={toasts} onDismiss={dismissToast} />
       </div>
     );
   }
@@ -509,19 +530,19 @@ const AdminDashboard = ({ API_BASE }) => {
                       <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); setSelectedQR(team); }}>
                         <QrCode size={14} /> VIEW QR
                       </button>
-                      <button className="cyber-btn striped" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/start`); }}>
+                      <button className="cyber-btn striped" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/start`, 'Mission started'); }}>
                         <Play size={14} /> START
                       </button>
-                      <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/stop`); }}>
+                      <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/stop`, 'Timer stopped'); }}>
                         <Power size={14} /> STOP TIMER
                       </button>
-                      <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/clue-override`); }}>
+                      <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/clue-override`, 'Clue skipped'); }}>
                         <SkipForward size={14} /> SKIP CLUE
                       </button>
-                      <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/reset`); }}>
+                      <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/reset`, 'Mission reset'); }}>
                         <RefreshCw size={14} /> RESET MISSION
                       </button>
-                      <button className="cyber-btn-outline" style={{ borderColor: '#f59e0b', color: '#fbbf24' }} onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/reset-session`); }}>
+                      <button className="cyber-btn-outline" style={{ borderColor: '#f59e0b', color: '#fbbf24' }} onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/reset-session`, 'Session reset'); }}>
                         <RefreshCw size={14} /> RESET IP/SESSION
                       </button>
                     </div>
@@ -773,7 +794,7 @@ const AdminDashboard = ({ API_BASE }) => {
                 color: '#fff',
                 fontSize: '16px',
                 cursor: 'pointer',
-                fontFamily: "'Share Tech Mono', monospace"
+                fontFamily: 'var(--font-sans)'
               }}
             >
               CLOSE [X]
@@ -781,6 +802,9 @@ const AdminDashboard = ({ API_BASE }) => {
           </div>
         </div>
       )}
+
+      {/* Smooth Toast Stack for Reset, Tasks, Errors, and Real-Time Notifications */}
+      <ToastStack toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 };
