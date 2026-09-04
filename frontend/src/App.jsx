@@ -5,6 +5,8 @@ import Scan from './pages/Scan';
 import AdminDashboard from './pages/AdminDashboard';
 import RegistrationPage from './pages/RegistrationPage';
 import RegistrationSuccess from './pages/RegistrationSuccess';
+import HomeLandingPage from './pages/HomeLandingPage';
+import PwaDownloadLanding from './pages/PwaDownloadLanding';
 import ScanlineOverlay from './components/ScanlineOverlay';
 import BackgroundCanvas from './components/BackgroundCanvas';
 
@@ -14,9 +16,15 @@ function App() {
   const [operatorName, setOperatorName] = useState('');
   const [teamInfo, setTeamInfo] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem('chernobyl_token') || localStorage.getItem('stalker_token') || '');
-  const [currentRoute, setCurrentRoute] = useState('welcome');
+  const [currentRoute, setCurrentRoute] = useState('pwa-download');
   const [isLoading, setIsLoading] = useState(true);
   const [registeredTeam, setRegisteredTeam] = useState(null);
+
+  const isStandalone = Boolean(
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true ||
+    document.referrer.includes('android-app://')
+  );
 
   // Parse initial route from URL hash
   useEffect(() => {
@@ -32,24 +40,32 @@ function App() {
         setCurrentRoute('register');
       } else if (hash === '#registration-success') {
         setCurrentRoute('registration-success');
-      } else {
+      } else if (hash === '#welcome') {
         setCurrentRoute('welcome');
+      } else if (hash === '#home') {
+        setCurrentRoute('home');
+      } else if (hash === '#pwa-download') {
+        setCurrentRoute('pwa-download');
+      } else {
+        // Default route on `/`
+        if (isStandalone) {
+          setCurrentRoute('home');
+        } else {
+          setCurrentRoute('pwa-download');
+        }
       }
     };
 
     parseRoute();
     window.addEventListener('hashchange', parseRoute);
     return () => window.removeEventListener('hashchange', parseRoute);
-  }, []);
+  }, [isStandalone]);
 
   // Persist session if token exists
   useEffect(() => {
     const verifyToken = async () => {
       if (!token) {
         setIsLoading(false);
-        if (!window.location.hash.startsWith('#admin')) {
-          window.location.hash = '#welcome';
-        }
         return;
       }
 
@@ -62,7 +78,7 @@ function App() {
           const data = await response.json();
           setOperatorName(data.user.name);
           setTeamInfo(data.team);
-          if (window.location.hash === '#welcome' || window.location.hash === '') {
+          if (window.location.hash === '#welcome' || window.location.hash === '#pwa-download') {
             window.location.hash = '#hud';
           }
         } else {
@@ -169,6 +185,26 @@ function App() {
     window.location.hash = `#${route}`;
   };
 
+  // PWA Download Landing page (Default browser screen on `/`)
+  if (currentRoute === 'pwa-download') {
+    return (
+      <PwaDownloadLanding
+        onContinueToWeb={() => window.location.hash = '#home'}
+        onOpenRegister={() => window.location.hash = '#register'}
+        onOpenLogin={() => window.location.hash = '#welcome'}
+      />
+    );
+  }
+
+  // Home Landing Page (Full website landing page from chiru webpage)
+  if (currentRoute === 'home') {
+    return (
+      <HomeLandingPage
+        onNavigate={(route) => window.location.hash = `#${route}`}
+      />
+    );
+  }
+
   // Admin page — full screen, no PDA frame
   if (currentRoute === 'admin') {
     return (
@@ -208,7 +244,7 @@ function App() {
     );
   }
 
-  // Main PDA view — Welcome + HUD
+  // Main PDA view — Welcome, Register, RegistrationSuccess, HUD
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
       {/* === Full-screen atmospheric background layers === */}
@@ -282,7 +318,7 @@ function App() {
                 <RegistrationPage 
                   API_BASE={API_BASE}
                   onRegisterSuccess={handleRegisterSuccess}
-                  onCancel={() => window.location.hash = '#welcome'}
+                  onCancel={() => window.location.hash = '#home'}
                 />
               )}
 

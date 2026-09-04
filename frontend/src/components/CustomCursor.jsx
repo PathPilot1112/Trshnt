@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import gsap from 'gsap';
 
 const CustomCursor = () => {
   const glowRef = useRef(null);
@@ -6,68 +7,32 @@ const CustomCursor = () => {
   const ringRef = useRef(null);
 
   useEffect(() => {
-    let glowX = -300, glowY = -300;
-    let ringX = -300, ringY = -300;
-    let dotX = -300, dotY = -300;
-    let mouseX = -300, mouseY = -300;
-    let animId;
+    // Dot follows instantly
+    const xDot = gsap.quickTo(dotRef.current, "x", { duration: 0.05, ease: "power3" });
+    const yDot = gsap.quickTo(dotRef.current, "y", { duration: 0.05, ease: "power3" });
+    
+    // Ring follows with slight delay
+    const xRing = gsap.quickTo(ringRef.current, "x", { duration: 0.15, ease: "power3" });
+    const yRing = gsap.quickTo(ringRef.current, "y", { duration: 0.15, ease: "power3" });
 
-    const lerp = (a, b, t) => a + (b - a) * t;
+    // Large glow follows with more delay for a trailing effect
+    const xGlow = gsap.quickTo(glowRef.current, "x", { duration: 0.3, ease: "power3" });
+    const yGlow = gsap.quickTo(glowRef.current, "y", { duration: 0.3, ease: "power3" });
 
-    const animate = () => {
-      // Dot is nearly instant
-      dotX = lerp(dotX, mouseX - 3, 0.35);
-      dotY = lerp(dotY, mouseY - 3, 0.35);
-
-      // Ring follows with slight lag
-      ringX = lerp(ringX, mouseX - 20, 0.15);
-      ringY = lerp(ringY, mouseY - 20, 0.15);
-
-      // Large glow trails most
-      glowX = lerp(glowX, mouseX - 150, 0.07);
-      glowY = lerp(glowY, mouseY - 150, 0.07);
-
-      if (dotRef.current) {
-        dotRef.current.style.transform = `translate(${dotX}px, ${dotY}px)`;
-      }
-      if (ringRef.current) {
-        ringRef.current.style.transform = `translate(${ringX}px, ${ringY}px)`;
-      }
-      if (glowRef.current) {
-        glowRef.current.style.transform = `translate(${glowX}px, ${glowY}px)`;
-      }
-
-      animId = requestAnimationFrame(animate);
+    const handleMouseMove = (e) => {
+      // Offset by half of each element's dimensions to center them on the mouse
+      xDot(e.clientX - 3);
+      yDot(e.clientY - 3);
+      
+      xRing(e.clientX - 20);
+      yRing(e.clientY - 20);
+      
+      xGlow(e.clientX - 150);
+      yGlow(e.clientY - 150);
     };
 
-    const updatePos = (clientX, clientY) => {
-      mouseX = clientX;
-      mouseY = clientY;
-    };
-
-    const handlePointerMove = (e) => {
-      updatePos(e.clientX, e.clientY);
-    };
-
-    const handleTouchMove = (e) => {
-      if (e.touches && e.touches[0]) {
-        updatePos(e.touches[0].clientX, e.touches[0].clientY);
-      }
-    };
-
-    window.addEventListener('mousemove', handlePointerMove);
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('touchmove', handleTouchMove, { passive: true });
-    window.addEventListener('touchstart', handleTouchMove, { passive: true });
-    animId = requestAnimationFrame(animate);
-
-    return () => {
-      window.removeEventListener('mousemove', handlePointerMove);
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchstart', handleTouchMove);
-      cancelAnimationFrame(animId);
-    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
   return (
@@ -83,10 +48,10 @@ const CustomCursor = () => {
           height: '300px',
           borderRadius: '50%',
           pointerEvents: 'none',
-          zIndex: 99997,
+          zIndex: 9997,
           background: 'radial-gradient(circle, rgba(57, 255, 20, 0.06) 0%, rgba(57, 255, 20, 0) 60%)',
           mixBlendMode: 'screen',
-          willChange: 'transform',
+          transform: 'translate(-100vw, -100vh)' // Hide offscreen initially
         }}
       />
       {/* Outer animated ring */}
@@ -100,10 +65,10 @@ const CustomCursor = () => {
           height: '40px',
           borderRadius: '50%',
           pointerEvents: 'none',
-          zIndex: 99998,
+          zIndex: 9998,
           border: '2px dotted rgba(57, 255, 20, 0.6)',
           boxShadow: '0 0 10px rgba(57, 255, 20, 0.2)',
-          willChange: 'transform',
+          transform: 'translate(-100vw, -100vh)' 
         }}
       />
       {/* Inner solid dot */}
@@ -117,10 +82,10 @@ const CustomCursor = () => {
           height: '6px',
           borderRadius: '50%',
           pointerEvents: 'none',
-          zIndex: 99999,
+          zIndex: 9999,
           backgroundColor: '#39FF14',
           boxShadow: '0 0 8px #39FF14',
-          willChange: 'transform',
+          transform: 'translate(-100vw, -100vh)' 
         }}
       />
     </>
