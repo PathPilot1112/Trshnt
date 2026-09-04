@@ -1739,4 +1739,228 @@ body {
   }
 }
 
+/* ============================================================
+   STALKER HUD DASHBOARD — PREMIUM APPLE/TACTICAL GLASS UI
+   ============================================================ */
+.hud-shell {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  box-sizing: border-box;
+  background: transparent;
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  position: relative;
+  overflow: hidden;
+}
+
+.hud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(8, 20, 22, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(57, 255, 20, 0.25);
+  border-radius: 14px;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.hud-kicker {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--color-neon-green);
+  text-transform: uppercase;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hud-operator {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-top: 2px;
+  letter-spacing: 0.3px;
+}
+
+.hud-icon-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--color-text);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hud-icon-btn:hover {
+  background: rgba(204, 0, 0, 0.25);
+  border-color: rgba(204, 0, 0, 0.6);
+  color: #ff4d4d;
+  transform: scale(1.05);
+}
+
+.hud-scroll {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-right: 2px;
+  margin-bottom: 14px;
+}
+
+.hud-telemetry-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.hud-timer-card, .hud-progress-card {
+  background: rgba(4, 16, 18, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(57, 255, 20, 0.2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.hud-widget-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hud-widget-val {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-neon-green);
+  text-shadow: 0 0 8px var(--color-green-glow);
+  margin-top: 4px;
+}
+
+.hud-clue-card {
+  background: rgba(6, 20, 24, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(57, 255, 20, 0.3);
+  border-radius: 16px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(57, 255, 20, 0.05);
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.hud-clue-card-header {
+  padding: 12px 16px;
+  background: rgba(0, 30, 35, 0.6);
+  border-bottom: 1px solid rgba(57, 255, 20, 0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hud-clue-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  color: var(--color-neon-green);
+  background: rgba(57, 255, 20, 0.12);
+  border: 1px solid rgba(57, 255, 20, 0.35);
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.hud-clue-body {
+  padding: 20px 18px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+.hud-clue-text {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.75;
+  color: #e6f2f2;
+  letter-spacing: 0.2px;
+  position: relative;
+  z-index: 2;
+  font-weight: 400;
+}
+
+.hud-copy {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(217, 224, 224, 0.85);
+  text-align: center;
+  padding: 10px;
+}
+
+.hud-scan-btn {
+  width: 100%;
+  padding: 15px;
+  background: var(--color-neon-green);
+  color: #040d0e;
+  border: none;
+  border-radius: 14px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 0 20px var(--color-green-glow), 0 4px 12px rgba(0,0,0,0.5);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.hud-scan-btn:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 0 30px var(--color-green-glow), 0 6px 16px rgba(0,0,0,0.6);
+}
+
+.hud-scan-btn:disabled {
+  background: rgba(57, 255, 20, 0.2);
+  color: rgba(255, 255, 255, 0.3);
+  box-shadow: none;
+  cursor: not-allowed;
+  border: 1px solid rgba(57, 255, 20, 0.15);
+}
+
+
 
