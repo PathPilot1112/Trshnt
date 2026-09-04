@@ -22,8 +22,11 @@ function App() {
 
   const isStandalone = Boolean(
     window.matchMedia('(display-mode: standalone)').matches ||
+    window.matchMedia('(display-mode: fullscreen)').matches ||
+    window.matchMedia('(display-mode: minimal-ui)').matches ||
     window.navigator.standalone === true ||
-    document.referrer.includes('android-app://')
+    document.referrer.includes('android-app://') ||
+    localStorage.getItem('chernobyl_pwa_installed') === 'true'
   );
 
   // Parse initial route from URL hash
@@ -189,7 +192,6 @@ function App() {
   if (currentRoute === 'pwa-download') {
     return (
       <PwaDownloadLanding
-        onContinueToWeb={() => window.location.hash = '#home'}
         onOpenRegister={() => window.location.hash = '#register'}
         onOpenLogin={() => window.location.hash = '#welcome'}
       />
