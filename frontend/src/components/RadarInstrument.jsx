@@ -1,6 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import CanvasErrorBoundary from './CanvasErrorBoundary';
 
 const ReactorFacility = () => {
   const groupRef = useRef();
@@ -10,14 +11,9 @@ const ReactorFacility = () => {
 
   useFrame((state) => {
     if (groupRef.current) {
-      // The circle hits the edges rhythmically based on MagicRings speed.
-      // Speed 1.5 on MagicRings roughly translates to a pulse here:
       const pulse = Math.pow(Math.sin(state.clock.elapsedTime * 1.0), 8);
-      
-      // Add a rapid electrical flicker when the pulse is strong
       const isFlickering = pulse > 0.3 && Math.random() > 0.4;
       const finalPulse = isFlickering ? Math.random() * 0.5 : pulse;
-      
       const currentColor = baseColor.clone().lerp(glowColor, finalPulse);
       
       groupRef.current.traverse((child) => {
@@ -71,16 +67,17 @@ const ReactorFacility = () => {
         <boxGeometry args={[1.5, 1.5, 2]} />
         <meshBasicMaterial color="#D9E0E0" wireframe={true} />
       </mesh>
-      
     </group>
   );
 };
 
 const RadarInstrument = () => {
   return (
-    <Canvas camera={{ position: [5, 4, 6], fov: 50 }}>
-      <ReactorFacility />
-    </Canvas>
+    <CanvasErrorBoundary fallback={null}>
+      <Canvas camera={{ position: [5, 4, 6], fov: 50 }}>
+        <ReactorFacility />
+      </Canvas>
+    </CanvasErrorBoundary>
   );
 };
 

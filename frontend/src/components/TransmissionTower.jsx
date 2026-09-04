@@ -1,6 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import CanvasErrorBoundary from './CanvasErrorBoundary';
 
 const IndustrialPlant = () => {
   const groupRef = useRef();
@@ -11,11 +12,8 @@ const IndustrialPlant = () => {
   useFrame((state) => {
     if (groupRef.current) {
       const pulse = Math.pow(Math.sin(state.clock.elapsedTime * 1.0), 8);
-      
-      // Add a rapid electrical flicker when the pulse is strong
       const isFlickering = pulse > 0.3 && Math.random() > 0.4;
       const finalPulse = isFlickering ? Math.random() * 0.5 : pulse;
-      
       const currentColor = baseColor.clone().lerp(glowColor, finalPulse);
       
       groupRef.current.traverse((child) => {
@@ -73,16 +71,17 @@ const IndustrialPlant = () => {
         <boxGeometry args={[2.5, 3, 2]} />
         <meshBasicMaterial color="#D9E0E0" wireframe={true} />
       </mesh>
-
     </group>
   );
 };
 
 const TransmissionTower = () => {
   return (
-    <Canvas camera={{ position: [-5, 4, 6], fov: 50 }}>
-      <IndustrialPlant />
-    </Canvas>
+    <CanvasErrorBoundary fallback={null}>
+      <Canvas camera={{ position: [-5, 4, 6], fov: 50 }}>
+        <IndustrialPlant />
+      </Canvas>
+    </CanvasErrorBoundary>
   );
 };
 

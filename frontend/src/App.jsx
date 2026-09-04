@@ -25,8 +25,7 @@ function App() {
     window.matchMedia('(display-mode: fullscreen)').matches ||
     window.matchMedia('(display-mode: minimal-ui)').matches ||
     window.navigator.standalone === true ||
-    document.referrer.includes('android-app://') ||
-    localStorage.getItem('chernobyl_pwa_installed') === 'true'
+    document.referrer.includes('android-app://')
   );
 
   // Parse initial route from URL hash

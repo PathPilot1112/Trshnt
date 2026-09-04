@@ -1,7 +1,8 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Center } from '@react-three/drei';
+import CanvasErrorBoundary from './CanvasErrorBoundary';
 
 const RadiationGeometry = () => {
   const shapes = useMemo(() => {
@@ -39,15 +40,11 @@ const RadiationGeometry = () => {
   
   useFrame((state, delta) => {
     if (groupRef.current) {
-      // Reactive rotation based on mouse
       targetRotation.current.x = (mouse.y * Math.PI) / 4;
       targetRotation.current.y = (mouse.x * Math.PI) / 4;
 
-      // Smooth interpolation
       groupRef.current.rotation.x += (targetRotation.current.x - groupRef.current.rotation.x) * 0.05;
       groupRef.current.rotation.y += (targetRotation.current.y - groupRef.current.rotation.y) * 0.05;
-      
-      // Continuous slow baseline rotation
       groupRef.current.rotation.z += delta * 0.1;
     }
   });
@@ -72,11 +69,31 @@ const RadiationGeometry = () => {
   );
 };
 
+const FallbackRadiationSymbol = () => (
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+    animation: 'spin 20s linear infinite'
+  }}>
+    <svg viewBox="0 0 100 100" width="80%" height="80%">
+      <circle cx="50" cy="50" r="12" fill="#39FF14" />
+      <path d="M50,50 L50,15 A35,35 0 0,1 80.3,32.5 Z" fill="#39FF14" opacity="0.85" />
+      <path d="M50,50 L80.3,67.5 A35,35 0 0,1 50,85 Z" fill="#39FF14" opacity="0.85" />
+      <path d="M50,50 L19.7,67.5 A35,35 0 0,1 19.7,32.5 Z" fill="#39FF14" opacity="0.85" />
+    </svg>
+  </div>
+);
+
 const RadiationSymbol = () => {
   return (
-    <Canvas camera={{ position: [0, 0, 10], fov: 40 }} style={{ cursor: 'crosshair' }}>
-      <RadiationGeometry />
-    </Canvas>
+    <CanvasErrorBoundary fallback={<FallbackRadiationSymbol />}>
+      <Canvas camera={{ position: [0, 0, 10], fov: 40 }} style={{ cursor: 'crosshair' }}>
+        <RadiationGeometry />
+      </Canvas>
+    </CanvasErrorBoundary>
   );
 };
 
