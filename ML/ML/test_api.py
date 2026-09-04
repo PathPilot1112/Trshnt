@@ -18,7 +18,8 @@ try:
         if response.status_code == 200:
             result = response.json()
             print(f"✅ Success!")
-            print(f"Prediction: {result['prediction']}")
+            prediction = result.get('prediction') or result.get('location') or "unknown"
+            print(f"Prediction: {prediction}")
             print(f"Confidence: {result['confidence'] * 100:.2f}%")
         else:
             print(f"❌ Failed with status code: {response.status_code}")
