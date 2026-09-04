@@ -62,9 +62,9 @@ const SoldierCanvas = ({ scrollProgress }) => {
       ctx.fillStyle = '#9BA8A8';
 
       const isMobile = canvas.width < 768;
-      const spacing = isMobile ? 4 : 5;
-      const cols = Math.floor(canvas.width / spacing) + 5; // Draw extra columns past the edge
-      const rowHeight = isMobile ? 5 : 7;
+      const spacing = isMobile ? 7 : 8;
+      const cols = Math.floor(canvas.width / spacing) + 2;
+      const rowHeight = isMobile ? 9 : 10;
       const rows = Math.floor(canvas.height / rowHeight) + 1;
 
       const p = scrollProgress.current;
@@ -208,9 +208,9 @@ const MascotCanvas = ({ scrollProgress }) => {
       ctx.fillStyle = '#9BA8A8';
 
       const isMobile = canvas.width < 768;
-      const spacing = isMobile ? 4 : 5;
-      const cols = Math.floor(canvas.width / spacing) + 5;
-      const rowHeight = isMobile ? 5 : 7;
+      const spacing = isMobile ? 7 : 8;
+      const cols = Math.floor(canvas.width / spacing) + 2;
+      const rowHeight = isMobile ? 9 : 10;
       const rows = Math.floor(canvas.height / rowHeight) + 1;
 
       const p = scrollProgress.current;

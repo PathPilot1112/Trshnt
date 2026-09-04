@@ -6,7 +6,15 @@ const CustomCursor = () => {
   const dotRef = useRef(null);
   const ringRef = useRef(null);
 
+  const isTouchDevice = typeof window !== 'undefined' && (
+    'ontouchstart' in window ||
+    navigator.maxTouchPoints > 0 ||
+    window.matchMedia('(pointer: coarse)').matches
+  );
+
   useEffect(() => {
+    if (isTouchDevice) return;
+
     // Dot follows instantly
     const xDot = gsap.quickTo(dotRef.current, "x", { duration: 0.05, ease: "power3" });
     const yDot = gsap.quickTo(dotRef.current, "y", { duration: 0.05, ease: "power3" });
@@ -33,7 +41,9 @@ const CustomCursor = () => {
 
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
+  }, [isTouchDevice]);
+
+  if (isTouchDevice) return null;
 
   return (
     <>

@@ -16,19 +16,33 @@ function App() {
   const [operatorName, setOperatorName] = useState('');
   const [teamInfo, setTeamInfo] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem('chernobyl_token') || localStorage.getItem('stalker_token') || '');
-  const [currentRoute, setCurrentRoute] = useState('pwa-download');
-  const [isLoading, setIsLoading] = useState(true);
-  const [registeredTeam, setRegisteredTeam] = useState(null);
 
-  const isStandalone = Boolean(
+  const isStandalone = typeof window !== 'undefined' && Boolean(
     window.matchMedia('(display-mode: standalone)').matches ||
     window.matchMedia('(display-mode: fullscreen)').matches ||
     window.matchMedia('(display-mode: minimal-ui)').matches ||
-    window.navigator.standalone === true ||
+    window.navigator?.standalone === true ||
     document.referrer.includes('android-app://')
   );
 
-  // Parse initial route from URL hash
+  const getInitialRoute = () => {
+    const hash = typeof window !== 'undefined' ? window.location.hash : '';
+    if (hash === '#admin' || hash === '#admin-login') return 'admin';
+    if (hash === '#hud') return 'hud';
+    if (hash === '#scan') return 'scan';
+    if (hash === '#register') return 'register';
+    if (hash === '#registration-success') return 'registration-success';
+    if (hash === '#welcome') return 'welcome';
+    if (hash === '#home') return 'home';
+    if (hash === '#pwa-download') return 'pwa-download';
+    return isStandalone ? 'home' : 'pwa-download';
+  };
+
+  const [currentRoute, setCurrentRoute] = useState(getInitialRoute);
+  const [isLoading, setIsLoading] = useState(true);
+  const [registeredTeam, setRegisteredTeam] = useState(null);
+
+  // Parse route from URL hash changes
   useEffect(() => {
     const parseRoute = () => {
       const hash = window.location.hash;
