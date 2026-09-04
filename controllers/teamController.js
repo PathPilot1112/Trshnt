@@ -327,12 +327,6 @@ export const loginWithQr = async (req, res) => {
       return res.status(404).json({ message: "QR is not mapped to any team" });
     }
 
-    if (team.status === "not_started" || req.body.force) {
-      team.activeSessionToken = null;
-    } else if (team.activeSessionToken) {
-      return res.status(403).json({ message: "Team already has an active session." });
-    }
-
     const email = `qr_${team._id}@chernobyl.net`;
     let user = await User.findOne({ email });
 

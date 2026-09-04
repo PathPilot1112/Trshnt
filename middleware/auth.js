@@ -15,13 +15,6 @@ export const protect = async (req, res, next) => {
     const user = await User.findById(decoded.id).select("-password");
     if (!user) return res.status(401).json({ message: "User no longer exists" });
 
-    if (user.team && decoded.sessionToken) {
-      const team = await Team.findById(user.team);
-      if (team && team.activeSessionToken && team.activeSessionToken !== decoded.sessionToken) {
-        return res.status(403).json({ message: "Session invalidated or active on another device" });
-      }
-    }
-
     req.user = user;
     next();
   } catch (err) {
