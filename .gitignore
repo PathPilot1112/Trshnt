@@ -6,3 +6,19 @@ node_modules/
 ML/ML/Treasure hunt Photos/
 ML/ML/__pycache__/
 ML/ML/artifacts/
+
+# Documents, PDFs, and Excel sheets (DO NOT PUSH TO GITHUB)
+*.pdf
+*.xlsx
+*.doc
+*.docx
+Treasure Hunt Routes.pdf
+Treasure Hunt Clues.xlsx
+
+# Testing folders & scratch files (DO NOT PUSH TO GITHUB)
+chiru/
+chiru webpage/
+uploads/
+test_workflow.js
+FIX_QR_LOGIN_SERVER_ERROR.md
+.idea/

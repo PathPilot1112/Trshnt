@@ -15,7 +15,9 @@ import {
   stopTeamTimer,
   getClueLocations,
   clearSubmissions,
-  resetTeamSession
+  resetTeamSession,
+  getAllRoutes,
+  assignTeamRoute
 } from "../controllers/adminController.js";
 import { protect, adminOnly } from "../middleware/auth.js";
 
@@ -28,6 +30,7 @@ router.get("/teams", protect, adminOnly, listTeams);
 router.get("/submissions", protect, adminOnly, listSubmissions);
 router.post("/submissions/clear", protect, adminOnly, clearSubmissions);
 router.get("/clue-locations", protect, adminOnly, getClueLocations);
+router.get("/routes", protect, adminOnly, getAllRoutes);
 router.get("/clues", protect, adminOnly, listClues);
 router.post("/clues", protect, adminOnly, createClue);
 router.put("/clues/:id", protect, adminOnly, updateClue);
@@ -35,6 +38,7 @@ router.delete("/clues/:id", protect, adminOnly, deleteClue);
 router.get("/:id", protect, adminOnly, getTeam);
 
 router.post("/teams/:id/start", protect, adminOnly, startTeamMission);
+router.post("/teams/:id/assign-route", protect, adminOnly, assignTeamRoute);
 router.post("/teams/:id/stop", protect, adminOnly, stopTeamTimer);
 router.post("/teams/:id/reset", protect, adminOnly, resetTeamMission);
 router.post("/teams/:id/reset-session", protect, adminOnly, resetTeamSession);

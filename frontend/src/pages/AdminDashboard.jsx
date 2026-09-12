@@ -36,6 +36,8 @@ const AdminDashboard = ({ API_BASE }) => {
   const [mlStatus, setMlStatus] = useState('red');
   const [isWaking, setIsWaking] = useState(false);
   const [toasts, setToasts] = useState([]);
+  const [allRoutes, setAllRoutes] = useState([]);
+  const [teamRoutes, setTeamRoutes] = useState({});
 
   const showToast = (title, message = '', type = 'success') => {
     const id = `${Date.now()}-${Math.random()}`;
@@ -161,11 +163,12 @@ const AdminDashboard = ({ API_BASE }) => {
 
   const fetchDashboardData = async () => {
     const headers = { Authorization: `Bearer ${adminToken}` };
-    const [teamsRes, submissionsRes, leaderboardRes, clueLocationsRes] = await Promise.all([
+    const [teamsRes, submissionsRes, leaderboardRes, clueLocationsRes, routesRes] = await Promise.all([
       fetch(`${API_BASE}/admin/teams`, { headers }),
       fetch(`${API_BASE}/admin/submissions`, { headers }),
       fetch(`${API_BASE}/admin/leaderboard/live`, { headers }),
       fetch(`${API_BASE}/admin/clue-locations`, { headers }),
+      fetch(`${API_BASE}/admin/routes`, { headers }),
     ]);
 
     if ([teamsRes, submissionsRes, leaderboardRes, clueLocationsRes].some((res) => res.status === 401)) {
@@ -191,6 +194,11 @@ const AdminDashboard = ({ API_BASE }) => {
     if (clueLocationsRes && clueLocationsRes.ok) {
       const data = await clueLocationsRes.json();
       setClueLocations(data.clueLocations || []);
+    }
+
+    if (routesRes && routesRes.ok) {
+      const data = await routesRes.json();
+      setAllRoutes(data.routes || []);
     }
   };
 
@@ -316,9 +324,14 @@ const AdminDashboard = ({ API_BASE }) => {
     clearAdminSession();
   };
 
-  const runAction = async (path, successTitle) => {
+  const runAction = async (path, successTitle, body = null) => {
     try {
-      await authedFetch(`${API_BASE}${path}`, { method: 'POST' });
+      const options = { method: 'POST' };
+      if (body) {
+        options.headers = { 'Content-Type': 'application/json' };
+        options.body = JSON.stringify(body);
+      }
+      await authedFetch(`${API_BASE}${path}`, options);
       await fetchDashboardData();
       showToast(successTitle || 'Updated');
     } catch (err) {
@@ -484,15 +497,18 @@ const AdminDashboard = ({ API_BASE }) => {
           {mergedTeams.map((team, index) => {
             const isExpanded = !!expandedTeams[team._id];
             return (
-              <div key={team._id} style={{ border: '1px solid rgba(57,255,20,0.2)', background: 'rgba(3,12,15,0.75)', padding: '16px' }}>
+              <div key={team._id} style={{ border: '1px solid rgba(57,255,20,0.2)', background: 'rgba(3,12,15,0.75)', padding: '16px', borderRadius: '8px', backdropFilter: 'blur(12px)' }}>
                 <div 
                   onClick={() => toggleTeam(team._id)}
                   style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
                 >
                   <div>
                     <span style={{ color: '#fff', fontSize: '16px', fontWeight: 'bold' }}>{index + 1}. {team.name}</span>
-                    <span style={{ marginLeft: '12px', fontSize: '11px', color: 'rgba(57,255,20,0.6)' }}>
+                    <span style={{ marginLeft: '12px', fontSize: '11px', color: 'rgba(57,255,20,0.8)' }}>
                       STATUS: {team.status} | SCORE: {team.score || 0} | CLUE: {(team.currentClueIndex || 0) + 1}
+                    </span>
+                    <span style={{ marginLeft: '12px', fontSize: '11px', color: '#00e5ff', fontWeight: 'bold' }}>
+                      ROUTE: {team.assignedRouteName ? `${team.assignedRouteName} (ID: ${team.assignedRouteId})` : 'Auto / Not Set'}
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--green-primary)' }}>
@@ -502,7 +518,7 @@ const AdminDashboard = ({ API_BASE }) => {
 
                 {isExpanded && (
                   <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(57,255,20,0.1)', display: 'flex', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-                    <div>
+                    <div style={{ flex: '1', minWidth: '280px' }}>
                       <div style={{ fontSize: '11px', marginTop: '6px' }}>
                         TIMER: {formatElapsed(team.elapsedMs || team.timerAccumulatedMs || 0)} {team.timerRunning ? '(RUNNING)' : '(STOPPED)'}
                       </div>
@@ -512,6 +528,52 @@ const AdminDashboard = ({ API_BASE }) => {
                       <div style={{ fontSize: '11px', marginTop: '6px', color: '#fff' }}>
                         MEMBERS: {team.members?.map(m => m.name).join(', ') || 'None'}
                       </div>
+
+                      {/* Route Selection Dropdown */}
+                      <div style={{ marginTop: '12px', padding: '10px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(0,229,255,0.25)', borderRadius: '6px' }}>
+                        <div style={{ fontSize: '10px', color: '#00e5ff', fontWeight: 'bold', marginBottom: '6px', letterSpacing: '1px' }}>
+                          ASSIGN TACTICAL ROUTE (1 OF 50):
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <select
+                            value={teamRoutes[team._id] !== undefined ? teamRoutes[team._id] : (team.assignedRouteId || '')}
+                            onChange={(e) => setTeamRoutes((prev) => ({ ...prev, [team._id]: e.target.value }))}
+                            style={{
+                              background: '#020d10',
+                              color: '#39ff14',
+                              border: '1px solid rgba(57,255,20,0.4)',
+                              padding: '6px 10px',
+                              fontSize: '11px',
+                              fontFamily: "'Share Tech Mono', monospace",
+                              outline: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              flex: '1',
+                              minWidth: '220px'
+                            }}
+                          >
+                            <option value="">-- AUTO RANDOM (ROUTE 1-50) --</option>
+                            {allRoutes.map((r) => (
+                              <option key={r.routeId} value={r.routeId}>
+                                Route {r.routeId} ({r.distance}) — {r.locations.slice(0, 3).join(', ')}...
+                              </option>
+                            ))}
+                          </select>
+
+                          <button
+                            className="cyber-btn-outline"
+                            style={{ padding: '6px 12px', fontSize: '10px', borderColor: '#00e5ff', color: '#00e5ff' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const selectedRId = teamRoutes[team._id] || team.assignedRouteId;
+                              runAction(`/admin/teams/${team._id}/assign-route`, `Route assigned`, { routeId: selectedRId });
+                            }}
+                          >
+                            SAVE ROUTE
+                          </button>
+                        </div>
+                      </div>
+
                       {team.completedClues && team.completedClues.length > 0 && (
                         <div style={{ marginTop: '10px' }}>
                           <div style={{ fontSize: '11px', color: 'rgba(57,255,20,0.6)', fontWeight: 'bold' }}>COMPLETED CLUES:</div>
@@ -530,7 +592,7 @@ const AdminDashboard = ({ API_BASE }) => {
                       <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); setSelectedQR(team); }}>
                         <QrCode size={14} /> VIEW QR
                       </button>
-                      <button className="cyber-btn striped" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/start`, 'Mission started'); }}>
+                      <button className="cyber-btn striped" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/start`, 'Mission started', { routeId: teamRoutes[team._id] || team.assignedRouteId }); }}>
                         <Play size={14} /> START
                       </button>
                       <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/stop`, 'Timer stopped'); }}>

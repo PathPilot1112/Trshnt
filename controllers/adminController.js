@@ -2,7 +2,7 @@ import Clue from "../models/Clue.js";
 import Team from "../models/Team.js";
 import Submission from "../models/Submission.js";
 import User from "../models/User.js";
-import { buildRandomCluePath } from "../utils/cluePath.js";
+import { buildRandomCluePath, assignRouteToTeam, getRoutes } from "../utils/cluePath.js";
 import jwt from "jsonwebtoken";
 import fs from "fs/promises";
 import path from "path";
@@ -134,12 +134,39 @@ export const listTeams = async(req, res)=>{
   }
 }
 
+export const getAllRoutes = async (req, res) => {
+  try {
+    const routes = getRoutes();
+    res.json({ routes });
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching routes list", error: err.message });
+  }
+};
+
+export const assignTeamRoute = async (req, res) => {
+  try {
+    const { routeId } = req.body;
+    const team = await Team.findById(req.params.id);
+    if (!team) return res.status(404).json({ message: "Team not found" });
+
+    const clues = await Clue.find();
+    assignRouteToTeam(team, routeId, clues);
+    await team.save();
+
+    res.json({ message: `Route ${team.assignedRouteName} assigned successfully`, team });
+  } catch (err) {
+    res.status(500).json({ message: "Error assigning route", error: err.message });
+  }
+};
+
 export const startTeamMission = async (req, res) => {
   try {
     const team = await Team.findById(req.params.id);
     if (!team) return res.status(404).json({ message: "Team not found" });
 
+    const selectedRouteId = req.body?.routeId || req.query?.routeId || team.assignedRouteId;
     const clues = await Clue.find();
+
     team.status = "in_progress";
     team.startedAt = new Date();
     team.timerStartedAt = new Date();
@@ -149,7 +176,8 @@ export const startTeamMission = async (req, res) => {
     team.currentClueIndex = 0;
     team.completedClues = [];
     team.score = 0;
-    team.cluePath = buildRandomCluePath(clues);
+    
+    assignRouteToTeam(team, selectedRouteId, clues);
     await team.save();
 
     const io = req.app.get("io");
@@ -161,6 +189,8 @@ export const startTeamMission = async (req, res) => {
         timerStartedAt: team.timerStartedAt,
         timerAccumulatedMs: team.timerAccumulatedMs,
         timerRunning: team.timerRunning,
+        assignedRouteId: team.assignedRouteId,
+        assignedRouteName: team.assignedRouteName,
       });
     }
 

@@ -7,11 +7,21 @@ const teamSchema = new mongoose.Schema(
     members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 
     
+    assignedRouteId: { type: Number, default: null },
+    assignedRouteName: { type: String, default: null },
+    routeLocations: [{ type: String }],
     currentClueIndex: { type: Number, default: 0 },
     cluePath: [
       {
         clue: { type: mongoose.Schema.Types.ObjectId, ref: "Clue" },
+        locationName: { type: String },
         assignedText: { type: String },
+        rewardItem: {
+          name: { type: String },
+          icon: { type: String },
+          category: { type: String },
+          description: { type: String },
+        },
       },
     ],
     completedClues: [
