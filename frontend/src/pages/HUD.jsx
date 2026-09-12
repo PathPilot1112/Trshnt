@@ -9,17 +9,10 @@ import {
   Lock,
   Package,
   Sparkles,
-  ChevronRight,
-  Zap,
-  Coffee,
-  Shield,
-  Key,
-  Gift,
-  MapPin,
+  Navigation,
   X,
-  Info,
-  Award,
-  Layers
+  Radio,
+  Check
 } from 'lucide-react';
 import { getSocket } from '../socket';
 
@@ -32,11 +25,64 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
   const [selectedItemModal, setSelectedItemModal] = useState(null);
   const [showInventoryDrawer, setShowInventoryDrawer] = useState(false);
 
+  // GPS Telemetry State
+  const [gpsStatus, setGpsStatus] = useState('acquiring'); // 'active' | 'acquiring' | 'denied'
+  const [gpsCoords, setGpsCoords] = useState(null);
+
   useEffect(() => {
     setLocalTeam(teamInfo);
   }, [teamInfo]);
 
-  // Fetch full clue payload (includes 5-quest path summary & inventory)
+  // Request & Stream GPS Location on HUD Mount / Game Start
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setGpsStatus('denied');
+      return;
+    }
+
+    // 1. Initial position request
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGpsStatus('active');
+        setGpsCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        if (token) {
+          fetch(`${API_BASE}/teams/location`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          }).catch(() => {});
+        }
+      },
+      (err) => {
+        console.warn("GPS Permission or signal error:", err.message);
+        setGpsStatus('denied');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+
+    // 2. Continuous watch
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        setGpsStatus('active');
+        setGpsCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        if (token) {
+          fetch(`${API_BASE}/teams/location`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          }).catch(() => {});
+        }
+      },
+      (err) => {
+        console.warn("GPS watch error:", err.message);
+      },
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [API_BASE, token]);
+
+  // Fetch full clue payload
   useEffect(() => {
     if (localTeam?.status === 'finished') {
       setClueFinished(true);
@@ -85,25 +131,6 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
     const interval = setInterval(() => setElapsedMs(calculateElapsed()), 1000);
     return () => clearInterval(interval);
   }, [localTeam]);
-
-  // Geolocation updates
-  useEffect(() => {
-    if (!token || !localTeam || localTeam.status !== 'in_progress' || !navigator.geolocation) return;
-    const watchId = navigator.geolocation.watchPosition(
-      async (position) => {
-        try {
-          await fetch(`${API_BASE}/teams/location`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ lat: position.coords.latitude, lng: position.coords.longitude }),
-          });
-        } catch { /* ignore */ }
-      },
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
-    );
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, [API_BASE, token, localTeam?.status]);
 
   // Socket updates
   useEffect(() => {
@@ -163,7 +190,7 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
   return (
     <div className="hud-shell" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       
-      {/* Dynamic Header: Operator & Squad Status */}
+      {/* Top Header Bar */}
       <header className="hud-top" style={{ flexShrink: 0 }}>
         <div>
           <div className="hud-kicker" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -173,7 +200,7 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
               boxShadow: localTeam?.timerRunning ? '0 0 10px #39ff14' : '0 0 10px #ffb700'
             }} />
             <span style={{ fontSize: '10px', letterSpacing: '1px', fontWeight: 'bold' }}>
-              {localTeam?.timerRunning ? 'TACTICAL UPLINK' : 'STANDBY MODE'}
+              {localTeam?.timerRunning ? 'LIVE TACTICAL UPLINK' : 'STANDBY MODE'}
             </span>
           </div>
           <div className="hud-operator" style={{ fontSize: '13px', marginTop: '2px' }}>
@@ -186,7 +213,7 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
             type="button"
             className="hud-icon-btn"
             onClick={() => setShowInventoryDrawer(!showInventoryDrawer)}
-            title="Squad Inventory"
+            title="Squad Tactical Inventory"
             style={{ position: 'relative', background: 'rgba(57, 255, 20, 0.1)', border: '1px solid rgba(57, 255, 20, 0.3)' }}
           >
             <Package size={16} color="var(--color-neon-green)" />
@@ -218,24 +245,24 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
         </div>
       </header>
 
-      {/* Gamified Top Stats Bar (Timer, Food, Hope, Score) */}
+      {/* Gamified Top Telemetry Bar (Timer, Live GPS, Items, Score) */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(4, 1fr)',
         gap: '6px',
-        padding: '8px 12px',
-        background: 'rgba(15, 23, 42, 0.75)',
-        backdropFilter: 'blur(12px)',
+        padding: '8px 10px',
+        background: 'rgba(15, 23, 42, 0.85)',
+        backdropFilter: 'blur(16px)',
         borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
         flexShrink: 0
       }}>
         {/* Stat 1: Timer */}
         <div style={{
-          background: 'rgba(0, 0, 0, 0.35)',
+          background: 'rgba(0, 0, 0, 0.4)',
           borderRadius: '8px',
-          padding: '6px',
+          padding: '6px 4px',
           textAlign: 'center',
-          border: '1px solid rgba(57, 255, 20, 0.2)'
+          border: '1px solid rgba(57, 255, 20, 0.25)'
         }}>
           <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             ⏰ Clock
@@ -245,36 +272,41 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
           </div>
         </div>
 
-        {/* Stat 2: Route Name / Route ID */}
+        {/* Stat 2: Live GPS Telemetry Indicator */}
         <div style={{
-          background: 'rgba(0, 0, 0, 0.35)',
+          background: 'rgba(0, 0, 0, 0.4)',
           borderRadius: '8px',
-          padding: '6px',
+          padding: '6px 4px',
           textAlign: 'center',
-          border: '1px solid rgba(255, 183, 0, 0.2)'
+          border: `1px solid ${gpsStatus === 'active' ? 'rgba(57, 255, 20, 0.3)' : 'rgba(255, 183, 0, 0.3)'}`
         }}>
           <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            🗺️ Route
+            🛰️ GPS
           </div>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#ffb700', fontFamily: 'var(--font-mono)' }}>
-            {cluePayload?.routeName ? cluePayload.routeName : localTeam?.assignedRouteName || 'Route 1'}
+          <div style={{
+            fontSize: '10px',
+            fontWeight: 'bold',
+            color: gpsStatus === 'active' ? '#39ff14' : gpsStatus === 'acquiring' ? '#ffb700' : '#ff4444',
+            fontFamily: 'var(--font-mono)'
+          }}>
+            {gpsStatus === 'active' ? 'LOCKED' : gpsStatus === 'acquiring' ? 'SEARCHING' : 'OFFLINE'}
           </div>
         </div>
 
-        {/* Stat 3: Resources Inventory Count */}
+        {/* Stat 3: Squad Inventory Counter */}
         <div
           onClick={() => setShowInventoryDrawer(true)}
           style={{
-            background: 'rgba(0, 0, 0, 0.35)',
+            background: 'rgba(0, 0, 0, 0.4)',
             borderRadius: '8px',
-            padding: '6px',
+            padding: '6px 4px',
             textAlign: 'center',
-            border: '1px solid rgba(0, 229, 255, 0.2)',
+            border: '1px solid rgba(0, 229, 255, 0.25)',
             cursor: 'pointer'
           }}
         >
           <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            🎒 Items
+            🎒 Supplies
           </div>
           <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#00e5ff', fontFamily: 'var(--font-mono)' }}>
             {inventory.length} / 5
@@ -283,11 +315,11 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
 
         {/* Stat 4: Points */}
         <div style={{
-          background: 'rgba(0, 0, 0, 0.35)',
+          background: 'rgba(0, 0, 0, 0.4)',
           borderRadius: '8px',
-          padding: '6px',
+          padding: '6px 4px',
           textAlign: 'center',
-          border: '1px solid rgba(255, 0, 128, 0.2)'
+          border: '1px solid rgba(255, 0, 128, 0.25)'
         }}>
           <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             🏆 Score
@@ -298,284 +330,269 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
         </div>
       </div>
 
-      {/* Main Content Area: Gamified Route Map & Clue View */}
+      {/* Main Mission Screen: 5-Quest Path Ascent Cards */}
       <div className="hud-scroll" style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
 
-        {/* Sector Quest Ascent Map Section (Inspired by Duolingo Ascent + Isometric Road Nodes) */}
-        <section style={{
-          background: 'radial-gradient(circle at 50% 0%, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.95))',
-          borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          padding: '16px 12px',
-          marginBottom: '14px',
-          position: 'relative',
-          overflow: 'hidden',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'
+        {/* Sector Quest Path Header */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '12px',
+          padding: '0 4px'
         }}>
-          {/* Background Ambient Glow */}
-          <div style={{
-            position: 'absolute',
-            top: '-40px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '180px',
-            height: '180px',
-            background: 'radial-gradient(circle, rgba(57, 255, 20, 0.15), transparent 70%)',
-            pointerEvents: 'none'
-          }} />
-
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '14px',
-            paddingBottom: '8px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Sparkles size={14} color="var(--color-neon-green)" />
-              <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                THE ASCENT PATH
-              </span>
-            </div>
-            <span style={{ fontSize: '10px', color: 'var(--color-accent)', fontFamily: 'var(--font-mono)' }}>
-              {isNotStarted ? '0 OF 5' : clueFinished ? '5 OF 5 CLEARED' : `QUEST ${currentStepNum} OF ${totalStepsNum}`}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Sparkles size={14} color="var(--color-neon-green)" />
+            <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px', textTransform: 'uppercase' }}>
+              SECTOR QUEST ASCENT
             </span>
           </div>
+          <span style={{ fontSize: '10px', color: 'var(--color-neon-green)', fontFamily: 'var(--font-mono)', fontWeight: 'bold' }}>
+            {isNotStarted ? '0 OF 5 STARTED' : clueFinished ? 'ALL 5 COMPLETED' : `STEP ${currentStepNum} OF ${totalStepsNum}`}
+          </span>
+        </div>
 
-          {/* Connected Path Nodes (5 Stops) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', position: 'relative' }}>
-            
-            {/* Connected Vertical Glow Line */}
-            <div style={{
-              position: 'absolute',
-              top: '20px',
-              bottom: '20px',
-              left: '23px',
-              width: '3px',
-              background: 'linear-gradient(to bottom, #39ff14, #00e5ff, rgba(255,255,255,0.1))',
-              zIndex: 1,
-              borderRadius: '2px',
-              boxShadow: '0 0 8px rgba(57, 255, 20, 0.4)'
-            }} />
+        {/* Not Started State Banner */}
+        {isNotStarted && (
+          <div style={{
+            background: 'rgba(255, 183, 0, 0.1)',
+            border: '1px solid rgba(255, 183, 0, 0.4)',
+            borderRadius: '14px',
+            padding: '20px 16px',
+            textAlign: 'center',
+            marginBottom: '14px'
+          }}>
+            <ShieldAlert size={36} color="var(--color-amber)" style={{ marginBottom: '10px' }} />
+            <h4 style={{ color: '#fff', fontSize: '16px', marginBottom: '6px', fontWeight: 'bold' }}>
+              AWAITING MISSION START
+            </h4>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>
+              Your research squad is linked to Chernobyl Command. Tactical quest clues will activate as soon as admin control initiates the operation.
+            </p>
+          </div>
+        )}
 
-            {/* Render 5 Quest Nodes */}
-            {(pathSummary.length > 0 ? pathSummary : Array.from({ length: 5 }).map((_, i) => ({
-              stepIndex: i + 1,
-              locationName: `Stop ${i + 1}`,
-              status: i === 0 && !isNotStarted ? 'active' : 'locked',
-              rewardItem: { name: 'Item', icon: '🎁', description: '' }
-            }))).map((node, idx) => {
-              const isCleared = node.status === 'cleared';
-              const isActive = node.status === 'active' && !isNotStarted;
-              const isLocked = node.status === 'locked' || isNotStarted;
+        {/* Mission Completed State Banner */}
+        {clueFinished && (
+          <div style={{
+            background: 'rgba(57, 255, 20, 0.1)',
+            border: '1px solid rgba(57, 255, 20, 0.5)',
+            borderRadius: '14px',
+            padding: '20px 16px',
+            textAlign: 'center',
+            marginBottom: '14px'
+          }}>
+            <CheckCircle2 size={42} color="var(--color-neon-green)" style={{ marginBottom: '10px', filter: 'drop-shadow(0 0 12px #39ff14)' }} />
+            <h4 style={{ color: '#39ff14', fontSize: '18px', marginBottom: '6px', fontWeight: 'bold' }}>
+              ALL 5 OBJECTIVES CLEARED!
+            </h4>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', lineHeight: '1.5' }}>
+              Congratulations, Operator! All 5 tactical clues resolved and sector supplies secured. Return to base terminal for debriefing.
+            </p>
+          </div>
+        )}
 
-              return (
-                <div
-                  key={idx}
-                  onClick={() => isCleared && setSelectedItemModal(node.rewardItem)}
-                  style={{
-                    position: 'relative',
-                    zIndex: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '10px 12px',
-                    borderRadius: '12px',
-                    background: isCleared
-                      ? 'rgba(57, 255, 20, 0.08)'
-                      : isActive
-                      ? 'rgba(255, 183, 0, 0.12)'
-                      : 'rgba(255, 255, 255, 0.02)',
-                    border: isCleared
-                      ? '1px solid rgba(57, 255, 20, 0.35)'
-                      : isActive
-                      ? '1px solid rgba(255, 183, 0, 0.5)'
-                      : '1px solid rgba(255, 255, 255, 0.06)',
-                    backdropFilter: 'blur(10px)',
-                    transition: 'all 0.3s ease',
-                    boxShadow: isActive ? '0 0 16px rgba(255, 183, 0, 0.25)' : isCleared ? '0 0 10px rgba(57, 255, 20, 0.15)' : 'none',
-                    cursor: isCleared ? 'pointer' : 'default'
-                  }}
-                >
-                  {/* Node Badge Icon */}
-                  <div style={{
-                    width: '26px',
-                    height: '26px',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    background: isCleared ? '#39ff14' : isActive ? '#ffb700' : 'rgba(255, 255, 255, 0.1)',
-                    color: isCleared ? '#000' : isActive ? '#000' : '#888',
-                    boxShadow: isCleared ? '0 0 10px #39ff14' : isActive ? '0 0 12px #ffb700' : 'none'
-                  }}>
-                    {isCleared ? (
-                      <CheckCircle2 size={16} color="#000" />
-                    ) : isActive ? (
-                      <Sparkles size={14} color="#000" className="flicker" />
-                    ) : (
-                      <Lock size={12} color="#666" />
-                    )}
-                  </div>
+        {/* Render 5 Quest Node Cards with Clues directly inside! */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', position: 'relative' }}>
+          
+          {/* Vertical Path Line */}
+          <div style={{
+            position: 'absolute',
+            top: '24px',
+            bottom: '24px',
+            left: '21px',
+            width: '3px',
+            background: 'linear-gradient(to bottom, #39ff14, #00e5ff, rgba(255,255,255,0.1))',
+            zIndex: 1,
+            borderRadius: '2px'
+          }} />
 
-                  {/* Node Text Content */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
+          {(pathSummary.length > 0 ? pathSummary : Array.from({ length: 5 }).map((_, i) => ({
+            stepIndex: i + 1,
+            clueText: "Locate designated tactical anomaly.",
+            status: i === 0 && !isNotStarted ? 'active' : 'locked',
+            rewardItem: { name: 'Item', icon: '🎁', description: '' }
+          }))).map((node, idx) => {
+            const isCleared = node.status === 'cleared';
+            const isActive = node.status === 'active' && !isNotStarted;
+            const isLocked = node.status === 'locked' || isNotStarted;
+
+            return (
+              <div
+                key={idx}
+                style={{
+                  position: 'relative',
+                  zIndex: 2,
+                  borderRadius: '14px',
+                  background: isCleared
+                    ? 'rgba(57, 255, 20, 0.06)'
+                    : isActive
+                    ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))'
+                    : 'rgba(15, 23, 42, 0.4)',
+                  border: isCleared
+                    ? '1px solid rgba(57, 255, 20, 0.35)'
+                    : isActive
+                    ? '2px solid var(--color-neon-green)'
+                    : '1px solid rgba(255, 255, 255, 0.08)',
+                  backdropFilter: 'blur(12px)',
+                  padding: '14px',
+                  transition: 'all 0.3s ease',
+                  boxShadow: isActive
+                    ? '0 0 24px rgba(57, 255, 20, 0.25), 0 8px 32px rgba(0,0,0,0.6)'
+                    : isCleared
+                    ? '0 0 12px rgba(57, 255, 20, 0.1)'
+                    : 'none'
+                }}
+              >
+                {/* Node Card Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isActive ? '10px' : '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {/* Node Badge */}
                     <div style={{
-                      fontSize: '9px',
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      fontSize: '11px',
+                      fontWeight: 'bold',
+                      background: isCleared ? '#39ff14' : isActive ? '#39ff14' : 'rgba(255, 255, 255, 0.1)',
+                      color: isCleared ? '#000' : isActive ? '#000' : '#888',
+                      boxShadow: isCleared ? '0 0 10px #39ff14' : isActive ? '0 0 12px #39ff14' : 'none'
+                    }}>
+                      {isCleared ? (
+                        <Check size={14} color="#000" strokeWidth={3} />
+                      ) : isActive ? (
+                        idx + 1
+                      ) : (
+                        <Lock size={11} color="#777" />
+                      )}
+                    </div>
+
+                    {/* Objective Title */}
+                    <span style={{
+                      fontSize: '11px',
                       fontFamily: 'var(--font-mono)',
-                      color: isCleared ? '#39ff14' : isActive ? '#ffb700' : 'rgba(255,255,255,0.4)',
+                      fontWeight: 'bold',
                       letterSpacing: '1px',
+                      color: isCleared ? '#39ff14' : isActive ? '#39ff14' : 'rgba(255,255,255,0.4)',
                       textTransform: 'uppercase'
                     }}>
-                      {isCleared ? 'CLEARED OBJECTIVE' : isActive ? 'TARGET LOCATION' : `LOCKED SECTOR ${idx + 1}`}
-                    </div>
-                    <div style={{
-                      fontSize: '13px',
-                      fontWeight: '700',
-                      color: isCleared ? '#fff' : isActive ? '#fff' : 'rgba(255,255,255,0.5)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}>
-                      {node.locationName}
-                    </div>
+                      {isCleared ? `OBJECTIVE ${idx + 1} CLEARED` : isActive ? `ACTIVE OBJECTIVE ${idx + 1}` : `OBJECTIVE ${idx + 1} (LOCKED)`}
+                    </span>
                   </div>
 
                   {/* Reward Item Badge */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    padding: '4px 8px',
-                    borderRadius: '16px',
-                    background: isCleared ? 'rgba(57, 255, 20, 0.2)' : 'rgba(255,255,255,0.05)',
-                    border: isCleared ? '1px solid rgba(57, 255, 20, 0.4)' : '1px solid rgba(255,255,255,0.08)',
-                    fontSize: '11px'
-                  }}>
-                    <span>{node.rewardItem?.icon || '🎒'}</span>
+                  <div
+                    onClick={() => isCleared && setSelectedItemModal(node.rewardItem)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '3px 8px',
+                      borderRadius: '12px',
+                      background: isCleared ? 'rgba(57, 255, 20, 0.2)' : 'rgba(255,255,255,0.05)',
+                      border: isCleared ? '1px solid rgba(57, 255, 20, 0.4)' : '1px solid rgba(255,255,255,0.08)',
+                      cursor: isCleared ? 'pointer' : 'default'
+                    }}
+                  >
+                    <span style={{ fontSize: '13px' }}>{node.rewardItem?.icon || '🎁'}</span>
                     <span style={{
                       fontSize: '9px',
                       color: isCleared ? '#39ff14' : 'rgba(255,255,255,0.4)',
                       fontWeight: isCleared ? 'bold' : 'normal'
                     }}>
-                      {isCleared ? node.rewardItem?.name : 'Reward'}
+                      {isCleared ? node.rewardItem?.name : 'Supply Reward'}
                     </span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </section>
 
-        {/* Main Tactical Clue Display Card */}
-        <section className="hud-clue-card" style={{ marginBottom: '12px' }}>
-          <div className="hazard-bar" style={{ height: '6px' }} />
-
-          <div className="hud-clue-card-header">
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-accent)', letterSpacing: '1.5px' }}>
-              CURRENT MISSION CLUE
-            </div>
-            <div className="hud-clue-badge">
-              {isNotStarted ? 'WAITING' : clueFinished ? 'COMPLETED' : `STEP ${currentStepNum} OF ${totalStepsNum}`}
-            </div>
-          </div>
-
-          <div className="hud-clue-body">
-            <div className="clue-body-corners" />
-
-            {isNotStarted ? (
-              <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                <ShieldAlert size={36} color="var(--color-amber)" style={{ marginBottom: '10px' }} />
-                <h4 style={{ color: '#fff', fontSize: '15px', marginBottom: '6px', fontWeight: 600 }}>
-                  AWAITING MISSION START
-                </h4>
-                <p className="hud-copy" style={{ fontSize: '12px' }}>
-                  Your team is connected to Chernobyl Command. Admin control will broadcast your assigned route once the game begins.
-                </p>
-              </div>
-            ) : clueFinished ? (
-              <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                <CheckCircle2 size={40} color="var(--color-neon-green)" style={{ marginBottom: '10px', filter: 'drop-shadow(0 0 10px var(--color-neon-green))' }} />
-                <h4 style={{ color: 'var(--color-neon-green)', fontSize: '17px', marginBottom: '6px', fontWeight: 700 }}>
-                  ALL 5 OBJECTIVES CLEARED!
-                </h4>
-                <p className="hud-copy" style={{ fontSize: '12px' }}>
-                  Outstanding work, Operator! You have completed all 5 route locations and collected all sector supplies. Return to command for debriefing.
-                </p>
-              </div>
-            ) : isLoadingClue ? (
-              <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                <div className="telemetry-bar-container" style={{ width: '50%', margin: '0 auto 10px auto' }}>
-                  <div className="telemetry-bar-fill" style={{ width: '100%', animation: 'radar-sweep 1.5s infinite linear' }} />
-                </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--color-neon-green)', letterSpacing: '1px' }}>
-                  DECRYPTING TACTICAL CLUE...
-                </div>
-              </div>
-            ) : (
-              <div style={{ position: 'relative' }}>
-                <div style={{
-                  position: 'absolute',
-                  top: '-16px',
-                  left: '-4px',
-                  fontSize: '44px',
-                  fontFamily: 'serif',
-                  color: 'rgba(57, 255, 20, 0.08)',
-                  pointerEvents: 'none',
-                  userSelect: 'none'
-                }}>
-                  “
-                </div>
-
-                <p className="hud-clue-text" style={{ fontSize: '14px', lineHeight: '1.5' }}>
-                  {cluePayload?.text}
-                </p>
-
-                {/* Target Reward Preview Box */}
-                {cluePayload?.rewardItem && (
-                  <div style={{
-                    marginTop: '12px',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    background: 'rgba(0, 229, 255, 0.08)',
-                    border: '1px solid rgba(0, 229, 255, 0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px'
-                  }}>
-                    <span style={{ fontSize: '20px' }}>{cluePayload.rewardItem.icon}</span>
-                    <div>
-                      <div style={{ fontSize: '9px', color: '#00e5ff', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
-                        REWARD UPON CLEARING LOCATION:
+                {/* ACTIVE NODE: Full Prominent Clue Box & Direct Scan Action */}
+                {isActive && (
+                  <div style={{ marginTop: '8px' }}>
+                    <div style={{
+                      position: 'relative',
+                      background: 'rgba(4, 16, 18, 0.85)',
+                      border: '1px solid rgba(57, 255, 20, 0.3)',
+                      borderRadius: '10px',
+                      padding: '14px 16px',
+                      marginBottom: '12px'
+                    }}>
+                      <div style={{
+                        position: 'absolute',
+                        top: '-12px',
+                        left: '12px',
+                        background: '#39ff14',
+                        color: '#000',
+                        fontSize: '9px',
+                        fontWeight: 'bold',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        fontFamily: 'var(--font-mono)',
+                        letterSpacing: '1px'
+                      }}>
+                        TACTICAL CLUE TEXT
                       </div>
-                      <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#fff' }}>
-                        {cluePayload.rewardItem.name}
-                      </div>
+
+                      <p style={{
+                        margin: 0,
+                        fontSize: '14px',
+                        lineHeight: '1.6',
+                        color: '#ffffff',
+                        fontWeight: '500',
+                        fontFamily: 'var(--font-sans)',
+                        letterSpacing: '0.2px'
+                      }}>
+                        “{node.clueText || cluePayload?.text}”
+                      </p>
                     </div>
+
+                    {/* Direct Scan Trigger Button inside Active Node Box */}
+                    <button
+                      type="button"
+                      className="hud-scan-btn"
+                      disabled={!canScan}
+                      onClick={() => canScan && onNavigate('scan')}
+                      style={{
+                        margin: 0,
+                        width: '100%',
+                        padding: '12px',
+                        fontSize: '13px',
+                        background: '#39ff14',
+                        color: '#000',
+                        fontWeight: 'bold',
+                        border: 'none',
+                        borderRadius: '10px',
+                        boxShadow: '0 0 16px rgba(57, 255, 20, 0.4)'
+                      }}
+                    >
+                      <Scan size={18} />
+                      [ SCAN TARGET LOCATION PHOTO ]
+                    </button>
                   </div>
                 )}
-              </div>
-            )}
-          </div>
-        </section>
-      </div>
 
-      {/* Primary Action Button: Open Camera Scanner */}
-      <div style={{ padding: '10px 12px', flexShrink: 0, background: 'rgba(15, 23, 42, 0.9)', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <button
-          type="button"
-          className="hud-scan-btn"
-          disabled={!canScan}
-          onClick={() => canScan && onNavigate('scan')}
-          style={{ margin: 0, width: '100%' }}
-        >
-          <Scan size={20} />
-          {canScan ? '[ INITIATE OPTIC SCAN ]' : '[ OPTIC SCAN LOCKED ]'}
-        </button>
+                {/* CLEARED NODE: Summary Banner */}
+                {isCleared && (
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <CheckCircle2 size={12} color="#39ff14" />
+                    <span>Location photo verified. Earned squad resource: <strong style={{ color: '#39ff14' }}>{node.rewardItem?.name}</strong> ({node.rewardItem?.icon})</span>
+                  </div>
+                )}
+
+                {/* LOCKED NODE: Lock Explanation */}
+                {isLocked && (
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>
+                    Complete Objective {idx} to decrypt tactical clue.
+                  </div>
+                )}
+
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Item Detail Modal */}
@@ -584,7 +601,7 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
           position: 'fixed',
           inset: 0,
           zIndex: 100,
-          background: 'rgba(0, 0, 0, 0.8)',
+          background: 'rgba(0, 0, 0, 0.85)',
           backdropFilter: 'blur(10px)',
           display: 'flex',
           alignItems: 'center',
@@ -592,7 +609,7 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
           padding: '20px'
         }}>
           <div style={{
-            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))',
+            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.99))',
             border: '1px solid rgba(57, 255, 20, 0.4)',
             borderRadius: '16px',
             padding: '20px',
@@ -606,7 +623,7 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
             <div style={{ fontSize: '10px', color: 'var(--color-accent)', fontFamily: 'var(--font-mono)', marginBottom: '12px', textTransform: 'uppercase' }}>
               UNLOCKED SQUAD RESOURCE
             </div>
-            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', marginBottom: '16px', lineHeight: '1.4' }}>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.85)', marginBottom: '16px', lineHeight: '1.4' }}>
               {selectedItemModal.description}
             </p>
             <button
@@ -664,7 +681,7 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
 
             {inventory.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '30px 0', color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>
-                No items collected yet. Clear campus locations to collect squad items & resources!
+                No items collected yet. Clear campus objectives to earn squad items & resources!
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: '10px' }}>

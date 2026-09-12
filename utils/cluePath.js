@@ -309,15 +309,13 @@ export const publicCluePayload = (team, clues) => {
 
   const pathSummary = pathSteps.map((step, idx) => {
     const clueObj = clues.find((c) => String(c._id) === String(step.clue));
-    const locName = step.locationName || clueObj?.title || `Stop ${idx + 1}`;
-    const rewardItem = step.rewardItem || getItemForLocation(locName);
+    const rewardItem = step.rewardItem || getItemForLocation(step.locationName);
 
     return {
       stepIndex: idx + 1,
-      locationName: locName,
+      clueText: step.assignedText || clueObj?.text || "Locate designated tactical anomaly.",
       status: idx < currentIdx ? "cleared" : idx === currentIdx && !isFinished ? "active" : "locked",
       rewardItem,
-      points: clueObj?.points || 100
     };
   });
 
@@ -328,8 +326,6 @@ export const publicCluePayload = (team, clues) => {
     return {
       finished: true,
       message: "All 5 sector objectives cleared!",
-      routeName: team.assignedRouteName || "Assigned Route",
-      routeId: team.assignedRouteId,
       step: pathSteps.length,
       total: pathSteps.length,
       pathSummary,
@@ -339,17 +335,12 @@ export const publicCluePayload = (team, clues) => {
 
   const currentStep = pathSteps[currentIdx];
   const clueObj = clues.find((c) => String(c._id) === String(currentStep?.clue));
-  const locName = currentStep?.locationName || clueObj?.title || `Stop ${currentIdx + 1}`;
-  const rewardItem = currentStep?.rewardItem || getItemForLocation(locName);
+  const rewardItem = currentStep?.rewardItem || getItemForLocation(currentStep?.locationName);
 
   return {
     finished: false,
-    routeName: team.assignedRouteName || "Assigned Route",
-    routeId: team.assignedRouteId,
     text: currentStep?.assignedText || clueObj?.text || "Locate designated target.",
-    locationName: locName,
     rewardItem,
-    points: clueObj?.points || 100,
     step: currentIdx + 1,
     total: pathSteps.length,
     pathSummary,
