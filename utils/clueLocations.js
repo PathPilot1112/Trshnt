@@ -30,16 +30,47 @@ export const LOCATION_COORDINATES = {
   // ZONE 4
   "Slice of Life": { lat: 12.821907633229062, lng: 80.04775732746997, zone: "Zone 4" },
   "TP Auditorium Gate": { lat: 12.824376, lng: 80.047331, zone: "Zone 4" },
+  "The gate of Dr. T. P. Ganesan Auditorium": { lat: 12.824376, lng: 80.047331, zone: "Zone 4" },
   "Dental College": { lat: 12.825311458267803, lng: 80.04754275076432, zone: "Zone 4" },
   "Gym": { lat: 12.825912974626478, lng: 80.04903942337197, zone: "Zone 4" },
   "Pickleball Court": { lat: null, lng: null, zone: "Zone 4", missingGps: true },
 
   // ZONE 5
   "Bell Block": { lat: 12.823287214422754, lng: 80.04406929003538, zone: "Zone 5" },
+  "Bel Block": { lat: 12.823287214422754, lng: 80.04406929003538, zone: "Zone 5" },
   "MBA Gate": { lat: 12.823629, lng: 80.044732, zone: "Zone 5" },
   "Architecture Stonehenge": { lat: 12.824048269271172, lng: 80.04447028029426, zone: "Zone 5" },
+  "Stone Henge": { lat: 12.824048269271172, lng: 80.04447028029426, zone: "Zone 5" },
   "Clock Tower": { lat: 12.823026990716777, lng: 80.04482433186632, zone: "Zone 5" },
   "Architecture #SRM": { lat: null, lng: null, zone: "Zone 5", missingGps: true }
+};
+
+/**
+ * Normalization alias dictionary to bridge spelling differences between PDF, clue.json, and coordinates inventory.
+ */
+const LOCATION_ALIASES = {
+  belblock: "bellblock",
+  bellblock: "bellblock",
+  perarignaranna: "perignaranna",
+  perignaranna: "perignaranna",
+  srmlogotp: "srmtp",
+  srmtp: "srmtp",
+  srmlogo: "srmtp",
+  archsrm: "architecturesrm",
+  architecturesrm: "architecturesrm",
+  srmarchitectureblock: "architecturesrm",
+  thegateofdrtpganesanauditorium: "tpauditoriumgate",
+  tpauditoriumgate: "tpauditoriumgate",
+  stonehenge: "architecturestonehenge",
+  stoneedge: "architecturestonehenge",
+  architecturestonehenge: "architecturestonehenge"
+};
+
+const cleanStr = (s) => (s || "").toLowerCase().replace(/^zone\s*\d+\s*[-_:]?\s*/, "").replace(/[^a-z0-9]/g, "");
+
+const normalizeKey = (s) => {
+  const c = cleanStr(s);
+  return LOCATION_ALIASES[c] || c;
 };
 
 /**
@@ -62,17 +93,22 @@ export const calculateDistanceMeters = (lat1, lon1, lat2, lon2) => {
 };
 
 /**
- * Looks up target coordinates for a location name with fuzzy cleaning.
+ * Looks up target coordinates for a location name with alias normalization and fuzzy cleaning.
  */
 export const getCoordinatesForLocation = (locationName) => {
   if (!locationName) return null;
-  if (LOCATION_COORDINATES[locationName]) return LOCATION_COORDINATES[locationName];
+  const candidates = Array.isArray(locationName) ? locationName : [locationName];
 
-  const cleanName = locationName.toLowerCase().replace(/[^a-z0-9]/g, "");
-  for (const [key, coords] of Object.entries(LOCATION_COORDINATES)) {
-    const cleanKey = key.toLowerCase().replace(/[^a-z0-9]/g, "");
-    if (cleanName.includes(cleanKey) || cleanKey.includes(cleanName)) {
-      return coords;
+  for (const item of candidates) {
+    if (!item) continue;
+    if (LOCATION_COORDINATES[item]) return LOCATION_COORDINATES[item];
+
+    const normItem = normalizeKey(item);
+    for (const [key, coords] of Object.entries(LOCATION_COORDINATES)) {
+      const normKey = normalizeKey(key);
+      if (normItem === normKey || normItem.includes(normKey) || normKey.includes(normItem)) {
+        return coords;
+      }
     }
   }
   return null;

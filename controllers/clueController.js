@@ -111,7 +111,7 @@ export const submitPhoto = async (req, res) => {
     const { coordMappingEnabled, coordRadiusMeters } = getSystemState();
     const userLat = parseFloat(req.body?.lat || req.body?.userLat || req.query?.lat || team.location?.lat);
     const userLng = parseFloat(req.body?.lng || req.body?.userLng || req.query?.lng || team.location?.lng);
-    const geofenceResult = isWithinGeofenceRange(userLat, userLng, currentClue.title || currentClue.targetLabel, coordRadiusMeters || 3.5);
+    const geofenceResult = isWithinGeofenceRange(userLat, userLng, [currentClue.title, currentClue.targetLabel, currentClue.location], coordRadiusMeters || 3.5);
 
     let isCorrect = false;
     let feedbackMessage = "";
