@@ -480,3 +480,110 @@ export const updateReportStatus = async (req, res) => {
   }
 };
 
+export const deleteReport = async (req, res) => {
+  try {
+    const report = await Report.findByIdAndDelete(req.params.id);
+    if (!report) return res.status(404).json({ message: "Report not found" });
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("report:deleted", { reportId: req.params.id });
+    }
+
+    res.json({ message: "Report deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting report", error: err.message });
+  }
+};
+
+export const clearAllReports = async (req, res) => {
+  try {
+    await Report.deleteMany({});
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("reports:cleared");
+    }
+
+    res.json({ message: "All reports cleared successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Error clearing reports", error: err.message });
+  }
+};
+
+export const updateTeam = async (req, res) => {
+  try {
+    const { name, teamNumber, status, score, currentClueIndex, assignedRouteId } = req.body;
+    const team = await Team.findById(req.params.id);
+    if (!team) return res.status(404).json({ message: "Team not found" });
+
+    if (name !== undefined && name.trim()) team.name = name.trim();
+    if (teamNumber !== undefined) team.teamNumber = teamNumber;
+    if (status !== undefined) {
+      team.status = status;
+      if (status === "finished" && !team.finishedAt) {
+        team.finishedAt = new Date();
+        if (team.timerRunning && team.timerStartedAt) {
+          team.timerAccumulatedMs = (team.timerAccumulatedMs || 0) + (Date.now() - new Date(team.timerStartedAt).getTime());
+          team.timerRunning = false;
+          team.timerStoppedAt = new Date();
+          team.timerStartedAt = undefined;
+        }
+      }
+    }
+    if (score !== undefined) team.score = Number(score);
+    if (currentClueIndex !== undefined) team.currentClueIndex = Number(currentClueIndex);
+
+    if (assignedRouteId !== undefined && assignedRouteId !== team.assignedRouteId) {
+      const clues = await Clue.find();
+      assignRouteToTeam(team, assignedRouteId, clues);
+    }
+
+    await team.save();
+
+    const io = req.app.get("io");
+    if (io) {
+      const allTeams = await Team.find().populate("members", "name email");
+      io.emit("teams:snapshot", allTeams.map(buildLeaderboardEntry));
+      io.emit("leaderboard:snapshot", buildSnapshot(allTeams));
+      io.emit("team:status", {
+        teamId: team._id,
+        status: team.status,
+        score: team.score,
+        currentClueIndex: team.currentClueIndex,
+        assignedRouteId: team.assignedRouteId,
+        assignedRouteName: team.assignedRouteName,
+      });
+    }
+
+    res.json({ message: "Team updated successfully", team });
+  } catch (err) {
+    res.status(500).json({ message: "Error updating team", error: err.message });
+  }
+};
+
+export const deleteTeam = async (req, res) => {
+  try {
+    const teamId = req.params.id;
+    const team = await Team.findById(teamId);
+    if (!team) return res.status(404).json({ message: "Team not found" });
+
+    await Submission.deleteMany({ team: teamId });
+    await Report.deleteMany({ team: teamId });
+    await User.updateMany({ team: teamId }, { $unset: { team: 1 } });
+    await Team.findByIdAndDelete(teamId);
+
+    const io = req.app.get("io");
+    if (io) {
+      const remainingTeams = await Team.find().populate("members", "name email");
+      io.emit("teams:snapshot", remainingTeams.map(buildLeaderboardEntry));
+      io.emit("leaderboard:snapshot", buildSnapshot(remainingTeams));
+      io.emit("team:deleted", { teamId });
+    }
+
+    res.json({ message: `Team ${team.name} deleted successfully` });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting team", error: err.message });
+  }
+};
+

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import QRCode from 'react-qr-code';
-import { Activity, Map, Play, Power, QrCode, RefreshCw, Shield, SkipForward, Users } from 'lucide-react';
+import { Activity, Clock, Edit3, Map, Play, Power, QrCode, RefreshCw, Shield, SkipForward, Trash2, Trophy, Users, X } from 'lucide-react';
 import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet';
 import { getSocket } from '../socket';
 import ToastStack from '../components/ToastStack';
@@ -40,6 +40,16 @@ const AdminDashboard = ({ API_BASE }) => {
   const [teamRoutes, setTeamRoutes] = useState({});
   const [systemState, setSystemState] = useState({ testDevMode: false, coordMappingEnabled: false, coordRadiusMeters: 3.5 });
   const [reports, setReports] = useState([]);
+  const [now, setNow] = useState(Date.now());
+  const [teamSortMode, setTeamSortMode] = useState('time');
+  const [editingTeam, setEditingTeam] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    status: 'not_started',
+    score: 0,
+    currentClueIndex: 0,
+    assignedRouteId: '',
+  });
 
   const showToast = (title, message = '', type = 'success') => {
     const id = `${Date.now()}-${Math.random()}`;
@@ -50,6 +60,17 @@ const AdminDashboard = ({ API_BASE }) => {
   };
 
   const dismissToast = (id) => setToasts((prev) => prev.filter((t) => t.id !== id));
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const getTeamElapsed = (team) => {
+    const base = team.timerAccumulatedMs || 0;
+    if (!team.timerRunning || !team.timerStartedAt) return team.elapsedMs || base;
+    return base + Math.max(0, now - new Date(team.timerStartedAt).getTime());
+  };
 
   const checkMLStatus = async () => {
     try {
@@ -324,29 +345,83 @@ const AdminDashboard = ({ API_BASE }) => {
       setSubmissions([]);
     };
 
+    const handleReportDeleted = (payload) => {
+      setReports((prev) => prev.filter((r) => r._id !== payload.reportId));
+    };
+
+    const handleReportsCleared = () => {
+      setReports([]);
+    };
+
+    const handleTeamDeleted = (payload) => {
+      setTeams((prev) => prev.filter((t) => t._id !== payload.teamId));
+    };
+
     socket.on('leaderboard:snapshot', handleSnapshot);
     socket.on('teams:snapshot', handleTeamsSnapshot);
     socket.on('submission:created', handleNewSubmission);
     socket.on('submissions:cleared', handleSubmissionsCleared);
+    socket.on('report:deleted', handleReportDeleted);
+    socket.on('reports:cleared', handleReportsCleared);
+    socket.on('team:deleted', handleTeamDeleted);
 
     return () => {
       socket.off('leaderboard:snapshot', handleSnapshot);
       socket.off('teams:snapshot', handleTeamsSnapshot);
       socket.off('submission:created', handleNewSubmission);
       socket.off('submissions:cleared', handleSubmissionsCleared);
+      socket.off('report:deleted', handleReportDeleted);
+      socket.off('reports:cleared', handleReportsCleared);
+      socket.off('team:deleted', handleTeamDeleted);
       socket.off('system:state', handleSystemState);
       socket.off('report:created', handleNewReport);
     };
   }, [API_BASE, adminToken]);
 
-  const mergedTeams = useMemo(
-    () =>
-      teams.map((team) => {
-        const live = leaderboard.find((entry) => String(entry.teamId) === String(team._id));
-        return live ? { ...team, ...live } : team;
-      }),
-    [leaderboard, teams]
-  );
+  const mergedTeams = useMemo(() => {
+    const list = teams.map((team) => {
+      const live = leaderboard.find((entry) => String(entry.teamId) === String(team._id));
+      return live ? { ...team, ...live } : team;
+    });
+
+    return list.sort((a, b) => {
+      if (teamSortMode === 'name') {
+        return (a.name || '').localeCompare(b.name || '');
+      }
+
+      const elapsedA = getTeamElapsed(a);
+      const elapsedB = getTeamElapsed(b);
+
+      if (teamSortMode === 'time') {
+        // Priority 1: Finished teams ranked by lowest elapsed time
+        const aFin = a.status === 'finished';
+        const bFin = b.status === 'finished';
+        if (aFin && !bFin) return -1;
+        if (!aFin && bFin) return 1;
+        if (aFin && bFin) return elapsedA - elapsedB;
+
+        // Priority 2: In-progress teams ranked by clues completed descending, then least elapsed time
+        const aIn = a.status === 'in_progress';
+        const bIn = b.status === 'in_progress';
+        if (aIn && !bIn) return -1;
+        if (!aIn && bIn) return 1;
+        if (aIn && bIn) {
+          const clueDiff = (b.currentClueIndex || 0) - (a.currentClueIndex || 0);
+          if (clueDiff !== 0) return clueDiff;
+          return elapsedA - elapsedB;
+        }
+
+        // Priority 3: Not started or other
+        return 0;
+      }
+
+      if (teamSortMode === 'pure_time') {
+        return elapsedA - elapsedB;
+      }
+
+      return 0;
+    });
+  }, [leaderboard, teams, teamSortMode, now]);
 
   const mapCenter = useMemo(() => {
     const firstLocated = mergedTeams.find((team) => team.location?.lat && team.location?.lng);
@@ -418,6 +493,93 @@ const AdminDashboard = ({ API_BASE }) => {
       showToast('Reset complete', 'Submissions cleared and teams reset.');
     } catch (err) {
       showToast('Reset failed', err.message, 'error');
+    }
+  };
+
+  const handleOpenEditTeam = (team) => {
+    setEditingTeam(team);
+    setEditForm({
+      name: team.name || '',
+      status: team.status || 'not_started',
+      score: team.score || 0,
+      currentClueIndex: team.currentClueIndex || 0,
+      assignedRouteId: team.assignedRouteId || '',
+    });
+  };
+
+  const handleSaveTeamEdit = async (e) => {
+    e.preventDefault();
+    if (!editingTeam) return;
+    try {
+      await authedFetch(`${API_BASE}/admin/teams/${editingTeam._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm),
+      });
+      showToast('Team Updated', `Team "${editForm.name}" updated successfully.`);
+      setEditingTeam(null);
+      await fetchDashboardData();
+    } catch (err) {
+      showToast('Update Failed', err.message, 'error');
+    }
+  };
+
+  const handleDeleteTeam = async (team) => {
+    if (!window.confirm(`⚠️ DANGER: Are you sure you want to permanently delete team "${team.name}"?\n\nThis will delete their submissions, reports, and unassign all members.`)) {
+      return;
+    }
+    try {
+      await authedFetch(`${API_BASE}/admin/teams/${team._id}`, {
+        method: 'DELETE',
+      });
+      showToast('Team Deleted', `Team "${team.name}" was permanently removed.`);
+      setTeams((prev) => prev.filter((t) => t._id !== team._id));
+      await fetchDashboardData();
+    } catch (err) {
+      showToast('Delete Failed', err.message, 'error');
+    }
+  };
+
+  const handleDeleteReport = async (reportId) => {
+    if (!window.confirm('Delete this issue report?')) return;
+    try {
+      await authedFetch(`${API_BASE}/admin/reports/${reportId}`, {
+        method: 'DELETE',
+      });
+      setReports((prev) => prev.filter((r) => r._id !== reportId));
+      showToast('Report Deleted', 'Issue report removed.');
+    } catch (err) {
+      showToast('Delete Failed', err.message, 'error');
+    }
+  };
+
+  const handleClearAllReports = async () => {
+    if (!window.confirm('⚠️ Are you sure you want to delete ALL feedback and discrepancy reports? This action cannot be undone.')) {
+      return;
+    }
+    try {
+      await authedFetch(`${API_BASE}/admin/reports/clear`, {
+        method: 'DELETE',
+      });
+      setReports([]);
+      showToast('Reports Cleared', 'All feedback reports have been removed.');
+    } catch (err) {
+      showToast('Clear Failed', err.message, 'error');
+    }
+  };
+
+  const handleToggleReportStatus = async (rep) => {
+    const nextStatus = rep.status === 'resolved' ? 'pending' : 'resolved';
+    try {
+      await authedFetch(`${API_BASE}/admin/reports/${rep._id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      setReports((prev) => prev.map((r) => (r._id === rep._id ? { ...r, status: nextStatus } : r)));
+      showToast('Report Status', `Marked as ${nextStatus.toUpperCase()}`);
+    } catch (err) {
+      showToast('Status Update Failed', err.message, 'error');
     }
   };
 
@@ -687,34 +849,192 @@ const AdminDashboard = ({ API_BASE }) => {
 
       {activeTab === 'teams' && (
         <div style={{ display: 'grid', gap: '14px' }}>
+          {/* Leaderboard & Time Rankings Controls */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: 'rgba(3,12,15,0.85)',
+            border: '1px solid rgba(255,215,0,0.3)',
+            padding: '12px 18px',
+            borderRadius: '8px',
+            flexWrap: 'wrap',
+            gap: '12px',
+            backdropFilter: 'blur(10px)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Trophy size={18} color="#ffd700" />
+              <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#ffd700', letterSpacing: '1px' }}>
+                LIVE LEADERBOARD & TIME RANKINGS ({mergedTeams.length} TEAMS)
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>SORT / RANK BY:</span>
+              <select
+                value={teamSortMode}
+                onChange={(e) => setTeamSortMode(e.target.value)}
+                style={{
+                  background: '#020b0d',
+                  color: '#ffd700',
+                  border: '1px solid #ffd700',
+                  padding: '6px 12px',
+                  fontSize: '11px',
+                  fontFamily: "'Share Tech Mono', monospace",
+                  outline: 'none',
+                  cursor: 'pointer',
+                  borderRadius: '4px'
+                }}
+              >
+                <option value="time">FASTEST TIME & COMPLETION (DEFAULT)</option>
+                <option value="pure_time">PURE TIME SPENT (LEAST TO MOST)</option>
+                <option value="name">TEAM NAME (A - Z)</option>
+              </select>
+            </div>
+          </div>
+
           {mergedTeams.map((team, index) => {
             const isExpanded = !!expandedTeams[team._id];
+            const currentElapsed = getTeamElapsed(team);
+            const rankLabel = index === 0 ? '🏆 RANK #1' : index === 1 ? '🥈 RANK #2' : index === 2 ? '🥉 RANK #3' : `RANK #${index + 1}`;
+            const rankColor = index === 0 ? '#ffd700' : index === 1 ? '#e2e8f0' : index === 2 ? '#cd7f32' : 'rgba(255,255,255,0.7)';
+            const rankBg = index === 0 ? 'rgba(255,215,0,0.18)' : index === 1 ? 'rgba(226,232,240,0.12)' : index === 2 ? 'rgba(205,127,50,0.15)' : 'rgba(255,255,255,0.06)';
+            const rankBorder = index === 0 ? '#ffd700' : index === 1 ? '#cbd5e1' : index === 2 ? '#cd7f32' : 'rgba(255,255,255,0.2)';
+
             return (
-              <div key={team._id} style={{ border: '1px solid rgba(57,255,20,0.2)', background: 'rgba(3,12,15,0.75)', padding: '16px', borderRadius: '8px', backdropFilter: 'blur(12px)' }}>
+              <div
+                key={team._id}
+                style={{
+                  border: `1px solid ${team.timerRunning ? 'rgba(57,255,20,0.45)' : 'rgba(57,255,20,0.2)'}`,
+                  background: team.timerRunning ? 'rgba(3, 16, 18, 0.85)' : 'rgba(3,12,15,0.75)',
+                  padding: '16px',
+                  borderRadius: '8px',
+                  backdropFilter: 'blur(12px)',
+                  boxShadow: team.timerRunning ? '0 0 16px rgba(57,255,20,0.12)' : 'none',
+                  transition: 'all 0.2s ease'
+                }}
+              >
                 <div 
                   onClick={() => toggleTeam(team._id)}
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none', flexWrap: 'wrap', gap: '12px' }}
                 >
-                  <div>
-                    <span style={{ color: '#fff', fontSize: '16px', fontWeight: 'bold' }}>{index + 1}. {team.name}</span>
-                    <span style={{ marginLeft: '12px', fontSize: '11px', color: 'rgba(57,255,20,0.8)' }}>
-                      STATUS: {team.status} | SCORE: {team.score || 0} | CLUE: {(team.currentClueIndex || 0) + 1}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <span style={{
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      padding: '4px 10px',
+                      borderRadius: '4px',
+                      background: rankBg,
+                      color: rankColor,
+                      border: `1px solid ${rankBorder}`,
+                      letterSpacing: '1px'
+                    }}>
+                      {rankLabel}
                     </span>
-                    <span style={{ marginLeft: '12px', fontSize: '11px', color: '#00e5ff', fontWeight: 'bold' }}>
-                      ROUTE: {team.assignedRouteName ? `${team.assignedRouteName} (ID: ${team.assignedRouteId})` : 'Auto / Not Set'}
+                    <span style={{ color: '#fff', fontSize: '18px', fontWeight: 'bold' }}>{team.name}</span>
+                    <span style={{
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      background: team.status === 'finished' ? 'rgba(0,229,255,0.2)' : team.status === 'in_progress' ? 'rgba(57,255,20,0.2)' : 'rgba(255,255,255,0.1)',
+                      color: team.status === 'finished' ? '#00e5ff' : team.status === 'in_progress' ? '#39ff14' : '#fff',
+                      border: `1px solid ${team.status === 'finished' ? '#00e5ff' : team.status === 'in_progress' ? '#39ff14' : 'rgba(255,255,255,0.3)'}`
+                    }}>
+                      {team.status.toUpperCase()}
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'rgba(57,255,20,0.8)' }}>
+                      SCORE: <strong>{team.score || 0}</strong> | CLUE: <strong>{(team.currentClueIndex || 0) + 1}</strong>
+                    </span>
+                    <span style={{ fontSize: '11px', color: '#00e5ff', fontWeight: 'bold' }}>
+                      ROUTE: {team.assignedRouteName ? `${team.assignedRouteName} (#${team.assignedRouteId})` : 'Auto'}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--green-primary)' }}>
-                    {isExpanded ? '[- COLLAPSE]' : '[+ EXPAND]'}
+
+                  {/* PROMINENT DIGITAL TIMER BADGE IN CARD HEADER */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: team.timerRunning ? 'rgba(57, 255, 20, 0.12)' : 'rgba(0, 0, 0, 0.55)',
+                      border: `1px solid ${team.timerRunning ? '#39ff14' : team.status === 'finished' ? '#00e5ff' : 'rgba(255, 170, 0, 0.5)'}`,
+                      borderRadius: '6px',
+                      padding: '6px 14px',
+                      boxShadow: team.timerRunning ? '0 0 12px rgba(57, 255, 20, 0.3)' : 'none'
+                    }}>
+                      <Clock size={16} color={team.timerRunning ? '#39ff14' : team.status === 'finished' ? '#00e5ff' : '#ffaa00'} />
+                      <span style={{
+                        fontSize: '20px',
+                        fontWeight: 'bold',
+                        fontFamily: "'Share Tech Mono', monospace",
+                        color: team.timerRunning ? '#39ff14' : team.status === 'finished' ? '#00e5ff' : '#fff',
+                        letterSpacing: '1.5px',
+                        textShadow: team.timerRunning ? '0 0 10px rgba(57, 255, 20, 0.7)' : 'none'
+                      }}>
+                        {formatElapsed(currentElapsed)}
+                      </span>
+                      <span style={{
+                        fontSize: '9px',
+                        fontWeight: 'bold',
+                        padding: '2px 6px',
+                        borderRadius: '3px',
+                        background: team.timerRunning ? 'rgba(57, 255, 20, 0.25)' : 'rgba(255, 255, 255, 0.1)',
+                        color: team.timerRunning ? '#39ff14' : team.status === 'finished' ? '#00e5ff' : '#ffaa00',
+                        border: `1px solid ${team.timerRunning ? '#39ff14' : 'rgba(255,255,255,0.2)'}`
+                      }}>
+                        {team.timerRunning ? 'LIVE' : team.status === 'finished' ? 'DONE' : 'STOP'}
+                      </span>
+                    </div>
+
+                    <div style={{ fontSize: '11px', color: 'var(--green-primary)' }}>
+                      {isExpanded ? '[- COLLAPSE]' : '[+ EXPAND]'}
+                    </div>
                   </div>
                 </div>
 
                 {isExpanded && (
                   <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(57,255,20,0.1)', display: 'flex', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
                     <div style={{ flex: '1', minWidth: '280px' }}>
-                      <div style={{ fontSize: '11px', marginTop: '6px' }}>
-                        TIMER: {formatElapsed(team.elapsedMs || team.timerAccumulatedMs || 0)} {team.timerRunning ? '(RUNNING)' : '(STOPPED)'}
+                      {/* Large HUD Mission Timer Box in Expanded View */}
+                      <div style={{
+                        padding: '12px 16px',
+                        background: 'rgba(0, 0, 0, 0.45)',
+                        border: `1px solid ${team.timerRunning ? '#39ff14' : 'rgba(255, 255, 255, 0.2)'}`,
+                        borderRadius: '6px',
+                        marginBottom: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '10px'
+                      }}>
+                        <div>
+                          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', letterSpacing: '1px' }}>
+                            OFFICIAL MISSION TIMER:
+                          </div>
+                          <div style={{
+                            fontSize: '24px',
+                            fontWeight: 'bold',
+                            fontFamily: "'Share Tech Mono', monospace",
+                            color: team.timerRunning ? '#39ff14' : team.status === 'finished' ? '#00e5ff' : '#ffaa00',
+                            textShadow: team.timerRunning ? '0 0 12px rgba(57,255,20,0.6)' : 'none'
+                          }}>
+                            ⏱️ {formatElapsed(currentElapsed)}
+                          </div>
+                        </div>
+                        <span style={{
+                          fontSize: '11px',
+                          padding: '4px 10px',
+                          borderRadius: '4px',
+                          fontWeight: 'bold',
+                          border: `1px solid ${team.timerRunning ? '#39ff14' : 'rgba(255,255,255,0.3)'}`,
+                          background: team.timerRunning ? 'rgba(57,255,20,0.15)' : 'rgba(255,255,255,0.05)',
+                          color: team.timerRunning ? '#39ff14' : 'rgba(255,255,255,0.7)'
+                        }}>
+                          {team.timerRunning ? '● LIVE TICKING' : team.status === 'finished' ? '✔ COMPLETED' : '■ TIMER STOPPED'}
+                        </span>
                       </div>
+
                       <div style={{ fontSize: '11px', marginTop: '6px' }}>
                         GPS: {team.location?.lat ? `${team.location.lat.toFixed(5)}, ${team.location.lng.toFixed(5)}` : 'No live coordinates yet'}
                       </div>
@@ -781,7 +1101,7 @@ const AdminDashboard = ({ API_BASE }) => {
                       )}
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px', minWidth: '320px', flex: '1' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', minWidth: '320px', flex: '1' }}>
                       <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); setSelectedQR(team); }}>
                         <QrCode size={14} /> VIEW QR
                       </button>
@@ -799,6 +1119,12 @@ const AdminDashboard = ({ API_BASE }) => {
                       </button>
                       <button className="cyber-btn-outline" style={{ borderColor: '#f59e0b', color: '#fbbf24' }} onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/reset-session`, 'Session reset'); }}>
                         <RefreshCw size={14} /> RESET IP/SESSION
+                      </button>
+                      <button className="cyber-btn-outline" style={{ borderColor: '#00e5ff', color: '#00e5ff' }} onClick={(e) => { e.stopPropagation(); handleOpenEditTeam(team); }}>
+                        <Edit3 size={14} /> EDIT TEAM
+                      </button>
+                      <button className="cyber-btn-outline" style={{ borderColor: '#ef4444', color: '#f87171' }} onClick={(e) => { e.stopPropagation(); handleDeleteTeam(team); }}>
+                        <Trash2 size={14} /> DELETE TEAM
                       </button>
                     </div>
                   </div>
@@ -948,9 +1274,21 @@ const AdminDashboard = ({ API_BASE }) => {
 
       {activeTab === 'reports' && (
         <div style={{ display: 'grid', gap: '12px', maxHeight: '68vh', overflowY: 'auto', paddingRight: '6px' }}>
-          <div style={{ fontSize: '13px', color: '#ffaa00', fontWeight: 'bold', marginBottom: '8px' }}>
-            SUBMITTED FEEDBACK & DISCREPANCY REPORTS ({reports.length})
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ fontSize: '14px', color: '#ffaa00', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Shield size={16} /> SUBMITTED FEEDBACK & DISCREPANCY REPORTS ({reports.length})
+            </div>
+            {reports.length > 0 && (
+              <button
+                className="cyber-btn"
+                style={{ background: '#7f1d1d', border: '1px solid #ef4444', color: '#fca5a5', padding: '6px 14px', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                onClick={handleClearAllReports}
+              >
+                <Trash2 size={13} /> CLEAR ALL REPORTS
+              </button>
+            )}
           </div>
+
           {reports.length === 0 ? (
             <div style={{ padding: '30px', textAlign: 'center', background: 'rgba(3,12,15,0.75)', border: '1px dashed rgba(57,255,20,0.3)', color: 'rgba(255,255,255,0.5)' }}>
               No feedback or issue reports submitted yet.
@@ -961,7 +1299,8 @@ const AdminDashboard = ({ API_BASE }) => {
                 background: 'rgba(4, 18, 23, 0.85)',
                 border: `1px solid ${rep.status === 'resolved' ? '#39ff14' : '#ffaa00'}`,
                 padding: '14px 18px',
-                borderRadius: '8px'
+                borderRadius: '8px',
+                boxShadow: rep.status === 'resolved' ? '0 0 10px rgba(57,255,20,0.05)' : '0 0 10px rgba(255,170,0,0.05)'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -973,15 +1312,33 @@ const AdminDashboard = ({ API_BASE }) => {
                       {new Date(rep.createdAt).toLocaleTimeString()}
                     </span>
                   </div>
-                  <span style={{
-                    fontSize: '10px',
-                    fontWeight: 'bold',
-                    padding: '2px 8px',
-                    color: rep.status === 'resolved' ? '#39ff14' : '#ffaa00',
-                    border: `1px solid ${rep.status === 'resolved' ? '#39ff14' : '#ffaa00'}`
-                  }}>
-                    STATUS: {rep.status?.toUpperCase() || 'PENDING'}
-                  </span>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                      className="cyber-btn-outline"
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        padding: '3px 8px',
+                        color: rep.status === 'resolved' ? '#39ff14' : '#ffaa00',
+                        border: `1px solid ${rep.status === 'resolved' ? '#39ff14' : '#ffaa00'}`,
+                        background: rep.status === 'resolved' ? 'rgba(57,255,20,0.1)' : 'rgba(255,170,0,0.1)',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => handleToggleReportStatus(rep)}
+                      title="Click to toggle between Pending and Resolved"
+                    >
+                      STATUS: {rep.status?.toUpperCase() || 'PENDING'} ↻
+                    </button>
+
+                    <button
+                      className="cyber-btn-outline"
+                      style={{ borderColor: '#ef4444', color: '#f87171', padding: '3px 8px', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      onClick={() => handleDeleteReport(rep._id)}
+                    >
+                      <Trash2 size={11} /> DELETE
+                    </button>
+                  </div>
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#e2e8f0', marginBottom: '8px', lineHeight: '1.4' }}>
@@ -997,6 +1354,168 @@ const AdminDashboard = ({ API_BASE }) => {
               </div>
             ))
           )}
+        </div>
+      )}
+
+      {/* Edit Team Modal */}
+      {editingTeam && (
+        <div
+          onClick={() => setEditingTeam(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px',
+            backdropFilter: 'blur(6px)'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '480px',
+              background: '#041217',
+              border: '1px solid #00e5ff',
+              boxShadow: '0 0 25px rgba(0, 229, 255, 0.3)',
+              borderRadius: '8px',
+              padding: '24px',
+              fontFamily: "'Share Tech Mono', monospace"
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(0,229,255,0.2)', paddingBottom: '10px' }}>
+              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#00e5ff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Edit3 size={18} /> EDIT TEAM: {editingTeam.name}
+              </div>
+              <button
+                onClick={() => setEditingTeam(null)}
+                style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '18px', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveTeamEdit} style={{ display: 'grid', gap: '14px' }}>
+              <div>
+                <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', display: 'block', marginBottom: '4px' }}>
+                  TEAM NAME:
+                </label>
+                <input
+                  type="text"
+                  className="id-input"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
+                  required
+                  style={{ width: '100%', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', display: 'block', marginBottom: '4px' }}>
+                    STATUS:
+                  </label>
+                  <select
+                    value={editForm.status}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, status: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      background: '#020b0d',
+                      color: '#39ff14',
+                      border: '1px solid rgba(57,255,20,0.4)',
+                      padding: '8px 10px',
+                      borderRadius: '4px',
+                      fontFamily: "'Share Tech Mono', monospace",
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <option value="not_started">NOT STARTED</option>
+                    <option value="in_progress">IN PROGRESS</option>
+                    <option value="finished">FINISHED</option>
+                    <option value="disqualified">DISQUALIFIED</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', display: 'block', marginBottom: '4px' }}>
+                    SCORE:
+                  </label>
+                  <input
+                    type="number"
+                    className="id-input"
+                    value={editForm.score}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, score: e.target.value }))}
+                    style={{ width: '100%', boxSizing: 'border-box' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', display: 'block', marginBottom: '4px' }}>
+                    CURRENT CLUE (1-INDEXED):
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="30"
+                    className="id-input"
+                    value={Number(editForm.currentClueIndex || 0) + 1}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, currentClueIndex: Math.max(0, parseInt(e.target.value, 10) - 1) }))}
+                    style={{ width: '100%', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', display: 'block', marginBottom: '4px' }}>
+                    ASSIGNED ROUTE:
+                  </label>
+                  <select
+                    value={editForm.assignedRouteId || ''}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, assignedRouteId: e.target.value ? Number(e.target.value) : null }))}
+                    style={{
+                      width: '100%',
+                      background: '#020b0d',
+                      color: '#00e5ff',
+                      border: '1px solid rgba(0,229,255,0.4)',
+                      padding: '8px 10px',
+                      borderRadius: '4px',
+                      fontFamily: "'Share Tech Mono', monospace",
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <option value="">AUTO / DEFAULT</option>
+                    {allRoutes.map((r) => (
+                      <option key={r.routeId} value={r.routeId}>
+                        Route {r.routeId} ({r.distance})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
+                <button
+                  type="button"
+                  className="cyber-btn-outline"
+                  onClick={() => setEditingTeam(null)}
+                  style={{ padding: '8px 16px' }}
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="submit"
+                  className="cyber-btn"
+                  style={{ padding: '8px 20px', background: '#00e5ff', color: '#020b0d', fontWeight: 'bold' }}
+                >
+                  SAVE CHANGES
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

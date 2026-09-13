@@ -22,7 +22,11 @@ import {
   toggleTestDevMode,
   toggleCoordMapping,
   getReports,
-  updateReportStatus
+  updateReportStatus,
+  deleteReport,
+  clearAllReports,
+  updateTeam,
+  deleteTeam,
 } from "../controllers/adminController.js";
 import { protect, adminOnly } from "../middleware/auth.js";
 
@@ -49,6 +53,11 @@ router.post("/toggle-coord-mapping", protect, adminOnly, toggleCoordMapping);
 // Feedback Reports Routes
 router.get("/reports", protect, adminOnly, getReports);
 router.put("/reports/:id/status", protect, adminOnly, updateReportStatus);
+router.delete("/reports/clear", protect, adminOnly, clearAllReports);
+router.delete("/reports/:id", protect, adminOnly, deleteReport);
+
+router.put("/teams/:id", protect, adminOnly, updateTeam);
+router.delete("/teams/:id", protect, adminOnly, deleteTeam);
 
 router.get("/:id", protect, adminOnly, getTeam);
 
