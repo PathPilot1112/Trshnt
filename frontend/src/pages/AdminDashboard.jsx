@@ -531,79 +531,107 @@ const AdminDashboard = ({ API_BASE }) => {
       }}>
         <div style={{ display: 'flex', gap: '24px', alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Toggle 1: Test Dev Mode */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px' }}>
-              <div
-                onClick={handleToggleTestDevMode}
-                style={{
-                  width: '46px',
-                  height: '24px',
-                  borderRadius: '12px',
-                  background: systemState.testDevMode ? 'rgba(255, 170, 0, 0.3)' : 'rgba(255, 255, 255, 0.1)',
-                  border: `1px solid ${systemState.testDevMode ? '#ffaa00' : 'rgba(255, 255, 255, 0.2)'}`,
-                  position: 'relative',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                <div style={{
-                  width: '18px',
-                  height: '18px',
-                  borderRadius: '50%',
-                  background: systemState.testDevMode ? '#ffaa00' : 'rgba(255, 255, 255, 0.5)',
-                  position: 'absolute',
-                  top: '2px',
-                  left: systemState.testDevMode ? '24px' : '3px',
-                  transition: 'all 0.3s ease',
-                  boxShadow: systemState.testDevMode ? '0 0 8px #ffaa00' : 'none'
-                }} />
+          <div
+            onClick={handleToggleTestDevMode}
+            role="button"
+            tabIndex={0}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              cursor: 'pointer',
+              userSelect: 'none',
+              padding: '4px 8px',
+              borderRadius: '8px',
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: `1px solid ${systemState.testDevMode ? 'rgba(255, 170, 0, 0.4)' : 'rgba(255, 255, 255, 0.08)'}`,
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <div
+              style={{
+                width: '46px',
+                height: '24px',
+                borderRadius: '12px',
+                background: systemState.testDevMode ? 'rgba(255, 170, 0, 0.3)' : 'rgba(255, 255, 255, 0.1)',
+                border: `1px solid ${systemState.testDevMode ? '#ffaa00' : 'rgba(255, 255, 255, 0.2)'}`,
+                position: 'relative',
+                transition: 'all 0.3s ease',
+                flexShrink: 0
+              }}
+            >
+              <div style={{
+                width: '18px',
+                height: '18px',
+                borderRadius: '50%',
+                background: systemState.testDevMode ? '#ffaa00' : 'rgba(255, 255, 255, 0.5)',
+                position: 'absolute',
+                top: '2px',
+                left: systemState.testDevMode ? '24px' : '3px',
+                transition: 'all 0.3s ease',
+                boxShadow: systemState.testDevMode ? '0 0 8px #ffaa00' : 'none'
+              }} />
+            </div>
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: 'bold', color: systemState.testDevMode ? '#ffaa00' : '#fff' }}>
+                TEST DEV MODE SLIDER
               </div>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 'bold', color: systemState.testDevMode ? '#ffaa00' : '#fff' }}>
-                  TEST DEV MODE SLIDER
-                </div>
-                <div style={{ fontSize: '10px', color: systemState.testDevMode ? '#ffaa00' : 'rgba(255,255,255,0.4)' }}>
-                  {systemState.testDevMode ? '[ ACTIVE: ROUTE ASSIGNMENT ONLY SHOWS testRoutes.json ]' : '[ INACTIVE: ALL PRODUCTION ROUTES ACTIVE ]'}
-                </div>
+              <div style={{ fontSize: '10px', color: systemState.testDevMode ? '#ffaa00' : 'rgba(255,255,255,0.4)' }}>
+                {systemState.testDevMode ? '[ ACTIVE: ROUTE ASSIGNMENT ONLY SHOWS testRoutes.json ]' : '[ INACTIVE: ALL PRODUCTION ROUTES ACTIVE ]'}
               </div>
-            </label>
+            </div>
           </div>
 
           {/* Toggle 2: GPS Coordinate Mapping */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px' }}>
-              <div
-                onClick={handleToggleCoordMapping}
-                style={{
-                  width: '46px',
-                  height: '24px',
-                  borderRadius: '12px',
-                  background: systemState.coordMappingEnabled ? 'rgba(57, 255, 20, 0.3)' : 'rgba(255, 255, 255, 0.1)',
-                  border: `1px solid ${systemState.coordMappingEnabled ? '#39ff14' : 'rgba(255, 255, 255, 0.2)'}`,
-                  position: 'relative',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                <div style={{
-                  width: '18px',
-                  height: '18px',
-                  borderRadius: '50%',
-                  background: systemState.coordMappingEnabled ? '#39ff14' : 'rgba(255, 255, 255, 0.5)',
-                  position: 'absolute',
-                  top: '2px',
-                  left: systemState.coordMappingEnabled ? '24px' : '3px',
-                  transition: 'all 0.3s ease',
-                  boxShadow: systemState.coordMappingEnabled ? '0 0 8px #39ff14' : 'none'
-                }} />
+          <div
+            onClick={handleToggleCoordMapping}
+            role="button"
+            tabIndex={0}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              cursor: 'pointer',
+              userSelect: 'none',
+              padding: '4px 8px',
+              borderRadius: '8px',
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: `1px solid ${systemState.coordMappingEnabled ? 'rgba(57, 255, 20, 0.4)' : 'rgba(255, 255, 255, 0.08)'}`,
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <div
+              style={{
+                width: '46px',
+                height: '24px',
+                borderRadius: '12px',
+                background: systemState.coordMappingEnabled ? 'rgba(57, 255, 20, 0.3)' : 'rgba(255, 255, 255, 0.1)',
+                border: `1px solid ${systemState.coordMappingEnabled ? '#39ff14' : 'rgba(255, 255, 255, 0.2)'}`,
+                position: 'relative',
+                transition: 'all 0.3s ease',
+                flexShrink: 0
+              }}
+            >
+              <div style={{
+                width: '18px',
+                height: '18px',
+                borderRadius: '50%',
+                background: systemState.coordMappingEnabled ? '#39ff14' : 'rgba(255, 255, 255, 0.5)',
+                position: 'absolute',
+                top: '2px',
+                left: systemState.coordMappingEnabled ? '24px' : '3px',
+                transition: 'all 0.3s ease',
+                boxShadow: systemState.coordMappingEnabled ? '0 0 8px #39ff14' : 'none'
+              }} />
+            </div>
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: 'bold', color: systemState.coordMappingEnabled ? '#39ff14' : '#fff' }}>
+                GPS COORDINATE MAPPING TOGGLE
               </div>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 'bold', color: systemState.coordMappingEnabled ? '#39ff14' : '#fff' }}>
-                  GPS COORDINATE MAPPING TOGGLE
-                </div>
-                <div style={{ fontSize: '10px', color: systemState.coordMappingEnabled ? '#39ff14' : 'rgba(255,255,255,0.4)' }}>
-                  {systemState.coordMappingEnabled ? `[ ACTIVE: 3.5m CIRCULAR RADIUS AUTO-VERIFY ]` : '[ INACTIVE: STANDARD OPTIC ML VERIFICATION ]'}
-                </div>
+              <div style={{ fontSize: '10px', color: systemState.coordMappingEnabled ? '#39ff14' : 'rgba(255,255,255,0.4)' }}>
+                {systemState.coordMappingEnabled ? '[ ACTIVE: ML VERIFICATION + TARGET GPS MAPPING REQUIRED ]' : '[ INACTIVE: STANDARD OPTIC ML VERIFICATION ONLY ]'}
               </div>
-            </label>
+            </div>
           </div>
         </div>
       </div>

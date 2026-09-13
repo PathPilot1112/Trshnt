@@ -7,17 +7,17 @@ This document logs all identified data discrepancies, missing GPS coordinates, n
 
 ## 1. Missing Coordinates Audit (7 Locations)
 
-The provided Zone coordinate inventory is missing explicit GPS coordinates for 7 locations. System fallback coordinates have been mapped for testing:
+The provided Zone coordinate inventory is missing explicit GPS coordinates for 7 locations. All fallback coordinates have been completely removed, and these 7 locations are strictly accepted on the basis of **ML response only** (GPS geofence check is bypassed for these targets even when coordinate mapping is enabled):
 
-| Zone | Location Name | Prompt Coordinate Status | System Fallback GPS Mapped |
-| :--- | :--- | :--- | :--- |
-| **Zone 1** | **Perignar Anna** | ❌ Missing | `12.823450, 80.042900` |
-| **Zone 1** | **Periyar** | ❌ Missing | `12.823550, 80.043100` |
-| **Zone 2** | **Sports Complex** | ❌ Missing | `12.825500, 80.044000` |
-| **Zone 3** | **Aaruush Logo (TP)** | ❌ Missing | `12.824200, 80.046800` |
-| **Zone 3** | **#SRM (TP)** | ❌ Missing | `12.824100, 80.046600` |
-| **Zone 4** | **Pickleball Court** | ❌ Missing | `12.826100, 80.048500` |
-| **Zone 5** | **Architecture #SRM** | ❌ Missing | `12.823900, 80.044300` |
+| Zone | Location Name | Prompt Coordinate Status | GPS Fallback Status | Verification Mode |
+| :--- | :--- | :--- | :--- | :--- |
+| **Zone 1** | **Perignar Anna** | ❌ Missing | 🚫 Removed (None) | ML Response Only |
+| **Zone 1** | **Periyar** | ❌ Missing | 🚫 Removed (None) | ML Response Only |
+| **Zone 2** | **Sports Complex** | ❌ Missing | 🚫 Removed (None) | ML Response Only |
+| **Zone 3** | **Aaruush Logo (TP)** | ❌ Missing | 🚫 Removed (None) | ML Response Only |
+| **Zone 3** | **#SRM (TP)** | ❌ Missing | 🚫 Removed (None) | ML Response Only |
+| **Zone 4** | **Pickleball Court** | ❌ Missing | 🚫 Removed (None) | ML Response Only |
+| **Zone 5** | **Architecture #SRM** | ❌ Missing | 🚫 Removed (None) | ML Response Only |
 
 ---
 

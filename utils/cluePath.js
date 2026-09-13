@@ -348,7 +348,8 @@ export const publicCluePayload = (team, clues) => {
       step: pathSteps.length,
       total: pathSteps.length,
       pathSummary,
-      inventory
+      inventory,
+      systemState: getSystemState()
     };
   }
 
@@ -363,6 +364,7 @@ export const publicCluePayload = (team, clues) => {
     step: currentIdx + 1,
     total: pathSteps.length,
     pathSummary,
-    inventory
+    inventory,
+    systemState: getSystemState()
   };
 };

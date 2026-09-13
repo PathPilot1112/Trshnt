@@ -104,22 +104,51 @@ export const submitPhoto = async (req, res) => {
 
     const isLabelMatch = predictedClean.length > 0 && targetClean.length > 0 &&
       (predictedClean === targetClean || predictedClean.includes(targetClean) || targetClean.includes(predictedClean));
-
     const isConfident = confidence >= (currentClue.confidenceThreshold || 0.50);
-    let isCorrect = Boolean(isLabelMatch && isConfident);
+    const isMlMatch = Boolean(isLabelMatch && isConfident);
 
     // Check GPS Coordinate Geofencing (3-4 meter circular range parameter)
     const { coordMappingEnabled, coordRadiusMeters } = getSystemState();
-    const userLat = parseFloat(req.body?.lat || req.body?.userLat || req.query?.lat);
-    const userLng = parseFloat(req.body?.lng || req.body?.userLng || req.query?.lng);
-    let geofenceResult = { isWithin: false, distance: null };
+    const userLat = parseFloat(req.body?.lat || req.body?.userLat || req.query?.lat || team.location?.lat);
+    const userLng = parseFloat(req.body?.lng || req.body?.userLng || req.query?.lng || team.location?.lng);
+    const geofenceResult = isWithinGeofenceRange(userLat, userLng, currentClue.title || currentClue.targetLabel, coordRadiusMeters || 3.5);
 
-    if (!isNaN(userLat) && !isNaN(userLng)) {
-      geofenceResult = isWithinGeofenceRange(userLat, userLng, currentClue.title || currentClue.targetLabel, coordRadiusMeters || 3.5);
-      // If Coordinate Mapping is enabled by Admin and user is within 3-4 meters radius, auto-accept scan!
-      if (coordMappingEnabled && geofenceResult.isWithin) {
-        console.log(`🎯 GPS Geofence matched location within ${geofenceResult.distance}m (Radius: ${coordRadiusMeters || 3.5}m)`);
+    let isCorrect = false;
+    let feedbackMessage = "";
+
+    // 1. MUST FIRST check ML response
+    if (!isMlMatch) {
+      isCorrect = false;
+      feedbackMessage = "Scan not accepted. Visual scan did not match the objective.";
+    } else {
+      // ML match confirmed!
+      if (!coordMappingEnabled) {
+        // GPS mapping is OFF -> standard optic ML verification
         isCorrect = true;
+        feedbackMessage = "Scan accepted! Visual match confirmed.";
+      } else {
+        // GPS mapping is ON -> immediately verify GPS mapping to target field
+        if (!geofenceResult.hasCoordinates) {
+          // Those whose GPS coordinates are missing: accept ONLY on basis of ML response!
+          console.log(`📍 Target "${currentClue.title || currentClue.targetLabel}" has no GPS coordinates; accepted on basis of ML response.`);
+          isCorrect = true;
+          feedbackMessage = "Scan accepted! Visual match confirmed (GPS exempt - location coordinates not mapped).";
+        } else {
+          // Target HAS GPS coordinates: must verify geofence match
+          if (geofenceResult.isWithin) {
+            console.log(`🎯 GPS Geofence and ML matched location within ${geofenceResult.distance}m (Radius: ${coordRadiusMeters || 3.5}m)`);
+            isCorrect = true;
+            feedbackMessage = `Scan accepted! Visual match confirmed and GPS lock verified within ${geofenceResult.distance}m.`;
+          } else {
+            console.log(`⚠️ ML matched but GPS out of range: user is ${geofenceResult.distance}m away (max ${coordRadiusMeters || 3.5}m)`);
+            isCorrect = false;
+            if (geofenceResult.distance != null) {
+              feedbackMessage = `Visual match confirmed, but GPS coordinates are out of range! You are ${geofenceResult.distance}m away (must be within ${coordRadiusMeters || 3.5}m of target).`;
+            } else {
+              feedbackMessage = "Visual match confirmed, but your device GPS location could not be verified. Please ensure GPS is active.";
+            }
+          }
+        }
       }
     }
 
@@ -202,14 +231,14 @@ export const submitPhoto = async (req, res) => {
       }
 
       return res.json({
-        message: "Scan accepted.",
+        message: feedbackMessage || "Scan accepted.",
         isCorrect: true,
         nextClue: publicCluePayload(team, clues),
       });
     }
 
     return res.json({
-      message: "Scan not accepted. Capture the location again.",
+      message: feedbackMessage || "Scan not accepted. Capture the location again.",
       isCorrect: false,
     });
 
@@ -223,6 +252,11 @@ export const submitPhoto = async (req, res) => {
 // @desc    Submit an issue or feedback report during test mode / active run
 export const submitReport = async (req, res) => {
   try {
+    const { testDevMode } = getSystemState();
+    if (!testDevMode) {
+      return res.status(403).json({ message: "Test issue reporting is disabled. Enable Test Dev Mode in Admin to report issues." });
+    }
+
     const team = await Team.findById(req.user.team);
     if (!team) return res.status(404).json({ message: "Team not found" });
 
@@ -253,4 +287,3 @@ export const submitReport = async (req, res) => {
     res.status(500).json({ message: "Error submitting report", error: err.message });
   }
 };
-

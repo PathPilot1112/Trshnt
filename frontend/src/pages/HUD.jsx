@@ -122,6 +122,9 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
         if (!response.ok) return;
         const data = await response.json();
         setCluePayload(data);
+        if (data.systemState) {
+          setSystemState(data.systemState);
+        }
         if (data.finished) {
           setClueFinished(true);
         } else {
@@ -302,10 +305,10 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
         </div>
       </header>
 
-      {/* Gamified Top Telemetry Bar (Timer, Live GPS, Items, Score) */}
+      {/* Gamified Top Telemetry Bar (Timer, Live GPS, Squad Supplies) */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
+        gridTemplateColumns: 'repeat(3, 1fr)',
         gap: '6px',
         padding: '8px 10px',
         background: 'rgba(15, 23, 42, 0.85)',
@@ -367,22 +370,6 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
           </div>
           <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#00e5ff', fontFamily: 'var(--font-mono)' }}>
             {inventory.length} / 5
-          </div>
-        </div>
-
-        {/* Stat 4: Points */}
-        <div style={{
-          background: 'rgba(0, 0, 0, 0.4)',
-          borderRadius: '8px',
-          padding: '6px 4px',
-          textAlign: 'center',
-          border: '1px solid rgba(255, 0, 128, 0.25)'
-        }}>
-          <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            🏆 Score
-          </div>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#ff0080', fontFamily: 'var(--font-mono)' }}>
-            {localTeam?.score || 0} pts
           </div>
         </div>
       </div>
@@ -862,28 +849,30 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
           <span>GEAR ({inventory.length})</span>
         </button>
 
-        <button
-          onClick={() => setShowReportModal(true)}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: systemState.testDevMode ? '#ffaa00' : '#00e5ff',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '3px',
-            fontSize: '10px',
-            fontFamily: 'var(--font-mono)',
-            cursor: 'pointer'
-          }}
-        >
-          <ShieldAlert size={18} color={systemState.testDevMode ? '#ffaa00' : '#00e5ff'} />
-          <span>REPORT</span>
-        </button>
+        {systemState.testDevMode && (
+          <button
+            onClick={() => setShowReportModal(true)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#ffaa00',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '3px',
+              fontSize: '10px',
+              fontFamily: 'var(--font-mono)',
+              cursor: 'pointer'
+            }}
+          >
+            <ShieldAlert size={18} color="#ffaa00" />
+            <span>REPORT</span>
+          </button>
+        )}
       </div>
 
-      {/* Test Mode / Feedback Issue Report Modal */}
-      {showReportModal && (
+      {/* Test Mode / Feedback Issue Report Modal (Only available in Test Dev Mode) */}
+      {showReportModal && systemState.testDevMode && (
         <div style={{
           position: 'fixed',
           inset: 0,

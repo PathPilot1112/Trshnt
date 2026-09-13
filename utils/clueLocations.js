@@ -10,18 +10,18 @@ export const LOCATION_COORDINATES = {
   "Rajaraja Chola": { lat: 12.823009293444368, lng: 80.04281319259249, zone: "Zone 1" },
   "Rajaraja Chola Statue": { lat: 12.823009293444368, lng: 80.04281319259249, zone: "Zone 1" },
   "Central Library": { lat: 12.823691889871549, lng: 80.04247255211634, zone: "Zone 1" },
-  "Perignar Anna": { lat: 12.823450, lng: 80.042900, zone: "Zone 1", estimated: true },
-  "Periyar": { lat: 12.823550, lng: 80.043100, zone: "Zone 1", estimated: true },
+  "Perignar Anna": { lat: null, lng: null, zone: "Zone 1", missingGps: true },
+  "Periyar": { lat: null, lng: null, zone: "Zone 1", missingGps: true },
 
   // ZONE 2
-  "Sports Complex": { lat: 12.825500, lng: 80.044000, zone: "Zone 2", estimated: true },
+  "Sports Complex": { lat: null, lng: null, zone: "Zone 2", missingGps: true },
   "Arts & Science Block": { lat: 12.825873105125622, lng: 80.04357516477907, zone: "Zone 2" },
   "Sai Temple": { lat: 12.825278767134366, lng: 80.04184707996356, zone: "Zone 2" },
   "Law Block": { lat: 12.825918205196725, lng: 80.04594281310993, zone: "Zone 2" },
 
   // ZONE 3
-  "Aaruush Logo (TP)": { lat: 12.824200, lng: 80.046800, zone: "Zone 3", estimated: true },
-  "#SRM (TP)": { lat: 12.824100, lng: 80.046600, zone: "Zone 3", estimated: true },
+  "Aaruush Logo (TP)": { lat: null, lng: null, zone: "Zone 3", missingGps: true },
+  "#SRM (TP)": { lat: null, lng: null, zone: "Zone 3", missingGps: true },
   "Vendhar Square": { lat: 12.824056115180442, lng: 80.04531785843815, zone: "Zone 3" },
   "Fab Lab": { lat: 12.822479081518516, lng: 80.04566922780847, zone: "Zone 3" },
   "Noon Meal Scheme (M Block)": { lat: 12.821493, lng: 80.045679, zone: "Zone 3" },
@@ -32,14 +32,14 @@ export const LOCATION_COORDINATES = {
   "TP Auditorium Gate": { lat: 12.824376, lng: 80.047331, zone: "Zone 4" },
   "Dental College": { lat: 12.825311458267803, lng: 80.04754275076432, zone: "Zone 4" },
   "Gym": { lat: 12.825912974626478, lng: 80.04903942337197, zone: "Zone 4" },
-  "Pickleball Court": { lat: 12.826100, lng: 80.048500, zone: "Zone 4", estimated: true },
+  "Pickleball Court": { lat: null, lng: null, zone: "Zone 4", missingGps: true },
 
   // ZONE 5
   "Bell Block": { lat: 12.823287214422754, lng: 80.04406929003538, zone: "Zone 5" },
   "MBA Gate": { lat: 12.823629, lng: 80.044732, zone: "Zone 5" },
   "Architecture Stonehenge": { lat: 12.824048269271172, lng: 80.04447028029426, zone: "Zone 5" },
   "Clock Tower": { lat: 12.823026990716777, lng: 80.04482433186632, zone: "Zone 5" },
-  "Architecture #SRM": { lat: 12.823900, lng: 80.044300, zone: "Zone 5", estimated: true }
+  "Architecture #SRM": { lat: null, lng: null, zone: "Zone 5", missingGps: true }
 };
 
 /**
@@ -83,10 +83,29 @@ export const getCoordinatesForLocation = (locationName) => {
  */
 export const isWithinGeofenceRange = (userLat, userLng, locationName, maxDistanceMeters = 3.5) => {
   const targetCoords = getCoordinatesForLocation(locationName);
-  if (!targetCoords) return { isWithin: false, distance: null };
+  // If target has no GPS coordinates defined, or missingGps is flagged
+  if (!targetCoords || targetCoords.lat == null || targetCoords.lng == null) {
+    return {
+      hasCoordinates: false,
+      isWithin: false,
+      distance: null,
+      targetCoords: null
+    };
+  }
+
+  // If user lat or lng is missing/invalid
+  if (userLat == null || userLng == null || isNaN(userLat) || isNaN(userLng)) {
+    return {
+      hasCoordinates: true,
+      isWithin: false,
+      distance: null,
+      targetCoords
+    };
+  }
 
   const distance = calculateDistanceMeters(userLat, userLng, targetCoords.lat, targetCoords.lng);
   return {
+    hasCoordinates: true,
     isWithin: distance <= maxDistanceMeters,
     distance: Math.round(distance * 10) / 10,
     targetCoords

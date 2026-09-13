@@ -421,6 +421,33 @@ const Scan = ({ API_BASE, token, onAbort }) => {
       );
       const formData = new FormData();
       formData.append('image', finalBlob, 'pda_scan.jpg');
+
+      // Check current GPS coordinates and append to submission payload
+      let liveCoords = coords;
+      if ((!liveCoords?.lat || !liveCoords?.lng) && navigator.geolocation) {
+        try {
+          const freshPos = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              timeout: 4000,
+              enableHighAccuracy: true,
+              maximumAge: 10000
+            });
+          });
+          liveCoords = { lat: freshPos.coords.latitude, lng: freshPos.coords.longitude };
+          setCoords(liveCoords);
+        } catch (gpsErr) {
+          console.warn("Could not acquire fresh GPS on transmit:", gpsErr.message);
+        }
+      }
+
+      if (liveCoords?.lat != null && liveCoords?.lng != null) {
+        formData.append('lat', liveCoords.lat);
+        formData.append('lng', liveCoords.lng);
+        pushLog(`>> ATTACHED GPS TELEMETRY: ${liveCoords.lat.toFixed(5)}, ${liveCoords.lng.toFixed(5)}`);
+      } else {
+        pushLog('>> CAUTION: NO GPS COORDINATES ATTACHED');
+      }
+
       const response = await fetch(`${API_BASE}/clues/submit`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
