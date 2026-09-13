@@ -388,7 +388,7 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
       </div>
 
       {/* Main Mission Screen: 5-Quest Path Ascent Cards */}
-      <div className="hud-scroll" style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
+      <div className="hud-scroll" style={{ flex: 1, overflowY: 'auto', padding: '12px', paddingBottom: '80px' }}>
 
         {/* Sector Quest Path Header */}
         <div style={{
@@ -593,17 +593,31 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
                         TACTICAL CLUE TEXT
                       </div>
 
-                      <p style={{
-                        margin: 0,
-                        fontSize: '14px',
-                        lineHeight: '1.6',
-                        color: '#ffffff',
-                        fontWeight: '500',
-                        fontFamily: 'var(--font-sans)',
-                        letterSpacing: '0.2px'
-                      }}>
-                        “{node.clueText || cluePayload?.text}”
-                      </p>
+                      {isLoadingClue && !node.clueText && !cluePayload?.text ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0', opacity: 0.85 }}>
+                          <div style={{
+                            width: '12px', height: '12px', borderRadius: '50%',
+                            border: '2px solid #39ff14', borderTopColor: 'transparent',
+                            animation: 'spin 0.8s linear infinite', flexShrink: 0
+                          }} />
+                          <span style={{ fontSize: '12px', color: '#39ff14', fontFamily: 'var(--font-mono)' }}>
+                            DECRYPTING TACTICAL INTEL...
+                          </span>
+                        </div>
+                      ) : (
+                        <p style={{
+                          margin: 0,
+                          fontSize: '14px',
+                          lineHeight: '1.65',
+                          color: '#ffffff',
+                          fontWeight: '500',
+                          fontFamily: 'var(--font-sans)',
+                          letterSpacing: '0.2px',
+                          textShadow: '0 1px 8px rgba(0,0,0,0.6)'
+                        }}>
+                          {node.clueText || cluePayload?.text || 'Locate the designated sector objective and capture a verification photo.'}
+                        </p>
+                      )}
                     </div>
 
                     {/* Direct Scan Trigger Button inside Active Node Box */}
