@@ -2,7 +2,9 @@ import Clue from "../models/Clue.js";
 import Team from "../models/Team.js";
 import Submission from "../models/Submission.js";
 import User from "../models/User.js";
+import Report from "../models/Report.js";
 import { buildRandomCluePath, assignRouteToTeam, getRoutes } from "../utils/cluePath.js";
+import { getSystemState, setSystemState } from "../utils/systemConfig.js";
 import jwt from "jsonwebtoken";
 import fs from "fs/promises";
 import path from "path";
@@ -410,3 +412,71 @@ export const clearSubmissions = async (req, res) => {
     res.status(500).json({ message: "Failed to clear submissions", error: err.message });
   }
 };
+
+// --- System State & Test Mode Toggles ---
+
+export const getSystemStatus = async (req, res) => {
+  try {
+    res.json(getSystemState());
+  } catch (err) {
+    res.status(500).json({ message: "Error reading system state", error: err.message });
+  }
+};
+
+export const toggleTestDevMode = async (req, res) => {
+  try {
+    const currentState = getSystemState();
+    const targetState = typeof req.body.enabled === "boolean" ? req.body.enabled : !currentState.testDevMode;
+    const newState = setSystemState({ testDevMode: targetState });
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("system:state", newState);
+    }
+
+    res.json({ message: `Test Dev Mode is now ${newState.testDevMode ? "ENABLED" : "DISABLED"}`, state: newState });
+  } catch (err) {
+    res.status(500).json({ message: "Error toggling Test Dev Mode", error: err.message });
+  }
+};
+
+export const toggleCoordMapping = async (req, res) => {
+  try {
+    const currentState = getSystemState();
+    const targetState = typeof req.body.enabled === "boolean" ? req.body.enabled : !currentState.coordMappingEnabled;
+    const newState = setSystemState({ coordMappingEnabled: targetState });
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("system:state", newState);
+    }
+
+    res.json({ message: `Coordinate Mapping (3-4m circular range) is now ${newState.coordMappingEnabled ? "ENABLED" : "DISABLED"}`, state: newState });
+  } catch (err) {
+    res.status(500).json({ message: "Error toggling Coordinate Mapping", error: err.message });
+  }
+};
+
+// --- Feedback Reports Management ---
+
+export const getReports = async (req, res) => {
+  try {
+    const reports = await Report.find().sort({ createdAt: -1 });
+    res.json({ reports });
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching feedback reports", error: err.message });
+  }
+};
+
+export const updateReportStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const report = await Report.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    if (!report) return res.status(404).json({ message: "Report not found" });
+
+    res.json({ message: "Report status updated", report });
+  } catch (err) {
+    res.status(500).json({ message: "Error updating report status", error: err.message });
+  }
+};
+

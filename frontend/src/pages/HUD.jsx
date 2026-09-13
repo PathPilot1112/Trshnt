@@ -25,6 +25,14 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
   const [selectedItemModal, setSelectedItemModal] = useState(null);
   const [showInventoryDrawer, setShowInventoryDrawer] = useState(false);
 
+  // Report Modal & System State
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportCategory, setReportCategory] = useState('clue_discrepancy');
+  const [reportMessage, setReportMessage] = useState('');
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reportSuccess, setReportSuccess] = useState(false);
+  const [systemState, setSystemState] = useState({ testDevMode: false, coordMappingEnabled: false });
+
   // GPS Telemetry State
   const [gpsStatus, setGpsStatus] = useState('acquiring'); // 'active' | 'acquiring' | 'denied'
   const [gpsCoords, setGpsCoords] = useState(null);
@@ -32,6 +40,14 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
   useEffect(() => {
     setLocalTeam(teamInfo);
   }, [teamInfo]);
+
+  // Fetch initial system state (Test Dev Mode, Geofence mapping)
+  useEffect(() => {
+    fetch(`${API_BASE}/admin/system-state`)
+      .then(res => res.json())
+      .then(data => setSystemState(data))
+      .catch(() => {});
+  }, [API_BASE]);
 
   // Request & Stream GPS Location on HUD Mount / Game Start
   useEffect(() => {
@@ -82,7 +98,7 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
     return () => navigator.geolocation.clearWatch(watchId);
   }, [API_BASE, token]);
 
-  // Fetch full clue payload
+  // Fetch full clue payload with zero-lag background updates
   useEffect(() => {
     if (localTeam?.status === 'finished') {
       setClueFinished(true);
@@ -96,7 +112,9 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
     }
 
     const fetchCurrentClue = async () => {
-      setIsLoadingClue(true);
+      if (!cluePayload) {
+        setIsLoadingClue(true);
+      }
       try {
         const response = await fetch(`${API_BASE}/clues/current`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -132,6 +150,40 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
     return () => clearInterval(interval);
   }, [localTeam]);
 
+  // Handle report submission
+  const handleSendReport = async (e) => {
+    e.preventDefault();
+    if (!reportMessage.trim()) return;
+    setReportSubmitting(true);
+    try {
+      const res = await fetch(`${API_BASE}/clues/report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          category: reportCategory,
+          message: reportMessage,
+          clueTitle: cluePayload?.pathSummary?.[cluePayload?.step - 1]?.locationName || cluePayload?.text || 'N/A',
+          coords: gpsCoords,
+        }),
+      });
+      if (res.ok) {
+        setReportSuccess(true);
+        setReportMessage('');
+        setTimeout(() => {
+          setReportSuccess(false);
+          setShowReportModal(false);
+        }, 1800);
+      }
+    } catch (err) {
+      console.error("Error submitting report:", err);
+    } finally {
+      setReportSubmitting(false);
+    }
+  };
+
   // Socket updates
   useEffect(() => {
     const socket = getSocket(API_BASE);
@@ -159,15 +211,20 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
         }));
       }
     };
+    const handleSystemState = (newState) => {
+      setSystemState(newState);
+    };
 
     socket.on('team:status', handleStatus);
     socket.on('team:timer', handleTimer);
     socket.on('leaderboard:snapshot', handleLeaderboard);
+    socket.on('system:state', handleSystemState);
 
     return () => {
       socket.off('team:status', handleStatus);
       socket.off('team:timer', handleTimer);
       socket.off('leaderboard:snapshot', handleLeaderboard);
+      socket.off('system:state', handleSystemState);
     };
   }, [API_BASE, localTeam?.id, localTeam?._id]);
 
@@ -708,6 +765,222 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* HUD Bottom Navigation Bar */}
+      <div style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: '62px',
+        zIndex: 85,
+        background: 'linear-gradient(180deg, rgba(3, 15, 20, 0.95), rgba(1, 8, 12, 0.99))',
+        borderTop: `1px solid ${systemState.testDevMode ? '#ffaa00' : 'rgba(57, 255, 20, 0.4)'}`,
+        backdropFilter: 'blur(12px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        padding: '0 10px',
+        boxShadow: systemState.testDevMode ? '0 -4px 20px rgba(255, 170, 0, 0.25)' : '0 -4px 20px rgba(57, 255, 20, 0.15)'
+      }}>
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: '#39ff14',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '3px',
+            fontSize: '10px',
+            fontFamily: 'var(--font-mono)',
+            cursor: 'pointer'
+          }}
+        >
+          <Compass size={18} />
+          <span>OBJECTIVES</span>
+        </button>
+
+        <button
+          onClick={() => canScan && onNavigate('scan')}
+          disabled={!canScan}
+          style={{
+            background: canScan ? '#39ff14' : 'rgba(255,255,255,0.1)',
+            color: canScan ? '#000' : 'rgba(255,255,255,0.4)',
+            border: 'none',
+            borderRadius: '20px',
+            padding: '8px 18px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            fontFamily: 'var(--font-mono)',
+            cursor: canScan ? 'pointer' : 'not-allowed',
+            boxShadow: canScan ? '0 0 12px rgba(57, 255, 20, 0.5)' : 'none'
+          }}
+        >
+          <Scan size={16} />
+          <span>SCAN</span>
+        </button>
+
+        <button
+          onClick={() => setShowInventoryDrawer(true)}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: inventory.length > 0 ? '#39ff14' : 'rgba(255,255,255,0.6)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '3px',
+            fontSize: '10px',
+            fontFamily: 'var(--font-mono)',
+            cursor: 'pointer'
+          }}
+        >
+          <Package size={18} />
+          <span>GEAR ({inventory.length})</span>
+        </button>
+
+        <button
+          onClick={() => setShowReportModal(true)}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: systemState.testDevMode ? '#ffaa00' : '#00e5ff',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '3px',
+            fontSize: '10px',
+            fontFamily: 'var(--font-mono)',
+            cursor: 'pointer'
+          }}
+        >
+          <ShieldAlert size={18} color={systemState.testDevMode ? '#ffaa00' : '#00e5ff'} />
+          <span>REPORT</span>
+        </button>
+      </div>
+
+      {/* Test Mode / Feedback Issue Report Modal */}
+      {showReportModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 110,
+          background: 'rgba(0, 0, 0, 0.88)',
+          backdropFilter: 'blur(12px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.99))',
+            border: `1px solid ${systemState.testDevMode ? '#ffaa00' : '#00e5ff'}`,
+            borderRadius: '16px',
+            padding: '22px',
+            maxWidth: '380px',
+            width: '100%',
+            fontFamily: 'var(--font-mono)',
+            boxShadow: `0 0 30px ${systemState.testDevMode ? 'rgba(255, 170, 0, 0.3)' : 'rgba(0, 229, 255, 0.3)'}`
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: systemState.testDevMode ? '#ffaa00' : '#00e5ff' }}>
+                <ShieldAlert size={20} />
+                <h3 style={{ fontSize: '15px', margin: 0 }}>SUBMIT TEST REPORT</h3>
+              </div>
+              <button onClick={() => setShowReportModal(false)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}>
+                <X size={18} />
+              </button>
+            </div>
+
+            {reportSuccess ? (
+              <div style={{ textAlign: 'center', padding: '20px 0', color: '#39ff14' }}>
+                <CheckCircle2 size={36} style={{ margin: '0 auto 10px' }} />
+                <div style={{ fontSize: '14px', fontWeight: 'bold' }}>REPORT RECEIVED</div>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', marginTop: '4px' }}>Logged to Admin Dashboard live feed.</div>
+              </div>
+            ) : (
+              <form onSubmit={handleSendReport}>
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>
+                    ISSUE CATEGORY:
+                  </label>
+                  <select
+                    value={reportCategory}
+                    onChange={(e) => setReportCategory(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      background: '#020d10',
+                      color: '#00e5ff',
+                      border: '1px solid rgba(0, 229, 255, 0.4)',
+                      borderRadius: '6px',
+                      fontFamily: 'inherit',
+                      fontSize: '12px'
+                    }}
+                  >
+                    <option value="clue_discrepancy">Clue Text / Location Discrepancy</option>
+                    <option value="coordinate_error">GPS Coordinate Mismatch</option>
+                    <option value="ml_false_rejection">ML Scan False Rejection</option>
+                    <option value="ui_lag">UI Lag or Delay</option>
+                    <option value="other">Other Feedback</option>
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: '14px' }}>
+                  <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>
+                    DESCRIPTION / FEEDBACK DETAILS:
+                  </label>
+                  <textarea
+                    rows={4}
+                    required
+                    value={reportMessage}
+                    onChange={(e) => setReportMessage(e.target.value)}
+                    placeholder="Describe any discrepancy, ML rejection, or location feedback..."
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      background: '#020d10',
+                      color: '#fff',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '6px',
+                      fontFamily: 'inherit',
+                      fontSize: '12px',
+                      resize: 'none'
+                    }}
+                  />
+                </div>
+
+                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '14px' }}>
+                  GPS: {gpsCoords ? `${gpsCoords.lat.toFixed(4)}, ${gpsCoords.lng.toFixed(4)}` : 'N/A'} | Target: {cluePayload?.pathSummary?.[cluePayload?.step - 1]?.locationName || 'Current Clue'}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={reportSubmitting}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    background: systemState.testDevMode ? '#ffaa00' : '#00e5ff',
+                    color: '#000',
+                    fontWeight: 'bold',
+                    border: 'none',
+                    fontFamily: 'inherit',
+                    cursor: reportSubmitting ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {reportSubmitting ? 'TRANSMITTING REPORT...' : 'SUBMIT REPORT TO ADMIN'}
+                </button>
+              </form>
             )}
           </div>
         </div>

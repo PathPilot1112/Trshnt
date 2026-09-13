@@ -1,0 +1,82 @@
+[
+  {
+    "routeId": 101,
+    "isTestRoute": true,
+    "name": "Test Route 1 (Zone 1)",
+    "distance": "1.2 km",
+    "startPoint": "Mahatma Gandhi Statue",
+    "endPoint": "Periyar",
+    "rawPath": "Mahatma Gandhi Statue → Genz Cafe → Rajaraja Chola Statue → Central Library → Perignar Anna → Periyar",
+    "locations": [
+      "Mahatma Gandhi Statue",
+      "Genz Cafe",
+      "Rajaraja Chola Statue",
+      "Central Library",
+      "Perignar Anna",
+      "Periyar"
+    ]
+  },
+  {
+    "routeId": 102,
+    "isTestRoute": true,
+    "name": "Test Route 2 (Zone 2)",
+    "distance": "1.1 km",
+    "startPoint": "Sports Complex",
+    "endPoint": "Law Block",
+    "rawPath": "Sports Complex → Arts & Science Block → Sai Temple → Law Block",
+    "locations": [
+      "Sports Complex",
+      "Arts & Science Block",
+      "Sai Temple",
+      "Law Block"
+    ]
+  },
+  {
+    "routeId": 103,
+    "isTestRoute": true,
+    "name": "Test Route 3 (Zone 3)",
+    "distance": "1.3 km",
+    "startPoint": "Aaruush Logo (TP)",
+    "endPoint": "Noon Meal Scheme",
+    "rawPath": "Aaruush Logo (TP) → #SRM (TP) → Vendhar Square → Fab Lab → Noon Meal Scheme (M Block)",
+    "locations": [
+      "Aaruush Logo (TP)",
+      "#SRM (TP)",
+      "Vendhar Square",
+      "Fab Lab",
+      "Noon Meal Scheme (M Block)"
+    ]
+  },
+  {
+    "routeId": 104,
+    "isTestRoute": true,
+    "name": "Test Route 4 (Zone 4)",
+    "distance": "1.4 km",
+    "startPoint": "Slice of Life",
+    "endPoint": "Pickleball Court",
+    "rawPath": "Slice of Life → TP Auditorium Gate → Dental College → Gym → Pickleball Court",
+    "locations": [
+      "Slice of Life",
+      "TP Auditorium Gate",
+      "Dental College",
+      "Gym",
+      "Pickleball Court"
+    ]
+  },
+  {
+    "routeId": 105,
+    "isTestRoute": true,
+    "name": "Test Route 5 (Zone 5)",
+    "distance": "1.0 km",
+    "startPoint": "Bell Block",
+    "endPoint": "Architecture #SRM",
+    "rawPath": "Bell Block → MBA Gate → Architecture Stonehenge → Clock Tower → Architecture #SRM",
+    "locations": [
+      "Bell Block",
+      "MBA Gate",
+      "Architecture Stonehenge",
+      "Clock Tower",
+      "Architecture #SRM"
+    ]
+  }
+]

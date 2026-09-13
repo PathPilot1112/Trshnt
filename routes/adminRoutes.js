@@ -17,7 +17,12 @@ import {
   clearSubmissions,
   resetTeamSession,
   getAllRoutes,
-  assignTeamRoute
+  assignTeamRoute,
+  getSystemStatus,
+  toggleTestDevMode,
+  toggleCoordMapping,
+  getReports,
+  updateReportStatus
 } from "../controllers/adminController.js";
 import { protect, adminOnly } from "../middleware/auth.js";
 
@@ -35,6 +40,16 @@ router.get("/clues", protect, adminOnly, listClues);
 router.post("/clues", protect, adminOnly, createClue);
 router.put("/clues/:id", protect, adminOnly, updateClue);
 router.delete("/clues/:id", protect, adminOnly, deleteClue);
+
+// System State & Test Dev Mode Routes
+router.get("/system-state", getSystemStatus);
+router.post("/toggle-test-mode", protect, adminOnly, toggleTestDevMode);
+router.post("/toggle-coord-mapping", protect, adminOnly, toggleCoordMapping);
+
+// Feedback Reports Routes
+router.get("/reports", protect, adminOnly, getReports);
+router.put("/reports/:id/status", protect, adminOnly, updateReportStatus);
+
 router.get("/:id", protect, adminOnly, getTeam);
 
 router.post("/teams/:id/start", protect, adminOnly, startTeamMission);

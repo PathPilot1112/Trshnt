@@ -38,6 +38,8 @@ const AdminDashboard = ({ API_BASE }) => {
   const [toasts, setToasts] = useState([]);
   const [allRoutes, setAllRoutes] = useState([]);
   const [teamRoutes, setTeamRoutes] = useState({});
+  const [systemState, setSystemState] = useState({ testDevMode: false, coordMappingEnabled: false, coordRadiusMeters: 3.5 });
+  const [reports, setReports] = useState([]);
 
   const showToast = (title, message = '', type = 'success') => {
     const id = `${Date.now()}-${Math.random()}`;
@@ -163,12 +165,14 @@ const AdminDashboard = ({ API_BASE }) => {
 
   const fetchDashboardData = async () => {
     const headers = { Authorization: `Bearer ${adminToken}` };
-    const [teamsRes, submissionsRes, leaderboardRes, clueLocationsRes, routesRes] = await Promise.all([
+    const [teamsRes, submissionsRes, leaderboardRes, clueLocationsRes, routesRes, sysRes, repRes] = await Promise.all([
       fetch(`${API_BASE}/admin/teams`, { headers }),
       fetch(`${API_BASE}/admin/submissions`, { headers }),
       fetch(`${API_BASE}/admin/leaderboard/live`, { headers }),
       fetch(`${API_BASE}/admin/clue-locations`, { headers }),
       fetch(`${API_BASE}/admin/routes`, { headers }),
+      fetch(`${API_BASE}/admin/system-state`, { headers }),
+      fetch(`${API_BASE}/admin/reports`, { headers }),
     ]);
 
     if ([teamsRes, submissionsRes, leaderboardRes, clueLocationsRes].some((res) => res.status === 401)) {
@@ -200,6 +204,55 @@ const AdminDashboard = ({ API_BASE }) => {
       const data = await routesRes.json();
       setAllRoutes(data.routes || []);
     }
+
+    if (sysRes && sysRes.ok) {
+      const data = await sysRes.json();
+      setSystemState(data);
+    }
+
+    if (repRes && repRes.ok) {
+      const data = await repRes.json();
+      setReports(data.reports || []);
+    }
+  };
+
+  const handleToggleTestDevMode = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/admin/toggle-test-mode`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+        body: JSON.stringify({ enabled: !systemState.testDevMode }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSystemState(data.state);
+        showToast('TEST DEV MODE', data.message, data.state.testDevMode ? 'warning' : 'info');
+        const routesRes = await fetch(`${API_BASE}/admin/routes`, { headers: { Authorization: `Bearer ${adminToken}` } });
+        if (routesRes.ok) {
+          const rData = await routesRes.json();
+          setAllRoutes(rData.routes || []);
+        }
+      }
+    } catch (err) {
+      showToast('SYSTEM ERROR', err.message, 'error');
+    }
+  };
+
+  const handleToggleCoordMapping = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/admin/toggle-coord-mapping`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+        body: JSON.stringify({ enabled: !systemState.coordMappingEnabled }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSystemState(data.state);
+        showToast('GPS GEOFENCING MAPPING', data.message, data.state.coordMappingEnabled ? 'success' : 'info');
+      }
+    } catch (err) {
+      showToast('SYSTEM ERROR', err.message, 'error');
+    }
   };
 
   useEffect(() => {
@@ -214,6 +267,20 @@ const AdminDashboard = ({ API_BASE }) => {
     const socket = getSocket(API_BASE);
 
     const handleSnapshot = (payload) => setLeaderboard(payload);
+    const handleSystemState = (newState) => {
+      setSystemState(newState);
+      fetch(`${API_BASE}/admin/routes`, { headers: { Authorization: `Bearer ${adminToken}` } })
+        .then(r => r.json())
+        .then(data => setAllRoutes(data.routes || []))
+        .catch(() => {});
+    };
+    const handleNewReport = (newRep) => {
+      setReports((prev) => [newRep, ...prev]);
+      showToast('NEW ISSUE REPORT', `${newRep.teamName}: ${newRep.category}`, 'warning');
+    };
+
+    socket.on('system:state', handleSystemState);
+    socket.on('report:created', handleNewReport);
     const handleTeamsSnapshot = (payload) => {
       setTeams((prev) =>
         prev.map((team) => {
@@ -267,6 +334,8 @@ const AdminDashboard = ({ API_BASE }) => {
       socket.off('teams:snapshot', handleTeamsSnapshot);
       socket.off('submission:created', handleNewSubmission);
       socket.off('submissions:cleared', handleSubmissionsCleared);
+      socket.off('system:state', handleSystemState);
+      socket.off('report:created', handleNewReport);
     };
   }, [API_BASE, adminToken]);
 
@@ -446,6 +515,99 @@ const AdminDashboard = ({ API_BASE }) => {
         </div>
       </div>
 
+      {/* System State Toggles & Test Dev Mode Banner */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(3, 20, 26, 0.9), rgba(1, 10, 15, 0.95))',
+        border: '1px solid rgba(0, 240, 255, 0.3)',
+        borderRadius: '10px',
+        padding: '14px 18px',
+        marginBottom: '20px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: '16px',
+        flexWrap: 'wrap',
+        boxShadow: '0 0 15px rgba(0, 240, 255, 0.1)'
+      }}>
+        <div style={{ display: 'flex', gap: '24px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Toggle 1: Test Dev Mode */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px' }}>
+              <div
+                onClick={handleToggleTestDevMode}
+                style={{
+                  width: '46px',
+                  height: '24px',
+                  borderRadius: '12px',
+                  background: systemState.testDevMode ? 'rgba(255, 170, 0, 0.3)' : 'rgba(255, 255, 255, 0.1)',
+                  border: `1px solid ${systemState.testDevMode ? '#ffaa00' : 'rgba(255, 255, 255, 0.2)'}`,
+                  position: 'relative',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <div style={{
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  background: systemState.testDevMode ? '#ffaa00' : 'rgba(255, 255, 255, 0.5)',
+                  position: 'absolute',
+                  top: '2px',
+                  left: systemState.testDevMode ? '24px' : '3px',
+                  transition: 'all 0.3s ease',
+                  boxShadow: systemState.testDevMode ? '0 0 8px #ffaa00' : 'none'
+                }} />
+              </div>
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 'bold', color: systemState.testDevMode ? '#ffaa00' : '#fff' }}>
+                  TEST DEV MODE SLIDER
+                </div>
+                <div style={{ fontSize: '10px', color: systemState.testDevMode ? '#ffaa00' : 'rgba(255,255,255,0.4)' }}>
+                  {systemState.testDevMode ? '[ ACTIVE: ROUTE ASSIGNMENT ONLY SHOWS testRoutes.json ]' : '[ INACTIVE: ALL PRODUCTION ROUTES ACTIVE ]'}
+                </div>
+              </div>
+            </label>
+          </div>
+
+          {/* Toggle 2: GPS Coordinate Mapping */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px' }}>
+              <div
+                onClick={handleToggleCoordMapping}
+                style={{
+                  width: '46px',
+                  height: '24px',
+                  borderRadius: '12px',
+                  background: systemState.coordMappingEnabled ? 'rgba(57, 255, 20, 0.3)' : 'rgba(255, 255, 255, 0.1)',
+                  border: `1px solid ${systemState.coordMappingEnabled ? '#39ff14' : 'rgba(255, 255, 255, 0.2)'}`,
+                  position: 'relative',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <div style={{
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  background: systemState.coordMappingEnabled ? '#39ff14' : 'rgba(255, 255, 255, 0.5)',
+                  position: 'absolute',
+                  top: '2px',
+                  left: systemState.coordMappingEnabled ? '24px' : '3px',
+                  transition: 'all 0.3s ease',
+                  boxShadow: systemState.coordMappingEnabled ? '0 0 8px #39ff14' : 'none'
+                }} />
+              </div>
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 'bold', color: systemState.coordMappingEnabled ? '#39ff14' : '#fff' }}>
+                  GPS COORDINATE MAPPING TOGGLE
+                </div>
+                <div style={{ fontSize: '10px', color: systemState.coordMappingEnabled ? '#39ff14' : 'rgba(255,255,255,0.4)' }}>
+                  {systemState.coordMappingEnabled ? `[ ACTIVE: 3.5m CIRCULAR RADIUS AUTO-VERIFY ]` : '[ INACTIVE: STANDARD OPTIC ML VERIFICATION ]'}
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
       <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
         <button className={`cyber-btn-outline ${activeTab === 'teams' ? 'glow-text' : ''}`} onClick={() => setActiveTab('teams')}>
           <Users size={14} /> Teams
@@ -455,6 +617,9 @@ const AdminDashboard = ({ API_BASE }) => {
         </button>
         <button className={`cyber-btn-outline ${activeTab === 'submissions' ? 'glow-text' : ''}`} onClick={() => setActiveTab('submissions')}>
           <Activity size={14} /> Submissions
+        </button>
+        <button className={`cyber-btn-outline ${activeTab === 'reports' ? 'glow-text' : ''}`} onClick={() => setActiveTab('reports')} style={{ borderColor: reports.length > 0 ? '#ffaa00' : 'rgba(57,255,20,0.4)' }}>
+          <Shield size={14} /> Test Reports ({reports.length})
         </button>
       </div>
 
@@ -530,9 +695,9 @@ const AdminDashboard = ({ API_BASE }) => {
                       </div>
 
                       {/* Route Selection Dropdown */}
-                      <div style={{ marginTop: '12px', padding: '10px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(0,229,255,0.25)', borderRadius: '6px' }}>
-                        <div style={{ fontSize: '10px', color: '#00e5ff', fontWeight: 'bold', marginBottom: '6px', letterSpacing: '1px' }}>
-                          ASSIGN TACTICAL ROUTE (1 OF 50):
+                      <div style={{ marginTop: '12px', padding: '10px', background: 'rgba(0,0,0,0.3)', border: `1px solid ${systemState.testDevMode ? '#ffaa00' : 'rgba(0,229,255,0.25)'}`, borderRadius: '6px' }}>
+                        <div style={{ fontSize: '10px', color: systemState.testDevMode ? '#ffaa00' : '#00e5ff', fontWeight: 'bold', marginBottom: '6px', letterSpacing: '1px' }}>
+                          {systemState.testDevMode ? 'ASSIGN TEST ROUTE (1 OF 5 - TEST DEV MODE ACTIVE):' : 'ASSIGN TACTICAL ROUTE (1 OF 50):'}
                         </div>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                           <select
@@ -750,6 +915,60 @@ const AdminDashboard = ({ API_BASE }) => {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {activeTab === 'reports' && (
+        <div style={{ display: 'grid', gap: '12px', maxHeight: '68vh', overflowY: 'auto', paddingRight: '6px' }}>
+          <div style={{ fontSize: '13px', color: '#ffaa00', fontWeight: 'bold', marginBottom: '8px' }}>
+            SUBMITTED FEEDBACK & DISCREPANCY REPORTS ({reports.length})
+          </div>
+          {reports.length === 0 ? (
+            <div style={{ padding: '30px', textAlign: 'center', background: 'rgba(3,12,15,0.75)', border: '1px dashed rgba(57,255,20,0.3)', color: 'rgba(255,255,255,0.5)' }}>
+              No feedback or issue reports submitted yet.
+            </div>
+          ) : (
+            reports.map((rep) => (
+              <div key={rep._id} style={{
+                background: 'rgba(4, 18, 23, 0.85)',
+                border: `1px solid ${rep.status === 'resolved' ? '#39ff14' : '#ffaa00'}`,
+                padding: '14px 18px',
+                borderRadius: '8px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold' }}>{rep.teamName}</span>
+                    <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(255,170,0,0.2)', color: '#ffaa00', border: '1px solid #ffaa00', textTransform: 'uppercase' }}>
+                      {rep.category}
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
+                      {new Date(rep.createdAt).toLocaleTimeString()}
+                    </span>
+                  </div>
+                  <span style={{
+                    fontSize: '10px',
+                    fontWeight: 'bold',
+                    padding: '2px 8px',
+                    color: rep.status === 'resolved' ? '#39ff14' : '#ffaa00',
+                    border: `1px solid ${rep.status === 'resolved' ? '#39ff14' : '#ffaa00'}`
+                  }}>
+                    STATUS: {rep.status?.toUpperCase() || 'PENDING'}
+                  </span>
+                </div>
+
+                <div style={{ fontSize: '13px', color: '#e2e8f0', marginBottom: '8px', lineHeight: '1.4' }}>
+                  {rep.message}
+                </div>
+
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                  <span>TARGET CLUE: <strong style={{ color: '#00e5ff' }}>{rep.clueTitle}</strong></span>
+                  {rep.coords?.lat && (
+                    <span>GPS: <strong style={{ color: '#39ff14' }}>{rep.coords.lat.toFixed(5)}, {rep.coords.lng.toFixed(5)}</strong></span>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       )}
 

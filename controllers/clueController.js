@@ -1,10 +1,13 @@
 import Clue from "../models/Clue.js";
 import Team from "../models/Team.js";
 import Submission from "../models/Submission.js";
+import Report from "../models/Report.js";
 import { predictImage } from "../utils/mlClient.js";
 import { uploadToCloudinary, isCloudinaryConfigured } from "../utils/cloudinary.js";
 import { uploadToSupabase, isSupabaseConfigured } from "../utils/supabase.js";
 import { ensureCluePath, publicCluePayload } from "../utils/cluePath.js";
+import { getSystemState } from "../utils/systemConfig.js";
+import { isWithinGeofenceRange } from "../utils/clueLocations.js";
 import fs from "fs/promises";
 
 const getTeamClue = async (team) => {
@@ -103,7 +106,22 @@ export const submitPhoto = async (req, res) => {
       (predictedClean === targetClean || predictedClean.includes(targetClean) || targetClean.includes(predictedClean));
 
     const isConfident = confidence >= (currentClue.confidenceThreshold || 0.50);
-    const isCorrect = Boolean(isLabelMatch && isConfident);
+    let isCorrect = Boolean(isLabelMatch && isConfident);
+
+    // Check GPS Coordinate Geofencing (3-4 meter circular range parameter)
+    const { coordMappingEnabled, coordRadiusMeters } = getSystemState();
+    const userLat = parseFloat(req.body?.lat || req.body?.userLat || req.query?.lat);
+    const userLng = parseFloat(req.body?.lng || req.body?.userLng || req.query?.lng);
+    let geofenceResult = { isWithin: false, distance: null };
+
+    if (!isNaN(userLat) && !isNaN(userLng)) {
+      geofenceResult = isWithinGeofenceRange(userLat, userLng, currentClue.title || currentClue.targetLabel, coordRadiusMeters || 3.5);
+      // If Coordinate Mapping is enabled by Admin and user is within 3-4 meters radius, auto-accept scan!
+      if (coordMappingEnabled && geofenceResult.isWithin) {
+        console.log(`🎯 GPS Geofence matched location within ${geofenceResult.distance}m (Radius: ${coordRadiusMeters || 3.5}m)`);
+        isCorrect = true;
+      }
+    }
 
     // 4. Log Submission
     const submission = new Submission({
@@ -113,6 +131,8 @@ export const submitPhoto = async (req, res) => {
       mlResult: {
         predictedLabel,
         confidence,
+        geofenceMatch: geofenceResult.isWithin,
+        distanceMeters: geofenceResult.distance,
         raw: mlResponse
       },
       isCorrect
@@ -198,3 +218,39 @@ export const submitPhoto = async (req, res) => {
     res.status(500).json({ message: "Error processing image", error: error.message });
   }
 };
+
+// @route   POST /api/clues/report
+// @desc    Submit an issue or feedback report during test mode / active run
+export const submitReport = async (req, res) => {
+  try {
+    const team = await Team.findById(req.user.team);
+    if (!team) return res.status(404).json({ message: "Team not found" });
+
+    const { category, message, clueTitle, coords } = req.body;
+    if (!message || typeof message !== "string" || !message.trim()) {
+      return res.status(400).json({ message: "Report description message is required" });
+    }
+
+    const report = new Report({
+      team: team._id,
+      teamName: team.name,
+      category: category || "other",
+      message: message.trim(),
+      clueTitle: clueTitle || "N/A",
+      coords: coords || null,
+    });
+    await report.save();
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("report:created", report);
+      console.log("📢 Broadcasted new feedback report from team:", team.name);
+    }
+
+    res.status(201).json({ message: "Report submitted successfully", report });
+  } catch (err) {
+    console.error("Error submitting issue report:", err);
+    res.status(500).json({ message: "Error submitting report", error: err.message });
+  }
+};
+
