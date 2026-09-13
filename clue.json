@@ -9,7 +9,7 @@
     "clue text": "“The Abandoned Sector is filled with destruction, but somewhere within it stands a man who believed destruction was never the answer. He carried no weapon, led no army, yet his name became a symbol of freedom. Find the man who still stands peacefully among the ruins.”",
     "clue_text": "“The Abandoned Sector is filled with destruction, but somewhere within it stands a man who believed destruction was never the answer. He carried no weapon, led no army, yet his name became a symbol of freedom. Find the man who still stands peacefully among the ruins.”",
     "hint": "Search around MAHATMA GANDHI STATUE in Zone 1",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 21,
     "clueVariations": [
@@ -46,7 +46,7 @@
     "clue text": "The reactor has stopped, but the younger survivors have not; their phones are still alive, their conversations are louder than the sirens, and they still have time to worry about food; find the place where this generation comes to recharge.",
     "clue_text": "The reactor has stopped, but the younger survivors have not; their phones are still alive, their conversations are louder than the sirens, and they still have time to worry about food; find the place where this generation comes to recharge.",
     "hint": "Search around GENZ CAFÉ in Zone 1",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -82,7 +82,7 @@
     "clue text": "The Restricted Area has many survivors, but one was once a ruler who commanded armies and ruled a powerful kingdom; find the king who never left his post.",
     "clue_text": "The Restricted Area has many survivors, but one was once a ruler who commanded armies and ruled a powerful kingdom; find the king who never left his post.",
     "hint": "Search around RAJARAJA CHOLA STATUE in Zone 1",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -118,7 +118,7 @@
     "clue text": "The Zone has lost many things, but not everything was destroyed; somewhere thousands of voices still survive through pages; find the place where these silent voices are kept.",
     "clue_text": "The Zone has lost many things, but not everything was destroyed; somewhere thousands of voices still survive through pages; find the place where these silent voices are kept.",
     "hint": "Search around CENTRAL LIBRARY in Zone 1",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -154,7 +154,7 @@
     "clue text": "The Zone remembers a leader whose weapon was his words; a powerful speaker, writer, and politician remembered by the title Perarignar; find the man who still stands silently here.",
     "clue_text": "The Zone remembers a leader whose weapon was his words; a powerful speaker, writer, and politician remembered by the title Perarignar; find the man who still stands silently here.",
     "hint": "Search around PERARIGNAR ANNA in Zone 1",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -190,7 +190,7 @@
     "clue text": "The Zone remembers a man known simply as Periyar; he was not a king, soldier, or scientist, but a thinker who fought against inequality; find the place where his memory remains.",
     "clue_text": "The Zone remembers a man known simply as Periyar; he was not a king, soldier, or scientist, but a thinker who fought against inequality; find the place where his memory remains.",
     "hint": "Search around PERIYAR in Zone 1",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -226,7 +226,7 @@
     "clue text": "The Perimeter is not always survived by running away; sometimes you must run toward the finish, jump, or fight for every point; find the sector where movement is the only way forward.",
     "clue_text": "The Perimeter is not always survived by running away; sometimes you must run toward the finish, jump, or fight for every point; find the sector where movement is the only way forward.",
     "hint": "Search around SPORTS COMPLEX in Zone 2",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -262,7 +262,7 @@
     "clue text": "☢️ Two worlds occupy the same sector; one asks you to imagine what does not yet exist, the other asks you to prove what does; find the place where imagination and discovery meet.",
     "clue_text": "☢️ Two worlds occupy the same sector; one asks you to imagine what does not yet exist, the other asks you to prove what does; find the place where imagination and discovery meet.",
     "hint": "Search around ARTS & SCIENCE BLOCK in Zone 2",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -298,7 +298,7 @@
     "clue text": "The contaminated grounds contain many places of worship, but this one remembers a man who refused to let faith become a wall between people; find where his message of peace survives.",
     "clue_text": "The contaminated grounds contain many places of worship, but this one remembers a man who refused to let faith become a wall between people; find where his message of peace survives.",
     "hint": "Search around SAI TEMPLE in Zone 2",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 22,
     "clueVariations": [
@@ -336,7 +336,7 @@
     "clue text": "☢️ The Zone remembers a disaster, but memory is not proof; somewhere the difference between what is claimed and what can be established decides what happens next; find that place.",
     "clue_text": "☢️ The Zone remembers a disaster, but memory is not proof; somewhere the difference between what is claimed and what can be established decides what happens next; find that place.",
     "hint": "Search around LAW BLOCK in Zone 2",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -372,7 +372,7 @@
     "clue text": "Find the mark that stands before the campus's tech hub, facing the road rather than the building; its name begins with the first rays, but its symbol waits outside.",
     "clue_text": "Find the mark that stands before the campus's tech hub, facing the road rather than the building; its name begins with the first rays, but its symbol waits outside.",
     "hint": "Search around AARUUSH LOGO in Zone 3",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -408,7 +408,7 @@
     "clue text": "Beyond the contaminated perimeter stands a building dedicated to the future, surrounded by glass, steel, screens, and students, with a symbol representing the institution itself; find the landmark.",
     "clue_text": "Beyond the contaminated perimeter stands a building dedicated to the future, surrounded by glass, steel, screens, and students, with a symbol representing the institution itself; find the landmark.",
     "hint": "Search around #SRM LOGO TP in Zone 3",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -444,7 +444,7 @@
     "clue text": "Beyond the restricted perimeter lies an open space where people cross paths, gather and wait; no classroom surrounds it and no machinery operates here; find the square where the paths converge.",
     "clue_text": "Beyond the restricted perimeter lies an open space where people cross paths, gather and wait; no classroom surrounds it and no machinery operates here; find the square where the paths converge.",
     "hint": "Search around VENDHAR SQUARE in Zone 3",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -480,7 +480,7 @@
     "clue text": "The abandoned sector contains a place where ideas become objects, designs become machines, and imagination becomes something you can touch; find where creation begins.",
     "clue_text": "The abandoned sector contains a place where ideas become objects, designs become machines, and imagination becomes something you can touch; find where creation begins.",
     "hint": "Search around FAB LAB in Zone 3",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -516,7 +516,7 @@
     "clue text": "The sign above the entrance belongs to another time, but today survivors arrive to collect what was sent to them; find the forgotten distribution point.",
     "clue_text": "The sign above the entrance belongs to another time, but today survivors arrive to collect what was sent to them; find the forgotten distribution point.",
     "hint": "Search around NOON MEAL SCHEME in Zone 3",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -552,7 +552,7 @@
     "clue text": "“The contaminated grounds left behind many strange places; this one offers something simpler: a slice of comfort after a long day. Find where it waits.”",
     "clue_text": "“The contaminated grounds left behind many strange places; this one offers something simpler: a slice of comfort after a long day. Find where it waits.”",
     "hint": "Search around SLICE OF LIFE in Zone 4",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -588,7 +588,7 @@
     "clue text": "“The survivors found a structure built to hold thousands at once, but every speech, performance and gathering begins much earlier than the first applause. Find the boundary where the crowd first enters.”",
     "clue_text": "“The survivors found a structure built to hold thousands at once, but every speech, performance and gathering begins much earlier than the first applause. Find the boundary where the crowd first enters.”",
     "hint": "Search around The gate of Dr. T. P. Ganesan Auditorium in Zone 4",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -624,7 +624,7 @@
     "clue text": "“The survivors searched for a place where a smile could become evidence; not every problem announces itself. Find where the hidden ones are found.”",
     "clue_text": "“The survivors searched for a place where a smile could become evidence; not every problem announces itself. Find where the hidden ones are found.”",
     "hint": "Search around DENTAL COLLEGE in Zone 4",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -660,7 +660,7 @@
     "clue text": "“The disaster left bodies weakened; some survivors searched for medicine, while others searched for strength. Find where strength is rebuilt, one repetition at a time.”",
     "clue_text": "“The disaster left bodies weakened; some survivors searched for medicine, while others searched for strength. Find where strength is rebuilt, one repetition at a time.”",
     "hint": "Search around GYM in Zone 4",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -696,7 +696,7 @@
     "clue text": "“The survivors found a battlefield where the projectile had holes and the weapon had no strings. Find where this strange duel takes place.”",
     "clue_text": "“The survivors found a battlefield where the projectile had holes and the weapon had no strings. Find where this strange duel takes place.”",
     "hint": "Search around PICKLEBALL COURT in Zone 4",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -732,7 +732,7 @@
     "clue text": "“After the disaster, rebuilding became survival. Here, rebuilding means something else. Ideas are dismantled, tested, and made functional. Find the place where they begin.”",
     "clue_text": "“After the disaster, rebuilding became survival. Here, rebuilding means something else. Ideas are dismantled, tested, and made functional. Find the place where they begin.”",
     "hint": "Search around BEL BLOCK in Zone 5",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -768,7 +768,7 @@
     "clue text": "“Beyond this gate, survival takes a different form. **Markets, people and money** become the problems to solve. Find the entrance where management begins.”",
     "clue_text": "“Beyond this gate, survival takes a different form. **Markets, people and money** become the problems to solve. Find the entrance where management begins.”",
     "hint": "Search around MBA GATE in Zone 5",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -804,7 +804,7 @@
     "clue text": "“Long before you arrived, giant forms stood against the green. Like an ancient sanctuary without a roof, find where the stone monuments remain.”",
     "clue_text": "“Long before you arrived, giant forms stood against the green. Like an ancient sanctuary without a roof, find where the stone monuments remain.”",
     "hint": "Search around STONE HENGE in Zone 5",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [
@@ -840,7 +840,7 @@
     "clue text": "\"In a wasteland where watches fail and minutes fade, Four roman-numeral faces watch over the trade. High above the traffic, measuring every second left to survive—Find the tall tower that keeps time alive.\"",
     "clue_text": "\"In a wasteland where watches fail and minutes fade, Four roman-numeral faces watch over the trade. High above the traffic, measuring every second left to survive—Find the tall tower that keeps time alive.\"",
     "hint": "Search around CLOCK TOWER in Zone 5",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 21,
     "clueVariations": [
@@ -877,7 +877,7 @@
     "clue text": "“Before walls rise, they first exist as lines. Plans, proportions and sketches fill the space behind this mark. Find the campus name standing before the place where buildings begin on paper.”",
     "clue_text": "“Before walls rise, they first exist as lines. Plans, proportions and sketches fill the space behind this mark. Find the campus name standing before the place where buildings begin on paper.”",
     "hint": "Search around #SRM - ARCHITECTURE BLOCK in Zone 5",
-    "confidenceThreshold": 0.55,
+    "confidenceThreshold": 0.45,
     "points": 100,
     "variationsCount": 20,
     "clueVariations": [

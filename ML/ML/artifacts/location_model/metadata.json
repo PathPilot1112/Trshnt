@@ -25,7 +25,7 @@
     "Zone 5 - Clock Tower",
     "Zone 5 - Stone edge"
   ],
-  "confidence_threshold": 0.55,
+  "confidence_threshold": 0.45,
   "image_size": 224,
   "weights": "efficientnet_b0"
 }

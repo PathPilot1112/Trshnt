@@ -104,7 +104,7 @@ export const submitPhoto = async (req, res) => {
 
     const isLabelMatch = predictedClean.length > 0 && targetClean.length > 0 &&
       (predictedClean === targetClean || predictedClean.includes(targetClean) || targetClean.includes(predictedClean));
-    const isConfident = confidence >= (currentClue.confidenceThreshold || 0.50);
+    const isConfident = confidence >= (currentClue.confidenceThreshold || 0.45);
     const isMlMatch = Boolean(isLabelMatch && isConfident);
 
     // Check GPS Coordinate Geofencing (3-4 meter circular range parameter)

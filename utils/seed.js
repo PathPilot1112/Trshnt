@@ -35,13 +35,16 @@ export const seedDatabase = async () => {
         hint: item.hint || `Find location: ${item.title}`,
         zone: item.zone || "",
         targetLabel: item.targetLabel || item.title,
-        confidenceThreshold: item.confidenceThreshold || 0.55,
+        confidenceThreshold: item.confidenceThreshold || 0.45,
         points: item.points || 100,
         clueVariations: item.clueVariations || []
       }));
 
       await Clue.insertMany(cluesToInsert);
       console.log(`✅ Seeded ${cluesToInsert.length} ML location Clues from clue.json`);
+    } else {
+      // Ensure existing clues match updated confidence threshold
+      await Clue.updateMany({ confidenceThreshold: { $gt: 0.45 } }, { $set: { confidenceThreshold: 0.45 } });
     }
 
     // 3. Seed Default Teams (to populate the Admin Live Telemetry dashboard)

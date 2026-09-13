@@ -13,7 +13,7 @@ const clueSchema = new mongoose.Schema(
 
     targetLabel: { type: String, required: true },
 
-    confidenceThreshold: { type: Number, default: 0.55 },
+    confidenceThreshold: { type: Number, default: 0.45 },
 
     points: { type: Number, default: 100 },
     isActive: { type: Boolean, default: true },

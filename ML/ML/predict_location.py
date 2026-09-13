@@ -13,7 +13,7 @@ def load_model(model_dir):
     metadata = json.loads((model_dir / "metadata.json").read_text())
     class_names = metadata["class_names"]
     image_size = metadata.get("image_size", 224)
-    threshold = metadata.get("confidence_threshold", 0.55)
+    threshold = metadata.get("confidence_threshold", 0.45)
 
     weights = models.EfficientNet_B0_Weights.DEFAULT
     model = models.efficientnet_b0(weights=None)

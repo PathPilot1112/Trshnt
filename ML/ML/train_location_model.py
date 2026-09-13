@@ -27,7 +27,7 @@ class TrainConfig:
     lr: float = 3e-4
     val_size: float = 0.2
     seed: int = 42
-    confidence_threshold: float = 0.55
+    confidence_threshold: float = 0.45
     freeze_backbone_epochs: int = 3
 
 
@@ -151,7 +151,7 @@ def main():
     parser.add_argument("--val-size", type=float, default=0.2)
     parser.add_argument("--image-size", type=int, default=224)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--confidence-threshold", type=float, default=0.55)
+    parser.add_argument("--confidence-threshold", type=float, default=0.45)
     parser.add_argument("--freeze-backbone-epochs", type=int, default=3)
     args = parser.parse_args()
 
