@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Smartphone, Share, PlusSquare, CheckCircle, ArrowRight } from 'lucide-react';
+import { Download, Smartphone, Share, PlusSquare, CheckCircle } from 'lucide-react';
 import BackgroundCanvas from '../components/BackgroundCanvas';
 
 const PwaDownloadLanding = ({ onOpenRegister, onOpenLogin }) => {
@@ -190,23 +190,6 @@ const PwaDownloadLanding = ({ onOpenRegister, onOpenLogin }) => {
             {installStatus}
           </div>
         )}
-
-        {/* Secondary navigation to Web App */}
-        <div style={{ marginTop: '12px', display: 'flex', gap: '16px', fontSize: '13px' }}>
-          <button
-            onClick={() => window.location.hash = '#home'}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--color-accent)',
-              cursor: 'pointer',
-              textDecoration: 'underline',
-              fontFamily: 'var(--font-sans)'
-            }}
-          >
-            Continue in Browser <ArrowRight size={12} style={{ display: 'inline' }} />
-          </button>
-        </div>
       </div>
 
       {/* iPhone Apple HIG Installation Guide Modal */}

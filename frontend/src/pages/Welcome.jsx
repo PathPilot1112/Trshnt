@@ -5,8 +5,8 @@ import { Camera, Download, Key, Radio, Upload, UserPlus, Wifi, X } from 'lucide-
 import RadiationSymbol from '../components/RadiationSymbol';
 
 const Welcome = ({ onQrLogin }) => {
-  const [scanOpen, setScanOpen] = useState(false);
-  const [scanMessage, setScanMessage] = useState('');
+  const [scanOpen, setScanOpen] = useState(true);
+  const [scanMessage, setScanMessage] = useState('Initializing QR scanner...');
   const [scanError, setScanError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [typedText, setTypedText] = useState('');
@@ -91,7 +91,10 @@ const Welcome = ({ onQrLogin }) => {
     }
   };
 
-  useEffect(() => stopScanner, []);
+  useEffect(() => {
+    openScanner();
+    return () => stopScanner();
+  }, []);
 
   const finalizeQrLogin = async (qrText) => {
     if (processingRef.current) return;
@@ -169,6 +172,7 @@ const Welcome = ({ onQrLogin }) => {
     setScanMessage('');
     setScanError('');
     setScanOpen(false);
+    window.location.hash = '#home';
   };
 
   const handleFileUpload = async (event) => {
@@ -263,14 +267,7 @@ const Welcome = ({ onQrLogin }) => {
         <div className="hero-biohazard-wrapper">
           <RadiationSymbol />
 
-          {/* === SCAN QR BUTTON DIRECTLY UNDERNEATH BIOHAZARD SYMBOL === */}
-          <button
-            className="cyber-btn striped qr-btn"
-            onClick={openScanner}
-            style={{ width: '100%', maxWidth: '300px', marginTop: '12px', padding: '10px 16px', fontSize: '12px', zIndex: 3 }}
-          >
-            <Radio size={15} /> Scan QR to Begin Mission
-          </button>
+          {/* Register Research Unit Button */}
 
           <button
             className="cyber-btn striped register-btn"
