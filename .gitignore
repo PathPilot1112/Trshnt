@@ -2,10 +2,17 @@
 .gitignore
 node_modules/
 
-# ML Dataset and Cache
+# ML Datasets, Photos, and Cache (DO NOT PUSH TO GITHUB)
 ML/ML/Treasure hunt Photos/
+ML/ML/Combined_Dataset/
+ML/ML/New Photo/
 ML/ML/__pycache__/
 ML/ML/artifacts/
+ML/ML/**/*.jpg
+ML/ML/**/*.jpeg
+ML/ML/**/*.png
+ML/ML/**/*.webp
+ML/ML/**/*.bmp
 
 # Documents, PDFs, and Excel sheets (DO NOT PUSH TO GITHUB)
 *.pdf
