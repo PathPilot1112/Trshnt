@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import PwaInstallButton from '../components/PwaInstallPrompt';
 
 const generateTeamNumber = () => {
   const randomNum = Math.floor(1000 + Math.random() * 9000);
   return `TH-${randomNum}`;
 };
 
-const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
+const RegistrationPage = ({ API_BASE = '/api', onRegisterSuccess, onCancel }) => {
   const [step, setStep] = useState(1);
   const [numPlayers, setNumPlayers] = useState(3);
   const [teamName, setTeamName] = useState('');
@@ -66,23 +67,27 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
           return;
         }
         
-        // Validate team name with backend
-        const res = await fetch(`${API_BASE}/teams/validate-team`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ teamName })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          setError(data.msg || 'Team validation failed');
-          setIsSubmitting(false);
-          return;
+        // Validate team name with backend (try /teams/validate-team then fallback)
+        try {
+          const res = await fetch(`${API_BASE}/teams/validate-team`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ teamName })
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            setError(data.msg || data.message || 'Unit identifier already deployed.');
+            setIsSubmitting(false);
+            return;
+          }
+        } catch {
+          // If endpoint is unreachable, continue locally
         }
       } else if (step > 1 && step <= numPlayers + 1) {
         const memberIndex = step - 2;
         const member = members[memberIndex];
         
-        if (!member.registerNumber || !member.name || !member.email || !member.contactNumber || !member.yearOfGraduation || !member.course || !member.specialization) {
+        if (!member.registerNumber || !member.name || !member.email || !member.contactNumber) {
           setError('All fields in this section are mandatory.');
           setIsSubmitting(false);
           return;
@@ -95,7 +100,7 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
         }
 
         if (!validatePhone(member.contactNumber)) {
-          setError('Invalid contact number format. Must be 10-15 digits.');
+          setError('Invalid contact number format detected.');
           setIsSubmitting(false);
           return;
         }
@@ -118,21 +123,8 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
             return;
           }
         }
-
-        // Validate member details with backend
-        const res = await fetch(`${API_BASE}/teams/validate-member`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(member)
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          setError(data.msg || 'Member validation failed');
-          setIsSubmitting(false);
-          return;
-        }
       }
-      
+
       setStep(step + 1);
     } catch (err) {
       console.error(err);
@@ -168,7 +160,11 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
       const data = await response.json();
 
       if (response.ok) {
-        onRegisterSuccess(data.token, data.user, data.team);
+        if (onRegisterSuccess) {
+          onRegisterSuccess(data.token, data.user, data.team);
+        } else {
+          window.location.hash = '#hud';
+        }
       } else {
         setError(data.msg || data.message || 'Clearance denial.');
       }
@@ -177,6 +173,14 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
       setError('Network failure. Document not saved.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleAbort = () => {
+    if (onCancel) {
+      onCancel();
+    } else {
+      window.location.hash = '#home';
     }
   };
 
@@ -250,28 +254,29 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
         </div>
 
         <div className="input-row">
-          <label>SPECIALTY EXPERTISE:</label>
+          <label>SPECIALIZATION (BRANCH):</label>
           <input 
             type="text" 
             required
             value={member.specialization}
             onChange={(e) => handleMemberChange(index, 'specialization', e.target.value)}
-            placeholder="e.g. Bio-engineering"
+            placeholder="e.g. Computer Science, Mechanical..."
           />
         </div>
 
         <div className="input-row">
-          <label>EMERGENCY FREQUENCY (PHONE):</label>
+          <label>SUB-SPACE COMMS FREQUENCY (CONTACT NUMBER):</label>
           <input 
             type="tel" 
             required
             value={member.contactNumber}
             onChange={(e) => handleMemberChange(index, 'contactNumber', e.target.value)}
+            placeholder="e.g. +91 9876543210"
           />
         </div>
 
         <div className="input-row">
-          <label>COMMUNICATION LINK (EMAIL):</label>
+          <label>ENCRYPTED NODE (EMAIL ADDRESS):</label>
           <input 
             type="email" 
             required
@@ -288,10 +293,13 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
   return (
     <div className="registration-wrapper">
       
-      {/* Back to Welcome button */}
-      <button onClick={onCancel} className="back-btn-doc">
-        &lt; ABORT AND RETURN TO BASE
-      </button>
+      {/* Back to Base button & App Download */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: '850px', marginBottom: '1.2rem', flexWrap: 'wrap', gap: '0.8rem' }}>
+        <button onClick={handleAbort} className="back-btn-doc" style={{ margin: 0 }}>
+          &lt; ABORT AND INCINERATE DOCUMENT
+        </button>
+        <PwaInstallButton variant="nav" style={{ fontSize: '0.8rem', padding: '6px 12px' }} />
+      </div>
 
       <div className="document-container">
         {/* Hazard Header */}
@@ -299,7 +307,10 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
         
         {/* Document Header */}
         <div className="doc-header">
-          <div className="doc-meta">FORM-4B // DEPT OF BIO-RESEARCH // CLEARANCE LEVEL: OMEGA</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.4rem' }}>
+            <div className="doc-meta">FORM-4B // DEPT OF BIO-RESEARCH // CLEARANCE LEVEL: OMEGA</div>
+            <PwaInstallButton variant="dossier" />
+          </div>
           <h2 className="doc-title">CONFIDENTIAL PROJECT CLEARANCE</h2>
           <div className="red-stamp">TOP SECRET</div>
         </div>
@@ -416,71 +427,49 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
         }
 
         .registration-wrapper {
-          height: 100vh;
-          height: 100dvh;
-          min-height: 0;
+          min-height: 100vh;
+          min-height: 100dvh;
+          width: 100%;
           display: flex;
           flex-direction: column;
-          justify-content: flex-start;
-          align-items: stretch;
-          padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+          justify-content: center;
+          align-items: center;
+          padding: 2rem;
+          box-sizing: border-box;
           position: relative;
           z-index: 100;
-          overflow: hidden;
-          width: 100%;
-          max-width: 720px;
-          margin: 0 auto;
-          box-sizing: border-box;
-          font-family: var(--font-sans);
+          background: #002729;
+          overflow-y: auto;
         }
 
         .back-btn-doc {
-          margin-bottom: 0.75rem;
-          background: rgba(8, 20, 22, 0.8);
-          backdrop-filter: blur(8px);
-          border: 1px solid var(--color-accent);
-          color: var(--color-text);
-          font-family: var(--font-mono);
-          font-size: 0.85rem;
+          background: transparent;
+          border: none;
+          color: rgba(255, 255, 255, 0.7);
+          font-family: 'Courier New', Courier, monospace;
+          font-size: 1rem;
           font-weight: bold;
           cursor: pointer;
           text-transform: uppercase;
-          transition: all 0.3s ease;
-          padding: 0.6rem 1.2rem;
-          border-radius: 8px;
-          flex-shrink: 0;
+          transition: color 0.3s ease;
         }
 
         .back-btn-doc:hover {
-          background: rgba(255, 51, 51, 0.2);
-          border-color: #ff3333;
           color: #ff3333;
         }
 
         .document-container {
           width: 100%;
-          flex: 1;
-          min-height: 0;
+          max-width: 850px;
           background-color: #fdfbf7;
           background-image: radial-gradient(#e0dcd3 1px, transparent 1px);
           background-size: 20px 20px;
           box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
           position: relative;
           color: #1a1a1a;
-          overflow-y: auto;
-          overflow-x: hidden;
-          -webkit-overflow-scrolling: touch;
-          overscroll-behavior: contain;
-          padding-bottom: max(24px, env(safe-area-inset-bottom));
-          border: 1px solid #1a1a1a;
-          border-radius: 12px;
-        }
-
-        .document-container input,
-        .document-container select,
-        .document-container textarea {
-          user-select: text;
-          -webkit-user-select: text;
+          overflow: hidden;
+          padding-bottom: 2rem;
+          border-radius: 4px;
         }
 
         .hazard-bar {
@@ -496,52 +485,51 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
         }
 
         .doc-header {
-          padding: 2rem 3rem 1rem 3rem;
+          padding: 3rem 4rem 1rem 4rem;
           position: relative;
           border-bottom: 3px double #1a1a1a;
-          margin-bottom: 1.5rem;
+          margin-bottom: 2rem;
         }
 
         .doc-meta {
           font-family: 'Courier New', Courier, monospace;
           font-weight: bold;
-          font-size: 0.8rem;
-          margin-bottom: 0.5rem;
+          font-size: 0.9rem;
           color: #444;
         }
 
         .doc-title {
           font-family: 'Times New Roman', Times, serif;
-          font-size: 1.8rem;
+          font-size: 2.2rem;
           font-weight: 900;
           letter-spacing: 1px;
-          margin: 0;
+          margin: 0.5rem 0 0 0;
           text-transform: uppercase;
         }
 
         .red-stamp {
           position: absolute;
-          top: 1.5rem;
-          right: 2rem;
+          top: 2rem;
+          right: 3rem;
           color: #cc0000;
           font-family: 'Courier New', Courier, monospace;
-          font-size: 1.2rem;
+          font-size: 1.5rem;
           font-weight: 900;
-          border: 3px solid #cc0000;
-          padding: 0.1rem 0.4rem;
-          transform: rotate(-12deg);
-          opacity: 0.85;
+          border: 4px solid #cc0000;
+          padding: 0.2rem 0.5rem;
+          transform: rotate(-15deg);
+          opacity: 0.8;
           border-radius: 4px;
         }
 
         .doc-progress-container {
-          padding: 0 3rem;
-          margin-bottom: 1.5rem;
+          padding: 0 4rem;
+          margin-bottom: 2rem;
         }
 
         .doc-progress-bg {
           width: 100%;
-          height: 6px;
+          height: 8px;
           background: #ccc;
           border: 1px solid #1a1a1a;
         }
@@ -553,8 +541,8 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
         }
 
         .doc-error {
-          margin: 0 3rem 1rem 3rem;
-          padding: 0.8rem;
+          margin: 0 4rem 1rem 4rem;
+          padding: 1rem;
           background: #ffe6e6;
           border-left: 5px solid #cc0000;
           color: #cc0000;
@@ -563,34 +551,34 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
         }
 
         form {
-          padding: 0 3rem;
+          padding: 0 4rem;
         }
 
         .form-section {
           display: flex;
           flex-direction: column;
-          gap: 1.2rem;
+          gap: 1.5rem;
         }
 
         .section-title {
           font-family: 'Times New Roman', Times, serif;
-          font-size: 1.3rem;
+          font-size: 1.5rem;
           border-bottom: 2px solid #1a1a1a;
-          padding-bottom: 0.4rem;
-          margin-bottom: 0.8rem;
+          padding-bottom: 0.5rem;
+          margin-bottom: 1rem;
           font-weight: bold;
         }
 
         .input-row {
           display: flex;
           flex-direction: column;
-          gap: 0.2rem;
+          gap: 0.3rem;
         }
 
         .input-row label {
           font-family: 'Courier New', Courier, monospace;
           font-weight: bold;
-          font-size: 0.85rem;
+          font-size: 0.95rem;
           color: #333;
         }
 
@@ -598,30 +586,30 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
           background: transparent;
           border: none;
           border-bottom: 1px solid #1a1a1a;
-          padding: 0.4rem 0;
+          padding: 0.5rem 0;
           font-family: 'Courier New', Courier, monospace;
-          font-size: 1.1rem;
+          font-size: 1.2rem;
           color: #000;
           outline: none;
           transition: border-bottom 0.2s ease;
         }
 
         .input-row input:focus {
-          border-bottom: 2.5px solid #1a1a1a;
+          border-bottom: 3px solid #1a1a1a;
         }
 
         .readonly-input {
           color: #666 !important;
           border-bottom: 1px dashed #666 !important;
-          background: rgba(0,0,0,0.03) !important;
+          background: rgba(0,0,0,0.05) !important;
         }
 
         .doc-select {
           background: transparent;
           border: 1px solid #1a1a1a;
-          padding: 0.4rem;
+          padding: 0.5rem;
           font-family: 'Courier New', Courier, monospace;
-          font-size: 0.9rem;
+          font-size: 1rem;
           font-weight: bold;
           color: #000;
           outline: none;
@@ -632,9 +620,9 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
           background: transparent;
           border: none;
           border-bottom: 1px solid #1a1a1a;
-          padding: 0.4rem 0;
+          padding: 0.5rem 0;
           font-family: 'Courier New', Courier, monospace;
-          font-size: 1.1rem;
+          font-size: 1.2rem;
           color: #000;
           outline: none;
           cursor: pointer;
@@ -650,25 +638,19 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
         .form-actions {
           display: flex;
           justify-content: space-between;
-          gap: 0.8rem;
-          margin-top: 1.5rem;
-          padding-top: 1.5rem;
-          padding-bottom: 0.5rem;
+          margin-top: 2rem;
+          padding-top: 2rem;
           border-top: 2px dashed #1a1a1a;
-          position: sticky;
-          bottom: 0;
-          background: #fdfbf7;
-          z-index: 2;
         }
 
         .btn-doc-primary {
           background: #cc0000;
           color: #fff;
           border: 2px solid #990000;
-          padding: 0.7rem 1.3rem;
+          padding: 0.8rem 1.5rem;
           font-family: 'Courier New', Courier, monospace;
           font-weight: bold;
-          font-size: 0.9rem;
+          font-size: 1rem;
           cursor: pointer;
           box-shadow: 2px 2px 0px #990000;
           transition: all 0.1s ease;
@@ -683,10 +665,10 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
           background: transparent;
           color: #1a1a1a;
           border: 2px solid #1a1a1a;
-          padding: 0.7rem 1.3rem;
+          padding: 0.8rem 1.5rem;
           font-family: 'Courier New', Courier, monospace;
           font-weight: bold;
-          font-size: 0.9rem;
+          font-size: 1rem;
           cursor: pointer;
           box-shadow: 2px 2px 0px #1a1a1a;
           transition: all 0.1s ease;
@@ -706,31 +688,27 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
         }
 
         @media (max-width: 768px) {
-          .registration-wrapper { padding: 8px; }
+          .registration-wrapper { padding: 1rem; }
           .back-btn-doc { 
-            width: 100%;
-            margin-bottom: 0.75rem; 
-            font-size: 0.75rem;
-            flex-shrink: 0;
+            font-size: 0.8rem;
           }
-          .doc-header { padding: 2.4rem 1rem 0.8rem 1rem; }
-          .doc-title { font-size: 1.15rem; padding-right: 0; }
-          .doc-meta { font-size: 0.65rem; }
+          .doc-header { padding: 1.5rem 1rem 1rem 1rem; }
+          .doc-title { font-size: 1.4rem; }
+          .doc-meta { font-size: 0.7rem; }
           .red-stamp { 
-            top: 0.35rem; 
+            top: 0.5rem; 
             right: 0.5rem; 
-            font-size: 0.7rem; 
+            font-size: 0.95rem; 
             border-width: 2px; 
             padding: 0.1rem 0.3rem;
           }
           .doc-progress-container, form { padding: 0 1rem; }
-          .doc-error { margin: 0 1rem 1rem 1rem; font-size: 0.85rem; }
-          .input-row input, .doc-select-underline { font-size: 16px; }
+          .doc-error { margin: 0 1rem 1rem 1rem; font-size: 0.9rem; }
           
           .signature-section > div:last-child {
             flex-direction: column;
             align-items: flex-start !important;
-            gap: 1rem;
+            gap: 1.5rem;
           }
           .signature-section > div:last-child > div {
             width: 100% !important;
@@ -738,11 +716,11 @@ const RegistrationPage = ({ API_BASE, onRegisterSuccess, onCancel }) => {
           
           .form-actions {
             flex-direction: column;
-            gap: 0.8rem;
+            gap: 1rem;
           }
           .btn-doc-primary, .btn-doc-secondary {
             width: 100%;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
           }
         }
       `}</style>

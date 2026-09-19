@@ -22,20 +22,28 @@ function App() {
     window.matchMedia('(display-mode: fullscreen)').matches ||
     window.matchMedia('(display-mode: minimal-ui)').matches ||
     window.navigator?.standalone === true ||
-    document.referrer.includes('android-app://')
+    document.referrer.includes('android-app://') ||
+    new URLSearchParams(window.location.search).get('pwa') === 'true' ||
+    localStorage.getItem('force_pwa_mode') === 'true'
   );
 
   const getInitialRoute = () => {
     const hash = typeof window !== 'undefined' ? window.location.hash : '';
     if (hash === '#admin' || hash === '#admin-login') return 'admin';
+    
+    // In standard browser: initial step must be downloading/installing the PWA
+    if (!isStandalone) {
+      return 'pwa-download';
+    }
+
+    // In PWA app: everything opens up!
     if (hash === '#hud') return 'hud';
     if (hash === '#scan') return 'scan';
     if (hash === '#register') return 'register';
     if (hash === '#registration-success') return 'registration-success';
     if (hash === '#welcome') return 'welcome';
     if (hash === '#home') return 'home';
-    if (hash === '#pwa-download') return 'pwa-download';
-    return isStandalone ? 'home' : 'pwa-download';
+    return 'home';
   };
 
   const [currentRoute, setCurrentRoute] = useState(getInitialRoute);
@@ -48,7 +56,17 @@ function App() {
       const hash = window.location.hash;
       if (hash === '#admin' || hash === '#admin-login') {
         setCurrentRoute('admin');
-      } else if (hash === '#hud') {
+        return;
+      }
+
+      // Initial gate: in standard browser, force PWA installation screen
+      if (!isStandalone) {
+        setCurrentRoute('pwa-download');
+        return;
+      }
+
+      // Inside installed PWA: all sections and views are unlocked
+      if (hash === '#hud') {
         setCurrentRoute('hud');
       } else if (hash === '#scan') {
         setCurrentRoute('scan');
@@ -63,12 +81,8 @@ function App() {
       } else if (hash === '#pwa-download') {
         setCurrentRoute('pwa-download');
       } else {
-        // Default route on `/`
-        if (isStandalone) {
-          setCurrentRoute('home');
-        } else {
-          setCurrentRoute('pwa-download');
-        }
+        // Default inside PWA
+        setCurrentRoute('home');
       }
     };
 
@@ -227,23 +241,17 @@ function App() {
     );
   }
 
-  // Registration — full viewport so the form always scrolls on phones
+  // Registration — full viewport confidential dossier
   if (currentRoute === 'register') {
     return (
-      <div className="register-route">
+      <div style={{ position: 'relative', width: '100vw', minHeight: '100vh', background: '#002729', overflowX: 'hidden' }}>
         <BackgroundCanvas />
         <div className="noise-overlay" />
-        <div className="register-route-inner">
-          {isLoading ? (
-            <div className="hud-copy" style={{ padding: 24 }}>Connecting…</div>
-          ) : (
-            <RegistrationPage
-              API_BASE={API_BASE}
-              onRegisterSuccess={handleRegisterSuccess}
-              onCancel={() => { window.location.hash = '#home'; }}
-            />
-          )}
-        </div>
+        <RegistrationPage
+          API_BASE={API_BASE}
+          onRegisterSuccess={handleRegisterSuccess}
+          onCancel={() => { window.location.hash = '#home'; }}
+        />
       </div>
     );
   }
