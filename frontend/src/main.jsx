@@ -5,24 +5,16 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import 'leaflet/dist/leaflet.css'
 import './index.css'
 import App from './App.jsx'
+import { registerSW } from 'virtual:pwa-register'
 
-// Register GSAP ScrollTrigger globally to prevent runtime missing plugin exceptions
+// Register GSAP ScrollTrigger globally
 gsap.registerPlugin(ScrollTrigger);
 
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  window.__pwaInstallPrompt = e;
-  window.dispatchEvent(new Event('pwa-install-ready'));
-});
+// Register PWA service worker
+registerSW({ immediate: true });
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />
   </StrictMode>,
 )
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
-  });
-}

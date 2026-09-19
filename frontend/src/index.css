@@ -41,17 +41,34 @@
   user-select: none;
 }
 
+html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   background-color: #081011;
   color: var(--color-text);
   font-family: var(--font-mono);
-  overflow-x: hidden;
+  overflow-x: hidden !important;
   overflow-y: auto;
   min-height: 100vh;
   min-height: 100dvh;
-  width: 100vw;
+  width: 100%;
+  max-width: 100%;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+}
+
+#root, .app-container {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+  box-sizing: border-box;
 }
 
 .admin-dashboard, .admin-dashboard * {
@@ -1962,5 +1979,106 @@ body {
   border: 1px solid rgba(57, 255, 20, 0.15);
 }
 
+/* ============================================================
+   THRILLER & CHERNOBYL THEME EFFECTS (FOR FRONTPAGE 3D UI)
+   ============================================================ */
 
+/* Dense Fog / Gas Leakage Effect */
+.fog-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 85;
+  overflow: hidden;
+  opacity: 0.9;
+}
 
+.fog-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300vw;
+  height: 100vh;
+  background: transparent url('https://raw.githubusercontent.com/danielstuart14/CSS_FOG_ANIMATION/master/fog1.png') repeat-x;
+  background-size: 100vw 100vh;
+  animation: fog-drift 45s linear infinite;
+  mix-blend-mode: screen;
+  filter: brightness(2.5) contrast(1.2) blur(2px);
+}
+
+.fog-layer.layer-2 {
+  background: transparent url('https://raw.githubusercontent.com/danielstuart14/CSS_FOG_ANIMATION/master/fog2.png') repeat-x;
+  background-size: 100vw 100vh;
+  animation: fog-drift 35s linear infinite reverse;
+  opacity: 0.8;
+  filter: brightness(2.5) contrast(1.4) blur(4px);
+}
+
+.fog-layer.layer-3 {
+  background: transparent url('https://raw.githubusercontent.com/danielstuart14/CSS_FOG_ANIMATION/master/fog1.png') repeat-x;
+  background-size: 150vw 100vh;
+  animation: fog-drift-fast 25s linear infinite;
+  opacity: 0.6;
+  filter: brightness(3) contrast(1.1) blur(5px);
+  transform: scaleY(-1);
+}
+
+@keyframes fog-drift {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100vw); }
+}
+
+@keyframes fog-drift-fast {
+  0% { transform: translateX(0) scaleY(-1); }
+  100% { transform: translateX(-150vw) scaleY(-1); }
+}
+
+/* CRT Scanlines */
+.scanlines {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0),
+    rgba(255,255,255,0) 50%,
+    rgba(0,0,0,0.15) 50%,
+    rgba(0,0,0,0.15)
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Hazard Borders */
+.hazard-border-top, .hazard-border-bottom {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  background: repeating-linear-gradient(
+    45deg,
+    #39FF14,
+    #39FF14 10px,
+    #002729 10px,
+    #002729 20px
+  );
+  z-index: 20;
+}
+
+.hazard-border-top { top: 0; }
+.hazard-border-bottom { bottom: 0; }
+
+/* Classified Redacted text effect */
+.redacted {
+  background-color: var(--color-accent);
+  color: var(--color-accent);
+  padding: 0 4px;
+  user-select: none;
+}
+.redacted:hover {
+  background-color: transparent;
+  color: #ff3333;
+}
