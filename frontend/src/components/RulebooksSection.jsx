@@ -19,31 +19,59 @@ const SoldierCanvas = ({ scrollProgress }) => {
     let animationFrameId;
     let imgDataObj = null;
 
+    const isMobile = window.innerWidth < 768;
+    const sources = isMobile
+      ? ['/phone_v2.webp', '/phone_v2.png', '/phone v2.png', '/matrix_pilot.webp', '/matrix_pilot.png']
+      : ['/matrix_pilot.webp', '/matrix_pilot.png', '/phone_v2.webp'];
+
+    let sourceIndex = 0;
     const img = new Image();
-    img.src = window.innerWidth < 768 ? '/phone v2.png' : '/matrix_pilot.png';
-    img.onload = () => {
-      const offscreenCanvas = document.createElement('canvas');
-      offscreenCanvas.width = img.width;
-      offscreenCanvas.height = img.height;
-      const oCtx = offscreenCanvas.getContext('2d');
-      oCtx.drawImage(img, 0, 0);
-      imgDataObj = oCtx.getImageData(0, 0, img.width, img.height);
+
+    const tryNextSource = () => {
+      if (sourceIndex < sources.length) {
+        img.src = sources[sourceIndex];
+        sourceIndex++;
+      }
     };
+
+    img.onload = () => {
+      try {
+        const offscreenCanvas = document.createElement('canvas');
+        offscreenCanvas.width = img.width;
+        offscreenCanvas.height = img.height;
+        const oCtx = offscreenCanvas.getContext('2d');
+        oCtx.drawImage(img, 0, 0);
+        imgDataObj = oCtx.getImageData(0, 0, img.width, img.height);
+      } catch (err) {
+        console.warn('Canvas sample error:', err);
+        tryNextSource();
+      }
+    };
+
+    img.onerror = () => {
+      console.warn(`Failed loading image: ${img.src}, trying fallback...`);
+      tryNextSource();
+    };
+
+    tryNextSource();
 
     const resize = () => {
       if (!canvas || !canvas.parentElement) return;
       const parent = canvas.parentElement;
-      canvas.width = parent.clientWidth || window.innerWidth;
-      canvas.height = parent.clientHeight || window.innerHeight;
+      canvas.width = parent.clientWidth || window.innerWidth || 360;
+      canvas.height = parent.clientHeight || window.innerHeight || 500;
     };
     window.addEventListener('resize', resize);
-    setTimeout(resize, 100);
+    setTimeout(resize, 50);
+    setTimeout(resize, 200);
     resize();
 
     let isVisible = true;
     const observer = new IntersectionObserver(([entry]) => {
-      isVisible = entry.isIntersecting;
-    });
+      if (entry) {
+        isVisible = entry.isIntersecting;
+      }
+    }, { threshold: 0.01 });
     observer.observe(canvas);
 
     const noiseMap = Array.from({ length: 300 }, () =>
@@ -53,9 +81,15 @@ const SoldierCanvas = ({ scrollProgress }) => {
     let time = 0;
     const render = () => {
       time += 0.05;
+
+      if (!isVisible) {
+        animationFrameId = requestAnimationFrame(render);
+        return;
+      }
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      if (!imgDataObj || !isVisible) {
+      if (!imgDataObj) {
         animationFrameId = requestAnimationFrame(render);
         return;
       }
@@ -148,16 +182,32 @@ const MascotCanvas = ({ scrollProgress }) => {
     let animationFrameId;
     let imgDataObj = null;
 
+    const sources = ['/soldier_mascot.webp', '/soldier_mascot.png'];
+    let sourceIndex = 0;
     const img = new Image();
-    img.src = '/soldier_mascot.png';
-    img.onload = () => {
-      const offscreenCanvas = document.createElement('canvas');
-      offscreenCanvas.width = img.width;
-      offscreenCanvas.height = img.height;
-      const oCtx = offscreenCanvas.getContext('2d');
-      oCtx.drawImage(img, 0, 0);
-      imgDataObj = oCtx.getImageData(0, 0, img.width, img.height);
+
+    const tryNextSource = () => {
+      if (sourceIndex < sources.length) {
+        img.src = sources[sourceIndex];
+        sourceIndex++;
+      }
     };
+
+    img.onload = () => {
+      try {
+        const offscreenCanvas = document.createElement('canvas');
+        offscreenCanvas.width = img.width;
+        offscreenCanvas.height = img.height;
+        const oCtx = offscreenCanvas.getContext('2d');
+        oCtx.drawImage(img, 0, 0);
+        imgDataObj = oCtx.getImageData(0, 0, img.width, img.height);
+      } catch (err) {
+        tryNextSource();
+      }
+    };
+
+    img.onerror = () => tryNextSource();
+    tryNextSource();
 
     const resize = () => {
       if (!canvas || !canvas.parentElement) return;
