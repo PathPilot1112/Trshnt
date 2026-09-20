@@ -3,7 +3,6 @@ import Navigation from '../components/Navigation';
 import HomeSection from '../components/HomeSection';
 import StorySection from '../components/StorySection';
 import ImageSection from '../components/ImageSection';
-import HistorySection from '../components/HistorySection';
 import RulebooksSection from '../components/RulebooksSection';
 import RegistrationBanner from '../components/RegistrationBanner';
 import Footer from '../components/Footer';
@@ -87,7 +86,6 @@ const HomeLandingPage = ({ onNavigate }) => {
         <HomeSection />
         <StorySection />
         <ImageSection />
-        <HistorySection />
         <RulebooksSection />
         <RegistrationBanner onOpenRegister={() => {
           if (onNavigate) onNavigate('register');

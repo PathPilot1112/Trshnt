@@ -75,19 +75,40 @@ const Navigation = ({ onNavigate }) => {
         <div 
           className="nav-title" 
           style={{ 
-            fontSize: '1.3rem', 
-            fontWeight: 'bold', 
             cursor: 'pointer', 
-            letterSpacing: '2px', 
-            color: '#39FF14',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            gap: '10px'
           }} 
           onClick={handleHomeClick}
+          title="Home"
         >
-          <span style={{ color: '#39FF14', fontSize: '1rem' }}>☢</span>
-          PRIPYAT EXODUS
+          <img 
+            src="/logo1.png" 
+            alt="Atomic Pi Logo" 
+            style={{ 
+              height: '36px', 
+              width: '36px', 
+              objectFit: 'contain',
+              borderRadius: '50%',
+              background: '#ffffff',
+              padding: '2px',
+              boxShadow: '0 0 10px rgba(255, 255, 255, 0.4)',
+              transition: 'transform 0.2s ease'
+            }} 
+          />
+          <img 
+            src="/logo2.png" 
+            alt="Aaruush Logo" 
+            style={{ 
+              height: '36px', 
+              width: '36px', 
+              objectFit: 'contain',
+              borderRadius: '50%',
+              boxShadow: '0 0 10px rgba(255, 120, 0, 0.5)',
+              transition: 'transform 0.2s ease'
+            }} 
+          />
         </div>
 
         {/* Desktop Links */}
@@ -100,7 +121,7 @@ const Navigation = ({ onNavigate }) => {
             margin: 0,
             padding: 0
           }}>
-            {['History', 'Rulebooks', 'Registration'].map((item) => (
+            {['Rulebooks', 'Registration'].map((item) => (
               <li key={item}>
                 <button 
                   onClick={() => handleNavClick(item)}
@@ -196,7 +217,7 @@ const Navigation = ({ onNavigate }) => {
             boxSizing: 'border-box'
           }}
         >
-          {['History', 'Rulebooks', 'Registration'].map((item) => (
+          {['Rulebooks', 'Registration'].map((item) => (
             <button
               key={item}
               onClick={() => handleNavClick(item)}

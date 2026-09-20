@@ -229,9 +229,10 @@ const Welcome = ({ onQrLogin }) => {
 
       {/* === Top classified header === */}
       <div className="stalker-header">
-        <div className="net-info">
-          <div className="net-name glitch-text" data-text="THE PRIPYAT EXODUS">THE PRIPYAT EXODUS</div>
-          <div className="operator-info">PRIPYAT EXCLUSION ZONE // DEPT OF BIO-RESEARCH</div>
+        <div className="net-info" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <img src="/logo1.png" alt="Logo 1" style={{ height: '26px', width: '26px', borderRadius: '50%', background: '#fff', padding: '1px', boxShadow: '0 0 8px rgba(255, 255, 255, 0.4)' }} />
+          <img src="/logo2.png" alt="Logo 2" style={{ height: '26px', width: '26px', borderRadius: '50%', boxShadow: '0 0 8px rgba(255, 120, 0, 0.5)' }} />
+          <div className="operator-info" style={{ fontSize: '10px', color: '#39FF14', letterSpacing: '1px' }}>PRIPYAT EXCLUSION ZONE</div>
         </div>
         <div className="header-icons" style={{ gap: '8px' }}>
           <span className="red-stamp-mini">TOP SECRET</span>
