@@ -6,11 +6,6 @@ const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:5000';
 
 /**
  * Sends an image to the Python ML microservice for prediction.
- * @param {string} imagePath - The path to the uploaded image file on disk.
- * @returns {Promise<{prediction: str, confidence: number}>} - The predicted label and confidence.
- */
-/**
- * Sends an image to the Python ML microservice for prediction.
  * @param {Buffer|string} bufferOrPath - The image buffer (memoryStorage) or file path (legacy).
  * @returns {Promise<{prediction: str, confidence: number}>} - The predicted label and confidence.
  */
@@ -19,9 +14,8 @@ export const predictImage = async (bufferOrPath) => {
     const formData = new FormData();
 
     if (Buffer.isBuffer(bufferOrPath)) {
-      // memoryStorage: append buffer directly
-      const blob = new Blob([bufferOrPath], { type: 'image/jpeg' });
-      formData.append('image', blob, 'scan.jpg');
+      // memoryStorage: append buffer directly with filename option
+      formData.append('image', bufferOrPath, { filename: 'scan.jpg', contentType: 'image/jpeg' });
     } else {
       // Legacy diskStorage: read from path
       formData.append('image', fs.createReadStream(bufferOrPath));
