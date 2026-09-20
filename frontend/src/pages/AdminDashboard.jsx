@@ -476,8 +476,10 @@ const AdminDashboard = ({ API_BASE }) => {
         options.body = JSON.stringify(body);
       }
       await authedFetch(`${API_BASE}${path}`, options);
-      await fetchDashboardData();
+      // Trigger toast IMMEDIATELY with zero lag
       showToast(successTitle || 'Updated');
+      // Trigger background refetch asynchronously
+      fetchDashboardData().catch(() => {});
     } catch (err) {
       showToast('Action failed', err.message, 'error');
     }
@@ -491,6 +493,7 @@ const AdminDashboard = ({ API_BASE }) => {
       await authedFetch(`${API_BASE}/admin/submissions/clear`, { method: 'POST' });
       setSubmissions([]);
       showToast('Reset complete', 'Submissions cleared and teams reset.');
+      fetchDashboardData().catch(() => {});
     } catch (err) {
       showToast('Reset failed', err.message, 'error');
     }
@@ -518,7 +521,7 @@ const AdminDashboard = ({ API_BASE }) => {
       });
       showToast('Team Updated', `Team "${editForm.name}" updated successfully.`);
       setEditingTeam(null);
-      await fetchDashboardData();
+      fetchDashboardData().catch(() => {});
     } catch (err) {
       showToast('Update Failed', err.message, 'error');
     }
@@ -534,7 +537,7 @@ const AdminDashboard = ({ API_BASE }) => {
       });
       showToast('Team Deleted', `Team "${team.name}" was permanently removed.`);
       setTeams((prev) => prev.filter((t) => t._id !== team._id));
-      await fetchDashboardData();
+      fetchDashboardData().catch(() => {});
     } catch (err) {
       showToast('Delete Failed', err.message, 'error');
     }
