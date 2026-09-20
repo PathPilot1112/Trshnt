@@ -179,111 +179,6 @@ const SoldierCanvas = ({ scrollProgress }) => {
   );
 };
 
-const MascotCanvas = ({ scrollProgress }) => {
-  const canvasRef = useRef();
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    let animationFrameId;
-    let imgDataObj = null;
-
-    const sources = ['/soldier_mascot.webp', '/soldier_mascot.png'];
-    let sourceIndex = 0;
-    const img = new Image();
-
-    const tryNextSource = () => {
-      if (sourceIndex < sources.length) {
-        img.src = sources[sourceIndex];
-        sourceIndex++;
-      }
-    };
-
-    img.onload = () => {
-      try {
-        const offscreenCanvas = document.createElement('canvas');
-        offscreenCanvas.width = img.width;
-        offscreenCanvas.height = img.height;
-        const oCtx = offscreenCanvas.getContext('2d');
-        oCtx.drawImage(img, 0, 0);
-        imgDataObj = oCtx.getImageData(0, 0, img.width, img.height);
-      } catch (err) {
-        tryNextSource();
-      }
-    };
-
-    img.onerror = () => tryNextSource();
-    tryNextSource();
-
-    const resize = () => {
-      if (!canvas || !canvas.parentElement) return;
-      canvas.width = canvas.parentElement.clientWidth || 300;
-      canvas.height = canvas.parentElement.clientHeight || 400;
-    };
-    window.addEventListener('resize', resize);
-    setTimeout(resize, 100);
-    resize();
-
-    let isVisible = true;
-    const observer = new IntersectionObserver(([entry]) => {
-      isVisible = entry.isIntersecting;
-    });
-    observer.observe(canvas);
-
-    let time = 0;
-    const render = () => {
-      time += 0.05;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      if (!imgDataObj || !isVisible) {
-        animationFrameId = requestAnimationFrame(render);
-        return;
-      }
-
-      ctx.fillStyle = '#39FF14';
-      const spacing = 5;
-      const cols = Math.floor(canvas.width / spacing);
-      const rowHeight = 7;
-      const rows = Math.floor(canvas.height / rowHeight);
-
-      const scale = Math.min(canvas.width / imgDataObj.width, canvas.height / imgDataObj.height) * 0.9;
-      const scaledW = imgDataObj.width * scale;
-      const scaledH = imgDataObj.height * scale;
-      const ox = (canvas.width - scaledW) / 2;
-      const oy = (canvas.height - scaledH) / 2;
-
-      for (let i = 0; i < cols; i++) {
-        for (let j = 0; j < rows; j++) {
-          const x = i * spacing;
-          const y = j * rowHeight;
-          const imgX = Math.floor((x - ox) / scale);
-          const imgY = Math.floor((y - oy) / scale);
-
-          if (imgX >= 0 && imgX < imgDataObj.width && imgY >= 0 && imgY < imgDataObj.height) {
-            const idx = (imgY * imgDataObj.width + imgX) * 4;
-            const a = imgDataObj.data[idx + 3];
-            if (a > 50) {
-              ctx.globalAlpha = (a / 255) * (0.6 + 0.3 * Math.sin(time + i * 0.2));
-              ctx.fillRect(x, y, spacing - 1, rowHeight - 1);
-            }
-          }
-        }
-      }
-      ctx.globalAlpha = 1.0;
-      animationFrameId = requestAnimationFrame(render);
-    };
-    render();
-
-    return () => {
-      window.removeEventListener('resize', resize);
-      observer.disconnect();
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [scrollProgress]);
-
-  return <canvas ref={canvasRef} style={{ width: '100%', height: '100%', maxHeight: '450px' }} />;
-};
 
 const RulebooksSection = () => {
   const container = useRef();
@@ -307,11 +202,12 @@ const RulebooksSection = () => {
   return (
     <div ref={container} style={{ width: '100%', position: 'relative', overflow: 'hidden' }}>
       <style>{`
-        .rulebooks-grid {
-          display: grid;
-          grid-template-columns: 1.2fr 0.8fr;
+        .rulebooks-container-inner {
+          display: flex;
+          flex-direction: column;
           width: 100%;
-          min-height: 100vh;
+          max-width: 950px;
+          margin: 0 auto;
           box-sizing: border-box;
         }
 
@@ -321,26 +217,7 @@ const RulebooksSection = () => {
           gap: 1.5rem;
           padding: clamp(3rem, 6vw, 6rem) clamp(1rem, 4vw, 3rem);
           box-sizing: border-box;
-        }
-
-        @media (max-width: 860px) {
-          .rulebooks-grid {
-            grid-template-columns: 1fr !important;
-            min-height: auto !important;
-            width: 100% !important;
-            max-width: 100% !important;
-          }
-
-          .rulebooks-left {
-            padding: 2.2rem 1rem !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            box-sizing: border-box !important;
-          }
-
-          .rulebooks-right {
-            display: none !important;
-          }
+          width: 100%;
         }
       `}</style>
 
@@ -355,9 +232,8 @@ const RulebooksSection = () => {
         boxSizing: 'border-box'
       }}>
 
-        {/* Top Part: Directives Text (Left) + Mascot (Right) */}
-        <div className="rulebooks-grid">
-          {/* Left Column: Rules */}
+        {/* Directives Section */}
+        <div className="rulebooks-container-inner">
           <div className="rulebooks-left">
             <h2 style={{ 
               marginBottom: '1rem', 
@@ -406,27 +282,11 @@ const RulebooksSection = () => {
               </div>
             ))}
           </div>
-
-          {/* Right Column: Mascot Canvas */}
-          <div className="rulebooks-right" style={{ position: 'relative', height: '100%', minHeight: '100vh', padding: '0' }}>
-            <div style={{
-              position: 'sticky',
-              top: '80px',
-              width: '100%',
-              height: '80vh',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden'
-            }}>
-              <MascotCanvas scrollProgress={progressRef} />
-            </div>
-          </div>
         </div>
 
       </section>
 
-      {/* Bottom Part: The Matrix Pilot Animation */}
+      {/* Bottom Part: Matrix Graphic Animation */}
       <section style={{ 
         position: 'relative', 
         width: '100%', 
