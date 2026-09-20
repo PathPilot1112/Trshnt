@@ -247,8 +247,9 @@ export const assignRouteToTeam = (team, selectedRouteId, clues) => {
     route = routes.find((r) => r.routeId === Number(selectedRouteId));
   }
   if (!route && routes.length > 0) {
-    // If no route selected, default to Route 1 instead of random
-    route = routes[0];
+    // Automatically pick a random route out of the 50 available routes in ROute.json
+    const randomIndex = Math.floor(Math.random() * routes.length);
+    route = routes[randomIndex];
   }
 
   if (!route) {

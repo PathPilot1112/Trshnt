@@ -1,5 +1,7 @@
 import Team from "../models/Team.js";
 import User from "../models/User.js";
+import Clue from "../models/Clue.js";
+import { assignRouteToTeam } from "../utils/cluePath.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
@@ -405,6 +407,9 @@ export const startMission = async (req, res) => {
     const team = await Team.findById(req.user.team);
     if (!team) return res.status(404).json({ message: "Team not found" });
 
+    const clues = await Clue.find();
+    assignRouteToTeam(team, team.assignedRouteId || null, clues);
+
     team.status = "in_progress";
     team.startedAt = new Date();
     team.timerStartedAt = new Date();
@@ -422,6 +427,8 @@ export const startMission = async (req, res) => {
         timerStartedAt: team.timerStartedAt,
         timerAccumulatedMs: team.timerAccumulatedMs,
         timerRunning: team.timerRunning,
+        assignedRouteId: team.assignedRouteId,
+        assignedRouteName: team.assignedRouteName,
       });
     }
 

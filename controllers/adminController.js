@@ -166,7 +166,8 @@ export const startTeamMission = async (req, res) => {
     const team = await Team.findById(req.params.id);
     if (!team) return res.status(404).json({ message: "Team not found" });
 
-    const selectedRouteId = req.body?.routeId || req.query?.routeId || team.assignedRouteId;
+    const reqRouteId = req.body?.routeId || req.query?.routeId;
+    const selectedRouteId = reqRouteId ? Number(reqRouteId) : null;
     const clues = await Clue.find();
 
     team.status = "in_progress";
@@ -179,6 +180,7 @@ export const startTeamMission = async (req, res) => {
     team.completedClues = [];
     team.score = 0;
     
+    // Automatically pick & save a random route out of 50 if no specific route requested
     assignRouteToTeam(team, selectedRouteId, clues);
     await team.save();
 
