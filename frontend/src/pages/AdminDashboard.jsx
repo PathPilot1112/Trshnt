@@ -38,7 +38,7 @@ const AdminDashboard = ({ API_BASE }) => {
   const [toasts, setToasts] = useState([]);
   const [allRoutes, setAllRoutes] = useState([]);
   const [teamRoutes, setTeamRoutes] = useState({});
-  const [systemState, setSystemState] = useState({ testDevMode: false, coordMappingEnabled: false, coordRadiusMeters: 3.5 });
+  const [systemState, setSystemState] = useState({ testDevMode: false, coordMappingEnabled: false, coordRadiusMeters: 35 });
   const [reports, setReports] = useState([]);
   const [now, setNow] = useState(Date.now());
   const [teamSortMode, setTeamSortMode] = useState('time');
@@ -602,7 +602,7 @@ const AdminDashboard = ({ API_BASE }) => {
   }
 
   return (
-    <div className="green-theme admin-dashboard" style={{ minHeight: '100vh', background: '#020709', color: 'var(--green-primary)', padding: '20px', fontFamily: "'Share Tech Mono', monospace", overflowY: 'auto', height: 'auto' }}>
+    <div className="green-theme admin-dashboard" style={{ minHeight: '100vh', background: '#020709', color: 'var(--green-primary)', padding: '20px', fontFamily: "'Share Tech Mono', monospace", overflowY: 'auto', overflowX: 'hidden', height: 'auto', maxWidth: '100vw', boxSizing: 'border-box' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '12px', flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontSize: '22px', color: '#fff' }}>ADMIN DASHBOARD</div>
@@ -739,7 +739,7 @@ const AdminDashboard = ({ API_BASE }) => {
                 TEST DEV MODE SLIDER
               </div>
               <div style={{ fontSize: '10px', color: systemState.testDevMode ? '#ffaa00' : 'rgba(255,255,255,0.4)' }}>
-                {systemState.testDevMode ? '[ ACTIVE: ROUTE ASSIGNMENT ONLY SHOWS testRoutes.json ]' : '[ INACTIVE: ALL PRODUCTION ROUTES ACTIVE ]'}
+                {systemState.testDevMode ? '[ ACTIVE: DEV MODE ENABLED ]' : '[ INACTIVE: PRODUCTION MODE ]'}
               </div>
             </div>
           </div>
@@ -1045,7 +1045,7 @@ const AdminDashboard = ({ API_BASE }) => {
                       {/* Route Selection Dropdown */}
                       <div style={{ marginTop: '12px', padding: '10px', background: 'rgba(0,0,0,0.3)', border: `1px solid ${systemState.testDevMode ? '#ffaa00' : 'rgba(0,229,255,0.25)'}`, borderRadius: '6px' }}>
                         <div style={{ fontSize: '10px', color: systemState.testDevMode ? '#ffaa00' : '#00e5ff', fontWeight: 'bold', marginBottom: '6px', letterSpacing: '1px' }}>
-                          {systemState.testDevMode ? 'ASSIGN TEST ROUTE (1 OF 5 - TEST DEV MODE ACTIVE):' : 'ASSIGN TACTICAL ROUTE (1 OF 50):'}
+                          ASSIGN TACTICAL ROUTE:
                         </div>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                           <select
@@ -1065,7 +1065,7 @@ const AdminDashboard = ({ API_BASE }) => {
                               minWidth: '220px'
                             }}
                           >
-                            <option value="">-- AUTO RANDOM (ROUTE 1-50) --</option>
+                            <option value="">-- SELECT ROUTE --</option>
                             {allRoutes.map((r) => (
                               <option key={r.routeId} value={r.routeId}>
                                 Route {r.routeId} ({r.distance}) — {r.locations.slice(0, 3).join(', ')}...
@@ -1101,7 +1101,7 @@ const AdminDashboard = ({ API_BASE }) => {
                       )}
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', minWidth: '320px', flex: '1' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', flex: '1' }}>
                       <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); setSelectedQR(team); }}>
                         <QrCode size={14} /> VIEW QR
                       </button>

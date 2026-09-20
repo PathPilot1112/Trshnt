@@ -2,27 +2,10 @@ import fs from "fs";
 import path from "path";
 import { getSystemState } from "./systemConfig.js";
 
-// 1. Load routes from ROute.json or testRoutes.json
+// 1. Load routes from ROute.json
 let cachedRoutes = null;
-let cachedTestRoutes = null;
 
-export const getRoutes = (forceTestMode = false) => {
-  const { testDevMode } = getSystemState();
-  const isTest = forceTestMode || testDevMode;
-
-  if (isTest) {
-    if (cachedTestRoutes) return cachedTestRoutes;
-    try {
-      const testRoutePath = path.join(process.cwd(), "testRoutes.json");
-      const raw = fs.readFileSync(testRoutePath, "utf8");
-      cachedTestRoutes = JSON.parse(raw);
-      return cachedTestRoutes;
-    } catch (err) {
-      console.error("❌ Failed to read testRoutes.json:", err.message);
-      return [];
-    }
-  }
-
+export const getRoutes = () => {
   if (cachedRoutes) return cachedRoutes;
   try {
     const routePath = path.join(process.cwd(), "ROute.json");
@@ -264,7 +247,8 @@ export const assignRouteToTeam = (team, selectedRouteId, clues) => {
     route = routes.find((r) => r.routeId === Number(selectedRouteId));
   }
   if (!route && routes.length > 0) {
-    route = routes[Math.floor(Math.random() * routes.length)];
+    // If no route selected, default to Route 1 instead of random
+    route = routes[0];
   }
 
   if (!route) {

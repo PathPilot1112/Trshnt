@@ -105,7 +105,7 @@ export const submitPhoto = async (req, res) => {
     const { coordMappingEnabled, coordRadiusMeters } = getSystemState();
     const userLat = parseFloat(req.body?.lat || req.body?.userLat || req.query?.lat || team.location?.lat);
     const userLng = parseFloat(req.body?.lng || req.body?.userLng || req.query?.lng || team.location?.lng);
-    const geofenceResult = isWithinGeofenceRange(userLat, userLng, [currentClue.title, currentClue.targetLabel, currentClue.location], coordRadiusMeters || 3.5);
+    const geofenceResult = isWithinGeofenceRange(userLat, userLng, [currentClue.title, currentClue.targetLabel, currentClue.location], coordRadiusMeters || 35);
 
     let isCorrect = false;
     let feedbackMessage = "";
@@ -130,14 +130,14 @@ export const submitPhoto = async (req, res) => {
         } else {
           // Target HAS GPS coordinates: must verify geofence match
           if (geofenceResult.isWithin) {
-            console.log(`🎯 GPS Geofence and ML matched location within ${geofenceResult.distance}m (Radius: ${coordRadiusMeters || 3.5}m)`);
+            console.log(`🎯 GPS Geofence and ML matched location within ${geofenceResult.distance}m (Radius: ${coordRadiusMeters || 35}m)`);
             isCorrect = true;
             feedbackMessage = `Scan accepted! Visual match confirmed and GPS lock verified within ${geofenceResult.distance}m.`;
           } else {
-            console.log(`⚠️ ML matched but GPS out of range: user is ${geofenceResult.distance}m away (max ${coordRadiusMeters || 3.5}m)`);
+            console.log(`⚠️ ML matched but GPS out of range: user is ${geofenceResult.distance}m away (max ${coordRadiusMeters || 35}m)`);
             isCorrect = false;
             if (geofenceResult.distance != null) {
-              feedbackMessage = `Visual match confirmed, but GPS coordinates are out of range! You are ${geofenceResult.distance}m away (must be within ${coordRadiusMeters || 3.5}m of target).`;
+              feedbackMessage = `Visual match confirmed, but GPS coordinates are out of range! You are ${geofenceResult.distance}m away (must be within ${coordRadiusMeters || 35}m of target).`;
             } else {
               feedbackMessage = "Visual match confirmed, but your device GPS location could not be verified. Please ensure GPS is active.";
             }

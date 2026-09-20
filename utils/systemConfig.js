@@ -5,7 +5,7 @@
 let systemState = {
   testDevMode: false,
   coordMappingEnabled: false,
-  coordRadiusMeters: 3.5,
+  coordRadiusMeters: 35,
 };
 
 export const getSystemState = () => ({ ...systemState });
