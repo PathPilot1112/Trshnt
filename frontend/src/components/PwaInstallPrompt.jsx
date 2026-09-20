@@ -102,7 +102,7 @@ export default function PwaInstallButton({ variant = 'nav', className = '', styl
       {variant === 'nav' ? (
         <button
           onClick={handleClick}
-          title="Download/Install Zone 4 App"
+          title="Download/Install The Pripyat Exodus App"
           className={`pwa-install-btn ${className}`}
           style={{
             display: 'inline-flex',
@@ -214,7 +214,7 @@ export default function PwaInstallButton({ variant = 'nav', className = '', styl
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(57, 255, 20, 0.3)', paddingBottom: '0.8rem', marginBottom: '1rem' }}>
               <span style={{ color: '#39FF14', fontWeight: 'bold', fontSize: '1rem', letterSpacing: '2px' }}>
-                // INSTALL ZONE 4 APP
+                // INSTALL THE PRIPYAT EXODUS
               </span>
               <button 
                 onClick={() => setShowModal(false)}
@@ -234,7 +234,7 @@ export default function PwaInstallButton({ variant = 'nav', className = '', styl
               {isIOS ? (
                 <>To install the application on iOS Safari, follow these security protocol steps:</>
               ) : (
-                <>To install Zone 4 as a standalone desktop/mobile app:</>
+                <>To install The Pripyat Exodus as a standalone desktop/mobile app:</>
               )}
             </p>
 
@@ -251,18 +251,18 @@ export default function PwaInstallButton({ variant = 'nav', className = '', styl
                   </div>
                   <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', background: 'rgba(0,0,0,0.3)', padding: '0.6rem 0.8rem', borderLeft: '3px solid #39FF14' }}>
                     <span style={{ fontSize: '1.2rem' }}>3.</span>
-                    <span>Tap <strong>Add</strong> in top-right. Launch Zone 4 from your home screen.</span>
+                    <span>Tap <strong>Add</strong> in top-right. Launch The Pripyat Exodus from your home screen.</span>
                   </div>
                 </>
               ) : (
                 <>
                   <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', background: 'rgba(0,0,0,0.3)', padding: '0.6rem 0.8rem', borderLeft: '3px solid #39FF14' }}>
                     <span style={{ fontSize: '1.2rem' }}>1.</span>
-                    <span>Check your browser address bar for the <strong>Install / Computer Icon</strong></span>
+                    <span>Tap browser menu (<strong>⋮</strong>) or check address bar for <strong>Install / Computer Icon</strong></span>
                   </div>
                   <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', background: 'rgba(0,0,0,0.3)', padding: '0.6rem 0.8rem', borderLeft: '3px solid #39FF14' }}>
                     <span style={{ fontSize: '1.2rem' }}>2.</span>
-                    <span>Click <strong>Install Zone 4</strong> to enable fast standalone launch & 3D caching</span>
+                    <span>Click <strong>Install App</strong> to enable standalone launch & 3D caching</span>
                   </div>
                 </>
               )}

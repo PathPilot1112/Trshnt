@@ -12,7 +12,20 @@ import teamRoutes from './routes/teamRoutes.js';
 import { seedDatabase } from './utils/seed.js';
 import Team from './models/Team.js';
 import axios from 'axios';
+import { shutdownPostHog } from './utils/posthog.js';
 dotenv.config();
+
+process.on('SIGTERM', async () => {
+  console.log('[PostHog Backend] Gracefully shutting down...');
+  await shutdownPostHog();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('[PostHog Backend] Gracefully shutting down...');
+  await shutdownPostHog();
+  process.exit(0);
+});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

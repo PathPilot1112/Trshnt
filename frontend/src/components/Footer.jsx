@@ -21,7 +21,7 @@ const Footer = () => {
         gap: '0.8rem'
       }}>
         <div style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(1rem, 4vw, 1.4rem)', color: 'var(--color-accent)', letterSpacing: '1px' }}>
-          TREASURE HUNT // OPERATION CHERNOBYL
+          THE PRIPYAT EXODUS // EXCLUSION ZONE
         </div>
         
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#888' }}>

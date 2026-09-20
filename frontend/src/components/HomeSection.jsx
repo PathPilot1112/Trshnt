@@ -178,22 +178,23 @@ const HomeSection = () => {
 
       {/* Title Text Block (Top) */}
       <div className="home-title-block">
-        <h1 className="glitch-text" data-text="CHERNOBYL" style={{ 
-          fontSize: 'clamp(2.1rem, 7.5vw, 6rem)', 
+        <h1 className="glitch-text" data-text="THE PRIPYAT" style={{ 
+          fontSize: 'clamp(2rem, 6.5vw, 5.2rem)', 
           margin: 0,
           letterSpacing: 'clamp(2px, 1.5vw, 6px)',
           lineHeight: 1.05
         }}>
-          CHERNOBYL
+          THE PRIPYAT
         </h1>
         <h2 style={{ 
-          letterSpacing: 'clamp(3px, 1.8vw, 7px)', 
-          fontSize: 'clamp(0.8rem, 2.2vw, 1.5rem)', 
+          letterSpacing: 'clamp(4px, 2vw, 9px)', 
+          fontSize: 'clamp(1.1rem, 3vw, 2.2rem)', 
           marginTop: '6px', 
-          fontFamily: 'var(--font-mono)', 
-          color: 'var(--color-text)' 
+          fontFamily: 'var(--font-serif, "Cinzel", serif)', 
+          color: '#39FF14',
+          fontWeight: 'bold'
         }}>
-          TREASURE HUNT
+          EXODUS
         </h2>
       </div>
 

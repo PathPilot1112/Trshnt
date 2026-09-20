@@ -322,7 +322,7 @@ function App() {
                 ZONE_ACCESS_PROTOCOL
               </div>
 
-              <div className="glitch-text" data-text="CHERNOBYL-TRSHNT" style={{
+              <div className="glitch-text" data-text="THE PRIPYAT EXODUS" style={{
                 fontFamily: 'var(--font-serif)',
                 fontSize: '20px',
                 fontWeight: 700,
@@ -330,7 +330,7 @@ function App() {
                 color: 'var(--color-accent)',
                 textTransform: 'uppercase',
               }}>
-                CHERNOBYL-TRSHNT
+                THE PRIPYAT EXODUS
               </div>
 
               <div className="flicker" style={{

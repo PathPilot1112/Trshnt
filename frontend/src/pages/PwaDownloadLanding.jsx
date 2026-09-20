@@ -12,7 +12,7 @@ const PwaDownloadLanding = () => {
 
   useEffect(() => {
     const ua = window.navigator.userAgent.toLowerCase();
-    const iosDevice = /iphone|ipad|ipod/.test(ua);
+    const iosDevice = /iphone|ipad|ipod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     setIsIos(iosDevice);
     
     const standaloneMode = Boolean(
@@ -26,14 +26,29 @@ const PwaDownloadLanding = () => {
     );
     setIsStandalone(standaloneMode);
 
-    const syncPrompt = () => setDeferredPrompt(window.__pwaInstallPrompt || null);
+    const syncPrompt = (e) => {
+      if (e && e.preventDefault && typeof e.preventDefault === 'function') {
+        e.preventDefault();
+      }
+      const promptObj = e?.prompt ? e : (window.__pwaInstallPrompt || null);
+      if (promptObj) {
+        window.__pwaInstallPrompt = promptObj;
+        setDeferredPrompt(promptObj);
+      }
+    };
+
     window.addEventListener('pwa-install-ready', syncPrompt);
     window.addEventListener('beforeinstallprompt', syncPrompt);
     window.addEventListener('appinstalled', () => {
-      setInstallStatus('App Installed Successfully! Launch Zone 4 from your home screen.');
+      setInstallStatus('App Installed Successfully! Launch The Pripyat Exodus from your home screen.');
       window.__pwaInstallPrompt = null;
       setDeferredPrompt(null);
     });
+
+    // Sync current prompt if already available on window
+    if (window.__pwaInstallPrompt) {
+      setDeferredPrompt(window.__pwaInstallPrompt);
+    }
 
     return () => {
       window.removeEventListener('pwa-install-ready', syncPrompt);
@@ -49,19 +64,29 @@ const PwaDownloadLanding = () => {
         promptEvent.prompt();
         const { outcome } = await promptEvent.userChoice;
         if (outcome === 'accepted') {
-          setInstallStatus('App Installed! Launch Zone 4 from your home screen.');
+          setInstallStatus('App Installed! Launch The Pripyat Exodus from your home screen.');
         } else {
-          setInstallStatus('Installation deferred.');
+          setInstallStatus('Installation deferred. Click below anytime to retry.');
         }
         window.__pwaInstallPrompt = null;
         setDeferredPrompt(null);
-      } catch {
+      } catch (err) {
+        console.error('Install prompt error:', err);
         setShowGuide(true);
       } finally {
         setIsInstalling(false);
       }
       return;
     }
+
+    // On iOS Safari, standard PWA prompt API isn't supported by Apple, so show iOS guide
+    if (isIos) {
+      setShowGuide(true);
+      return;
+    }
+
+    // On Android & phone browsers (Chrome, Edge, Samsung Internet, Firefox, Opera, etc.):
+    // If prompt is not ready yet, show immediate instructions/modal for fast 1-tap browser installation
     setShowGuide(true);
   };
 
@@ -130,14 +155,14 @@ const PwaDownloadLanding = () => {
         </div>
 
         <h1 style={{
-          fontSize: '32px',
+          fontSize: '26px',
           fontWeight: '900',
           color: '#ffffff',
           letterSpacing: '2px',
           margin: 0,
           fontFamily: 'var(--font-serif, "Cinzel", serif)'
         }}>
-          ZONE_4
+          THE PRIPYAT EXODUS
         </h1>
 
         <p style={{
@@ -149,8 +174,8 @@ const PwaDownloadLanding = () => {
           fontFamily: 'var(--font-mono, monospace)'
         }}>
           {isIos
-            ? 'Access Protocol: Install Zone 4 to your home screen. The full 3D interactive terminal, confidential dossier registration, and GPS radar will unlock in app mode.'
-            : 'Access Protocol: Download & install the Zone 4 tactical app to your device. Once launched from your home screen, all 3D interfaces and clearance registration will unlock.'}
+            ? 'Access Protocol: Install The Pripyat Exodus to your home screen. The full 3D interactive terminal, confidential dossier registration, and GPS radar will unlock in app mode.'
+            : 'Access Protocol: Download & install The Pripyat Exodus app to your device. Once launched from your home screen, all 3D interfaces and clearance registration will unlock.'}
         </p>
 
         {/* Primary Action Button */}
@@ -241,9 +266,9 @@ const PwaDownloadLanding = () => {
               color: '#D9E0E0'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '16px', fontWeight: 'bold', color: '#39FF14', marginBottom: '16px', letterSpacing: '1px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '15px', fontWeight: 'bold', color: '#39FF14', marginBottom: '16px', letterSpacing: '1px' }}>
               <Smartphone size={20} color="#39FF14" />
-              {isIos ? '// INSTALL ON IOS SAFARI' : '// INSTALL ON ANDROID / PC'}
+              {isIos ? '// INSTALL ON IOS SAFARI' : '// INSTALL ON ANDROID / PHONE / BROWSER'}
             </div>
 
             {isIos ? (
@@ -251,13 +276,13 @@ const PwaDownloadLanding = () => {
                 <li>Tap the <strong>Share</strong> icon in Safari <Share size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />.</li>
                 <li>Scroll down and tap <strong>Add to Home Screen</strong> <PlusSquare size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />.</li>
                 <li>Tap <strong>Add</strong> in top-right corner.</li>
-                <li>Launch <strong>ZONE 4</strong> from your Home Screen to unlock the 3D terminal!</li>
+                <li>Launch <strong>The Pripyat Exodus</strong> from your Home Screen to unlock the app!</li>
               </ol>
             ) : (
               <ol style={{ paddingLeft: '20px', margin: 0, lineHeight: '1.8', fontSize: '13px', color: 'rgba(217, 224, 224, 0.9)' }}>
-                <li>Click the <strong>Install / Computer</strong> icon in the address bar, or open the browser menu (<strong>⋮</strong>).</li>
-                <li>Select <strong>Install Zone 4</strong> or <strong>Add to Home Screen</strong>.</li>
-                <li>Confirm installation, then launch Zone 4 from your desktop/apps.</li>
+                <li>Tap the browser menu button (<strong>⋮</strong> or <strong>≡</strong>) in Chrome, Edge, Firefox, or Samsung Internet.</li>
+                <li>Select <strong>Install App</strong> or <strong>Add to Home Screen</strong>.</li>
+                <li>Confirm installation, then open <strong>The Pripyat Exodus</strong> from your home screen.</li>
               </ol>
             )}
 

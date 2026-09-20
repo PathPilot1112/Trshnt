@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "short_name": "Chernobyl",
-  "name": "Chernobyl-trshnt",
-  "description": "Field terminal for Chernobyl-trshnt. Install once, then open from the home screen on iPhone or Android.",
+  "short_name": "Pripyat Exodus",
+  "name": "The Pripyat Exodus",
+  "description": "Field terminal for The Pripyat Exodus. Install once, then open from the home screen on iPhone or Android.",
   "icons": [
     {
       "src": "/icon-192.png",

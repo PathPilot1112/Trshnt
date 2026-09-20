@@ -213,7 +213,7 @@ const Welcome = ({ onQrLogin }) => {
             <div className="pwa-alert-icon">⚠️</div>
             <div className="pwa-notification-text">
               <div className="pwa-notification-title">UPLINK_ALERT // PWA_DOWNLOAD_AVAILABLE</div>
-              <div>Chernobyl-trshnt Tactical Interface can be downloaded to your terminal for offline mission data access.</div>
+              <div>The Pripyat Exodus Tactical Interface can be downloaded to your terminal for offline mission data access.</div>
             </div>
           </div>
           <div className="pwa-notification-actions">
@@ -230,7 +230,7 @@ const Welcome = ({ onQrLogin }) => {
       {/* === Top classified header === */}
       <div className="stalker-header">
         <div className="net-info">
-          <div className="net-name glitch-text" data-text="CHERNOBYL-TRSHNT">CHERNOBYL-TRSHNT</div>
+          <div className="net-name glitch-text" data-text="THE PRIPYAT EXODUS">THE PRIPYAT EXODUS</div>
           <div className="operator-info">PRIPYAT EXCLUSION ZONE // DEPT OF BIO-RESEARCH</div>
         </div>
         <div className="header-icons" style={{ gap: '8px' }}>

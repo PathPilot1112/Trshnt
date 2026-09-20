@@ -378,8 +378,8 @@ const RegistrationPage = ({ API_BASE = '/api', onRegisterSuccess, onCancel }) =>
           {step === totalSteps && (
             <div className="signature-section fade-in">
               <p style={{fontFamily: 'Courier New, monospace', fontSize: '0.9rem', lineHeight: '1.5', marginTop: '1rem'}}>
-                By sealing this document, the Research Unit accepts all terms of the 
-                Chernobyl Exclusion Zone protocol. Bio-assets proceed at their own risk. 
+                By sealing this document, the Research Unit accepts all terms of 
+                The Pripyat Exodus protocol. Bio-assets proceed at their own risk. 
                 Any exposure to ionizing radiation or anomalous phenomena is the sole 
                 responsibility of the Unit.
               </p>

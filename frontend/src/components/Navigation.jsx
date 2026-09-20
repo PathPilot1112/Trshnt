@@ -87,7 +87,7 @@ const Navigation = ({ onNavigate }) => {
           onClick={handleHomeClick}
         >
           <span style={{ color: '#39FF14', fontSize: '1rem' }}>☢</span>
-          ZONE_4
+          PRIPYAT EXODUS
         </div>
 
         {/* Desktop Links */}
