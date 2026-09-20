@@ -8,7 +8,6 @@ import { uploadToSupabase, isSupabaseConfigured } from "../utils/supabase.js";
 import { ensureCluePath, publicCluePayload } from "../utils/cluePath.js";
 import { getSystemState } from "../utils/systemConfig.js";
 import { isWithinGeofenceRange } from "../utils/clueLocations.js";
-import fs from "fs/promises";
 
 const getTeamClue = async (team) => {
   const clues = await Clue.find();
@@ -42,51 +41,46 @@ export const submitPhoto = async (req, res) => {
   if (finished || !currentClue) {
     return res.status(400).json({ message: "All clues already completed" });
   }
-  const photoPath = req.file.path; // from multer
-  let photoUrl = `/uploads/${req.file.filename}`; 
+  // With memoryStorage, the file is in req.file.buffer — no disk path exists.
+  const fileBuffer = req.file.buffer;
+  const originalName = req.file.originalname || 'scan.jpg';
+  let photoUrl = `data:image/jpeg;base64,...`; // placeholder until cloud upload
 
   try {
     // 1. Upload to Supabase if configured (primary cloud storage)
     if (isSupabaseConfigured) {
       try {
         console.log("🌲 Uploading photo to Supabase Storage...");
-        photoUrl = await uploadToSupabase(photoPath);
+        photoUrl = await uploadToSupabase(fileBuffer, originalName);
         console.log("🌲 Supabase Storage upload successful:", photoUrl);
       } catch (err) {
         console.error("❌ Supabase upload failed, trying Cloudinary fallback...", err.message);
         if (isCloudinaryConfigured) {
           try {
             console.log("☁️ Uploading photo to Cloudinary (fallback)...");
-            photoUrl = await uploadToCloudinary(photoPath);
+            photoUrl = await uploadToCloudinary(fileBuffer);
             console.log("☁️ Cloudinary upload successful:", photoUrl);
           } catch (cloudErr) {
-            console.error("❌ Cloudinary upload failed, falling back to local storage:", cloudErr.message);
+            console.error("❌ Cloudinary upload failed, no cloud storage available:", cloudErr.message);
           }
         }
       }
     } else if (isCloudinaryConfigured) {
       try {
         console.log("☁️ Uploading photo to Cloudinary...");
-        photoUrl = await uploadToCloudinary(photoPath);
+        photoUrl = await uploadToCloudinary(fileBuffer);
         console.log("☁️ Cloudinary upload successful:", photoUrl);
       } catch (err) {
-        console.error("❌ Cloudinary upload failed, falling back to local storage:", err.message);
+        console.error("❌ Cloudinary upload failed:", err.message);
       }
     }
 
     // 2. Send photo to ML Service with offline fallback
     let mlResponse;
     try {
-      mlResponse = await predictImage(photoPath);
+      mlResponse = await predictImage(fileBuffer);
     } catch (err) {
       console.warn("⚠️ ML Service offline, rejecting submission:", err.message);
-      
-      if (isSupabaseConfigured || isCloudinaryConfigured) {
-        try {
-          await fs.unlink(photoPath);
-        } catch (unlinkErr) {}
-      }
-      
       return res.status(503).json({ 
         message: "Scanning system is currently offline. Please try again later."
       });
@@ -183,15 +177,7 @@ export const submitPhoto = async (req, res) => {
       }
     }
 
-    // 5. Clean up temporary local file if Cloudinary or Supabase was used
-    if (isSupabaseConfigured || isCloudinaryConfigured) {
-      try {
-        await fs.unlink(photoPath);
-        console.log("🗑️ Local temporary file deleted:", photoPath);
-      } catch (err) {
-        console.warn("⚠️ Failed to delete local temp file:", err.message);
-      }
-    }
+    // 5. No temp file cleanup needed — using memoryStorage (buffer only, no disk write)
 
     // 6. Update Team Progress ONLY IF Correct
     if (isCorrect) {

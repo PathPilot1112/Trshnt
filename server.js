@@ -158,6 +158,14 @@ const broadcastLiveSnapshots = async () => {
 
 setInterval(broadcastLiveSnapshots, 1000);
 
+// Global JSON error handler — catches any Express errors and returns JSON.
+// This prevents Vercel from returning an HTML error page on uncaught route errors.
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error('[Global Error Handler]', err.message || err);
+  res.status(err.status || 500).json({ message: err.message || 'Internal server error' });
+});
+
 const PORT = process.env.PORT || 8000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

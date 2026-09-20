@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import fs from 'fs/promises';
 import path from 'path';
 import dotenv from 'dotenv';
 
@@ -9,7 +8,13 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
 const supabaseBucket = process.env.SUPABASE_BUCKET || 'images';
 
-export const isSupabaseConfigured = !!(supabaseUrl && supabaseKey);
+// Also validate that the key isn't a placeholder value
+export const isSupabaseConfigured = !!(
+  supabaseUrl &&
+  supabaseKey &&
+  supabaseKey !== 'hello' &&
+  supabaseKey.length > 20
+);
 
 let supabase;
 if (isSupabaseConfigured) {
@@ -20,17 +25,31 @@ if (isSupabaseConfigured) {
 }
 
 /**
- * Uploads a local file to Supabase storage.
- * @param {string} localFilePath - Path to the local file.
+ * Uploads an image buffer to Supabase storage.
+ * Accepts either a Buffer (from multer memoryStorage) or a local file path (legacy).
+ * @param {Buffer|string} bufferOrPath - The image buffer or a path string (fallback).
+ * @param {string} [originalName] - Optional original filename for extension detection.
  * @returns {Promise<string>} - The public URL of the uploaded image.
  */
-export const uploadToSupabase = async (localFilePath) => {
+export const uploadToSupabase = async (bufferOrPath, originalName = 'upload.jpg') => {
   if (!isSupabaseConfigured) {
     throw new Error('Supabase credentials are not configured');
   }
 
-  const fileBuffer = await fs.readFile(localFilePath);
-  const fileName = `${Date.now()}_${path.basename(localFilePath)}`;
+  let fileBuffer;
+  let fileName;
+
+  if (Buffer.isBuffer(bufferOrPath)) {
+    // memoryStorage path: buffer passed directly
+    const ext = path.extname(originalName) || '.jpg';
+    fileName = `${Date.now()}_scan${ext}`;
+    fileBuffer = bufferOrPath;
+  } else {
+    // Legacy diskStorage path: read file from disk
+    const { default: fs } = await import('fs/promises');
+    fileBuffer = await fs.readFile(bufferOrPath);
+    fileName = `${Date.now()}_${path.basename(bufferOrPath)}`;
+  }
 
   const { data, error } = await supabase.storage
     .from(supabaseBucket)

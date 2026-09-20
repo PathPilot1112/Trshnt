@@ -9,14 +9,27 @@ const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:5000';
  * @param {string} imagePath - The path to the uploaded image file on disk.
  * @returns {Promise<{prediction: str, confidence: number}>} - The predicted label and confidence.
  */
-export const predictImage = async (imagePath) => {
+/**
+ * Sends an image to the Python ML microservice for prediction.
+ * @param {Buffer|string} bufferOrPath - The image buffer (memoryStorage) or file path (legacy).
+ * @returns {Promise<{prediction: str, confidence: number}>} - The predicted label and confidence.
+ */
+export const predictImage = async (bufferOrPath) => {
   try {
     const formData = new FormData();
-    formData.append('image', fs.createReadStream(imagePath));
+
+    if (Buffer.isBuffer(bufferOrPath)) {
+      // memoryStorage: append buffer directly
+      const blob = new Blob([bufferOrPath], { type: 'image/jpeg' });
+      formData.append('image', blob, 'scan.jpg');
+    } else {
+      // Legacy diskStorage: read from path
+      formData.append('image', fs.createReadStream(bufferOrPath));
+    }
 
     const response = await axios.post(`${ML_SERVICE_URL}/predict`, formData, {
       headers: {
-        ...formData.getHeaders(),
+        ...formData.getHeaders?.() ?? {},
       },
       timeout: 45000,
     });
