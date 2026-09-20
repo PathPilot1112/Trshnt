@@ -325,6 +325,21 @@ const RegistrationPage = ({ API_BASE = '/api', onRegisterSuccess, onCancel }) =>
            </div>
         </div>
 
+        {/* Participation Fee Notice Banner */}
+        <div style={{
+          background: 'rgba(180, 40, 40, 0.08)',
+          border: '1px dashed #cc0000',
+          borderLeft: '4px solid #cc0000',
+          padding: '0.8rem 1rem',
+          margin: '0.5rem 0 1rem 0',
+          fontFamily: 'Courier New, monospace',
+          fontSize: '0.88rem',
+          color: '#8b0000',
+          lineHeight: '1.4'
+        }}>
+          <strong>[NOTICE // PARTICIPATION FEE]:</strong> Each team must pay a participation fee of <strong>₹50 per team</strong> before the hunt begins. The fee is <strong>non-refundable</strong> once the team has registered.
+        </div>
+
         {error && (
           <div className="doc-error fade-in">
             [DENIED]: {error}

@@ -6,13 +6,14 @@ const rules = [
   { id: '01', title: 'TEAM SIZE', text: 'Each team must consist of a minimum of 3 and a maximum of 5 members.' },
   { id: '02', title: 'ONE PHONE PER TEAM', text: 'Only one mobile phone per team is permitted throughout the hunt. It may be used for clues, communication, and photographs.' },
   { id: '03', title: 'CLUES & ORDER', text: 'Teams must solve the clues and visit the locations in the given order. Skipping any location is strictly prohibited.' },
-  { id: '04', title: 'LOCATION PROOF', text: 'At every location, teams must take a photograph of the official location/name board along with at least one team member.' },
+  { id: '04', title: 'LOCATION PROOF', text: 'At every location, teams must take a photograph of the official location/name board.' },
   { id: '05', title: 'STAY TOGETHER', text: 'All team members must remain together throughout the hunt.' },
   { id: '06', title: 'FAIR PLAY', text: 'Sharing clues or answers, seeking unauthorized outside help, following another team to obtain answers, or using additional devices is strictly prohibited.' },
   { id: '07', title: 'CAMPUS CONDUCT', text: 'Do not enter restricted areas, disturb regular campus activities, or damage, move, or tamper with any clue boards, location boards, or campus property.' },
   { id: '08', title: 'ISSUES & QUERIES', text: 'For any clue, location, technical, or rule-related query, contact designated coordinator: Vighnesh Garg (Contact: 9411851533).' },
   { id: '09', title: 'MISSING OR INACCESSIBLE CLUE', text: 'If a clue or location board is missing or inaccessible, do not tamper with it. Contact the coordinator immediately.' },
-  { id: '10', title: 'TIME & WINNING', text: 'Teams must complete the hunt within the given time limit. The winner will be determined based on valid completion, successful verification, and completion time/score.' }
+  { id: '10', title: 'TIME & WINNING', text: 'Teams must complete the hunt within the given time limit. The winner will be determined based on valid completion, successful verification, and completion time/score.' },
+  { id: '11', title: 'PARTICIPATION FEE', text: 'Each team must pay a participation fee of ₹50 per team before the hunt begins. The fee is non-refundable once the team has registered.' }
 ];
 
 const SoldierCanvas = ({ scrollProgress }) => {

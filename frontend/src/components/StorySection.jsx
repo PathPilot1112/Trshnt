@@ -127,9 +127,6 @@ const PlayerAvatarCanvas = ({ role }) => {
 
 const StorySection = () => {
   const container = useRef();
-  const videoRef = useRef();
-  const [isPlaying, setIsPlaying] = React.useState(false);
-  const [isMuted, setIsMuted] = React.useState(true);
 
   useGSAP(() => {
     gsap.from('.story-reveal', {
@@ -145,46 +142,6 @@ const StorySection = () => {
     });
   }, { scope: container });
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          video.muted = true;
-          video.play().catch(() => {});
-        } else {
-          video.pause();
-        }
-      },
-      { threshold: 0.2 }
-    );
-
-    observer.observe(video);
-    return () => observer.disconnect();
-  }, []);
-
-  const togglePlay = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.paused) {
-      video.play().catch(() => {});
-      setIsPlaying(true);
-    } else {
-      video.pause();
-      setIsPlaying(false);
-    }
-  };
-
-  const toggleMute = (e) => {
-    e.stopPropagation();
-    const video = videoRef.current;
-    if (!video) return;
-    video.muted = !video.muted;
-    setIsMuted(video.muted);
-  };
-
   const players = [
     { title: 'PLAYER_01', role: '[LEAD]' },
     { title: 'PLAYER_02', role: '[SCOUT]' },
@@ -199,61 +156,41 @@ const StorySection = () => {
           padding: clamp(3rem, 6vw, 6rem) clamp(1rem, 4vw, 3rem);
           background-color: transparent;
           display: flex;
-          flex-direction: row;
-          gap: 3rem;
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
           max-width: 1200px;
           margin: 0 auto;
-          align-items: flex-start;
-          justify-content: space-between;
           box-sizing: border-box;
+        }
+
+        .story-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: clamp(2rem, 5vw, 4rem);
           width: 100%;
-          overflow: hidden;
+          align-items: center;
+          box-sizing: border-box;
         }
 
         .story-left {
-          flex: 1 1 60%;
-          min-width: 0;
           display: flex;
           flex-direction: column;
           gap: 1.5rem;
-          width: 100%;
+          min-width: 0;
         }
 
         .story-right {
-          flex: 0 0 320px;
-          display: flex;
-          flex-direction: column;
-          gap: 1.5rem;
-          border-left: 1px solid rgba(155, 168, 168, 0.3);
-          padding-left: 2rem;
-          box-sizing: border-box;
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1.2rem;
+          min-width: 0;
         }
 
         @media (max-width: 860px) {
-          .story-container {
-            flex-direction: column !important;
-            gap: 2rem !important;
-            padding: 2.2rem 1rem !important;
-            width: 100% !important;
-            max-width: 100% !important;
-          }
-
-          .story-left {
-            width: 100% !important;
-            max-width: 100% !important;
-          }
-
-          .story-right {
-            width: 100% !important;
-            max-width: 100% !important;
-            flex: 1 1 auto !important;
-            border-left: none !important;
-            border-top: 1px solid rgba(155, 168, 168, 0.3) !important;
-            padding-left: 0 !important;
-            padding-top: 1.5rem !important;
-            display: grid !important;
-            grid-template-columns: repeat(2, 1fr) !important;
-            gap: 0.8rem !important;
+          .story-grid {
+            grid-template-columns: 1fr !important;
+            gap: 2.5rem !important;
           }
         }
 
@@ -264,126 +201,49 @@ const StorySection = () => {
         }
       `}</style>
 
-      {/* Left Column: Context & Video */}
-      <div className="story-reveal story-left">
-        <div>
-          <h2 style={{ 
-            fontSize: 'clamp(1.6rem, 5.5vw, 2.8rem)', 
-            color: 'var(--color-accent)', 
-            fontFamily: 'var(--font-serif)', 
-            marginBottom: '0.8rem',
-            lineHeight: 1.15,
-            letterSpacing: 'clamp(1px, 0.4vw, 3px)',
-            wordBreak: 'break-word',
-            overflowWrap: 'break-word'
-          }}>
-            THE INCIDENT
-          </h2>
-          <p style={{ 
-            color: 'var(--color-text)', 
-            fontSize: 'clamp(0.85rem, 2.8vw, 1.05rem)', 
-            lineHeight: 1.65, 
-            fontFamily: 'var(--font-sans)', 
-            fontWeight: 300,
-            margin: 0,
-            wordBreak: 'normal',
-            overflowWrap: 'break-word'
-          }}>
-            Decades after the catastrophic failure of Reactor 4, the exclusion zone remains sealed. But anomalies have begun to shift, revealing pathways to secure bunkers containing invaluable artifacts. You and your squad have been briefed. Your mission: infiltrate, secure the payload, and extract before the radiation consumes you.
-          </p>
-        </div>
-
-        {/* Video Player */}
-        <div
-          onClick={togglePlay}
-          style={{ width: '100%', position: 'relative', cursor: 'pointer', background: '#000', lineHeight: 0, borderRadius: '4px', overflow: 'hidden' }}
-        >
-          <video
-            ref={videoRef}
-            src="/Jumanji Open World - Official Trailer - Only In Cinemas This Christmas.mp4"
-            loop
-            playsInline
-            preload="metadata"
-            style={{ display: 'block', width: '100%', height: 'auto', maxHeight: '420px', objectFit: 'cover' }}
-          />
-
-          {/* Control bar */}
-          <div style={{
-            position: 'absolute',
-            bottom: '12px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 4,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}>
-            <button
-              onClick={(e) => { e.stopPropagation(); togglePlay(); }}
-              title={isPlaying ? 'Pause' : 'Play'}
-              style={{
-                width: '38px', height: '38px',
-                borderRadius: '50%',
-                background: 'rgba(0,0,0,0.6)',
-                border: '1.5px solid rgba(255,255,255,0.75)',
-                color: '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer'
-              }}
-            >
-              {isPlaying ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-                  <rect x="5" y="3" width="4" height="18" rx="1"/>
-                  <rect x="15" y="3" width="4" height="18" rx="1"/>
-                </svg>
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" style={{ marginLeft: '2px' }}>
-                  <polygon points="5,3 19,12 5,21"/>
-                </svg>
-              )}
-            </button>
-
-            <button
-              onClick={toggleMute}
-              title={isMuted ? 'Unmute' : 'Mute'}
-              style={{
-                width: '38px', height: '38px',
-                borderRadius: '50%',
-                background: isMuted ? 'rgba(204,0,0,0.7)' : 'rgba(0,0,0,0.6)',
-                border: isMuted ? '1.5px solid rgba(255,80,80,0.9)' : '1.5px solid rgba(255,255,255,0.75)',
-                color: '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer'
-              }}
-            >
-              {isMuted ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-                  <path d="M11 5L6 9H2v6h4l5 4V5z"/>
-                  <line x1="23" y1="9" x2="17" y2="15" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                  <line x1="17" y1="9" x2="23" y2="15" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
-                  <path d="M11 5L6 9H2v6h4l5 4V5z" fill="white" stroke="none"/>
-                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-                </svg>
-              )}
-            </button>
+      <div className="story-grid">
+        {/* Left Column: Context */}
+        <div className="story-reveal story-left">
+          <div>
+            <h2 style={{ 
+              fontSize: 'clamp(1.6rem, 5.5vw, 2.8rem)', 
+              color: 'var(--color-accent)', 
+              fontFamily: 'var(--font-serif)', 
+              marginBottom: '0.8rem',
+              lineHeight: 1.15,
+              letterSpacing: 'clamp(1px, 0.4vw, 3px)',
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word'
+            }}>
+              THE INCIDENT
+            </h2>
+            <p style={{ 
+              color: 'var(--color-text)', 
+              fontSize: 'clamp(0.85rem, 2.8vw, 1.05rem)', 
+              lineHeight: 1.65, 
+              fontFamily: 'var(--font-sans)', 
+              fontWeight: 300,
+              margin: 0,
+              wordBreak: 'normal',
+              overflowWrap: 'break-word'
+            }}>
+              Decades after the catastrophic failure of Reactor 4, the exclusion zone remains sealed. But anomalies have begun to shift, revealing pathways to secure bunkers containing invaluable artifacts. You and your squad have been briefed. Your mission: infiltrate, secure the payload, and extract before the radiation consumes you.
+            </p>
           </div>
         </div>
-      </div>
 
-      {/* Right Column: Squad Roster */}
-      <div className="story-reveal story-right">
-        {players.map((p, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(0,25,28,0.5)', padding: '8px 12px', border: '1px solid rgba(155,168,168,0.15)', borderRadius: '4px' }}>
-            <PlayerAvatarCanvas role={p.role} />
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ color: 'var(--color-text)', fontFamily: 'var(--font-sans)', letterSpacing: '1px', fontSize: '0.95rem', fontWeight: 600 }}>{p.title}</span>
-              <span style={{ color: '#39FF14', fontFamily: 'var(--font-mono)', letterSpacing: '1px', fontSize: '0.8rem' }}>{p.role}</span>
+        {/* Right Column: Squad Roster */}
+        <div className="story-reveal story-right">
+          {players.map((p, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(0,25,28,0.5)', padding: '8px 12px', border: '1px solid rgba(155,168,168,0.15)', borderRadius: '4px' }}>
+              <PlayerAvatarCanvas role={p.role} />
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ color: 'var(--color-text)', fontFamily: 'var(--font-sans)', letterSpacing: '1px', fontSize: '0.95rem', fontWeight: 600 }}>{p.title}</span>
+                <span style={{ color: '#39FF14', fontFamily: 'var(--font-mono)', letterSpacing: '1px', fontSize: '0.8rem' }}>{p.role}</span>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );
