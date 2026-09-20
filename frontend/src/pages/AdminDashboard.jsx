@@ -450,12 +450,12 @@ const AdminDashboard = ({ API_BASE }) => {
     const response = await fetch(`${API_BASE}/admin/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ password }),
     });
 
     const data = await response.json();
     if (!response.ok) {
-      showToast('Sign in failed', data.message || 'Check your credentials.', 'error');
+      showToast('Authentication Failed', data.message || 'Incorrect 4-digit PIN.', 'error');
       return;
     }
 
@@ -585,14 +585,65 @@ const AdminDashboard = ({ API_BASE }) => {
 
   if (!isAdmin) {
     return (
-      <div className="admin-apple admin-dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--color-bg)' }}>
-        <form onSubmit={handleAdminLogin} className="admin-login-card">
-          <div className="admin-login-title">Admin</div>
-          <div style={{ display: 'grid', gap: '14px' }}>
-            <input className="id-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required />
-            <input className="id-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required />
-            <button className="cyber-btn striped" type="submit">
-              <Shield size={14} /> Sign in
+      <div className="admin-apple admin-dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#020709', padding: '20px' }}>
+        <form onSubmit={handleAdminLogin} className="admin-login-card" style={{ maxWidth: '360px', width: '100%', background: 'rgba(0, 39, 41, 0.95)', border: '1px solid #39FF14', padding: '30px 24px', borderRadius: '8px', boxShadow: '0 0 30px rgba(57, 255, 20, 0.2)', textAlign: 'center' }}>
+          <div style={{ color: '#39FF14', fontSize: '11px', letterSpacing: '3px', marginBottom: '8px', fontFamily: 'monospace' }}>
+            // COMMAND OVERRIDE PROTOCOL //
+          </div>
+          <div className="admin-login-title" style={{ color: '#fff', fontSize: '20px', fontWeight: 'bold', letterSpacing: '2px', marginBottom: '20px', fontFamily: '"Cinzel", serif' }}>
+            ADMIN CLEARANCE
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ position: 'relative' }}>
+              <input
+                className="id-input"
+                type="password"
+                maxLength={4}
+                pattern="[0-9]*"
+                inputMode="numeric"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="ENTER 4-DIGIT PIN"
+                required
+                autoFocus
+                style={{
+                  width: '100%',
+                  padding: '14px',
+                  fontSize: '22px',
+                  letterSpacing: '12px',
+                  textAlign: 'center',
+                  background: 'rgba(0, 0, 0, 0.6)',
+                  border: '1px solid rgba(57, 255, 20, 0.5)',
+                  color: '#39FF14',
+                  borderRadius: '4px',
+                  fontFamily: 'monospace',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+            <button
+              className="cyber-btn striped"
+              type="submit"
+              style={{
+                width: '100%',
+                padding: '12px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                letterSpacing: '2px',
+                textTransform: 'uppercase',
+                background: '#39FF14',
+                color: '#002729',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}
+            >
+              <Shield size={16} /> UNLOCK TERMINAL
             </button>
           </div>
         </form>

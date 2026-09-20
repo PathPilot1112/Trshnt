@@ -43,21 +43,22 @@ const buildSnapshot = (teams) =>
 // --- Admin Authentication ---
 
 export const adminLogin = async (req, res) => {
-  const { email, password } = req.body;
+  const { password, pin } = req.body;
+  const inputPassword = String(pin || password || "").trim();
   
-  const targetEmail = process.env.ADMIN_MAIL || "admintest@gmail.com";
-  const targetPassword = process.env.ADMIN_PASSWORD || "admin123";
+  const targetPassword = String(process.env.ADMIN_PIN || process.env.ADMIN_PASSWORD || "1234").trim();
+  const targetEmail = process.env.ADMIN_MAIL || "admin@pripyatexodus.com";
 
-  if (email !== targetEmail || password !== targetPassword) {
-    return res.status(401).json({ message: "Invalid admin credentials" });
+  if (!inputPassword || inputPassword !== targetPassword) {
+    return res.status(401).json({ message: "Invalid 4-digit admin password" });
   }
 
   try {
     // Find or create admin user in DB to satisfy JWT verification
-    let adminUser = await User.findOne({ email: targetEmail.toLowerCase() });
+    let adminUser = await User.findOne({ role: "admin" });
     if (!adminUser) {
       adminUser = new User({
-        name: "Admin Operator",
+        name: "Command Operator",
         email: targetEmail.toLowerCase(),
         role: "admin"
       });
