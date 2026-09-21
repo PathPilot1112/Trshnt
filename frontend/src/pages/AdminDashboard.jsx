@@ -3,7 +3,6 @@ import QRCode from 'react-qr-code';
 import { Activity, Clock, Edit3, Map, Play, Power, QrCode, RefreshCw, Shield, SkipForward, Trash2, Trophy, Users, X } from 'lucide-react';
 import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet';
 import { getSocket } from '../socket';
-import ToastStack from '../components/ToastStack';
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
@@ -18,10 +17,11 @@ const formatElapsed = (ms = 0) => {
 };
 
 const AdminDashboard = ({ API_BASE }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [adminToken, setAdminToken] = useState(() => localStorage.getItem('chernobyl_admin_token') || localStorage.getItem('stalker_admin_token') || '');
-  const [isAdmin, setIsAdmin] = useState(Boolean(localStorage.getItem('chernobyl_admin_token') || localStorage.getItem('stalker_admin_token')));
+  const [accessCode, setAccessCode] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [adminToken, setAdminToken] = useState(() => localStorage.getItem('chernobyl_admin_token') || '');
+  const [isAdmin, setIsAdmin] = useState(Boolean(localStorage.getItem('chernobyl_admin_token')));
   const [teams, setTeams] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
@@ -29,13 +29,14 @@ const AdminDashboard = ({ API_BASE }) => {
   const [selectedQR, setSelectedQR] = useState(null);
   const [clueLocations, setClueLocations] = useState([]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
-  const [newSubmissionAlert, setNewSubmissionAlert] = useState(null);
   const [selectedTeamFilter, setSelectedTeamFilter] = useState('all');
   const [expandedTeams, setExpandedTeams] = useState({});
   const [expandedSubmissions, setExpandedSubmissions] = useState({});
   const [mlStatus, setMlStatus] = useState('red');
   const [isWaking, setIsWaking] = useState(false);
-  const [toasts, setToasts] = useState([]);
+  const [banner, setBanner] = useState(null);
+  const [actionStatus, setActionStatus] = useState({});
+  const [clearSubmissionsLoading, setClearSubmissionsLoading] = useState(false);
   const [allRoutes, setAllRoutes] = useState([]);
   const [teamRoutes, setTeamRoutes] = useState({});
   const [systemState, setSystemState] = useState({ testDevMode: false, coordMappingEnabled: false, coordRadiusMeters: 35 });
@@ -51,15 +52,11 @@ const AdminDashboard = ({ API_BASE }) => {
     assignedRouteId: '',
   });
 
-  const showToast = (title, message = '', type = 'success') => {
-    const id = `${Date.now()}-${Math.random()}`;
-    setToasts((prev) => [...prev.slice(-4), { id, title, message, type }]);
-    window.setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3800);
+  const showBanner = (title, message = '', type = 'success') => {
+    setBanner({ title, message, type });
+    window.clearTimeout(window.__bannerTimer);
+    window.__bannerTimer = window.setTimeout(() => setBanner(null), 2500);
   };
-
-  const dismissToast = (id) => setToasts((prev) => prev.filter((t) => t.id !== id));
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -111,11 +108,11 @@ const AdminDashboard = ({ API_BASE }) => {
         if (contentType && contentType.includes('application/json')) {
           const data = await res.json();
           setMlStatus(data.status || 'orange');
-          showToast('ML core', 'Wake request sent.', 'info');
+          showBanner('ML Core', 'Wake request sent.', 'info');
         }
       }
     } catch (err) {
-      showToast('ML core', err.message, 'error');
+      showBanner('ML Core', err.message, 'error');
     }
   };
 
@@ -140,33 +137,41 @@ const AdminDashboard = ({ API_BASE }) => {
     }));
   };
 
-  const getFullPhotoUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http')) return url;
-    
-    if (API_BASE && API_BASE.startsWith('http')) {
-      const origin = API_BASE.replace(/\/api\/?$/, '');
-      return `${origin}${url}`;
+  const getFullPhotoUrl = (photoUrl) => {
+    if (!photoUrl) return '';
+    if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) {
+      return photoUrl;
     }
-    
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return `http://localhost:8000${url}`;
-    }
-    
-    return `${window.location.origin}${url}`;
+    const base = API_BASE ? API_BASE.replace(/\/+$/, '') : '';
+    return `${base}${photoUrl.startsWith('/') ? '' : '/'}${photoUrl}`;
   };
 
-  const filteredSubmissions = useMemo(() => {
-    if (selectedTeamFilter === 'all') return submissions;
-    return submissions.filter((s) => String(s.team?._id) === String(selectedTeamFilter));
-  }, [submissions, selectedTeamFilter]);
+  const handleToggleSubmissionAccepted = async (sub) => {
+    const nextVal = !sub.isCorrect;
+    try {
+      await authedFetch(`${API_BASE}/admin/submissions/${sub._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isCorrect: nextVal }),
+      });
+      setSubmissions((prev) => prev.map((s) => (s._id === sub._id ? { ...s, isCorrect: nextVal } : s)));
+      showBanner('Submission Updated', `Marked as ${nextVal ? 'ACCEPTED' : 'REJECTED'}`);
+    } catch (err) {
+      showBanner('Update Failed', err.message, 'error');
+    }
+  };
 
-  const getClueLocationText = (clue) => {
-    if (typeof clue === 'object' && clue?.targetLabel) return clue.targetLabel;
-    const cid = typeof clue === 'object' ? (clue?.clueId || clue?.order) : clue;
-    if (!cid) return 'N/A';
-    const found = clueLocations.find((loc) => String(loc.clueid) === String(cid) || String(loc.order) === String(cid));
-    return found ? (found.targetLabel || found.location || found.title) : 'Target Location';
+  const handleDeleteSubmission = async (subId) => {
+    if (!window.confirm('Are you sure you want to delete this submission?')) return;
+    try {
+      await authedFetch(`${API_BASE}/admin/submissions/${subId}`, {
+        method: 'DELETE',
+      });
+      setSubmissions((prev) => prev.filter((s) => s._id !== subId));
+      showBanner('Submission Deleted');
+    } catch (err) {
+      showBanner('Delete Failed', err.message, 'error');
+    }
   };
 
   const getClueText = (clue) => {
@@ -179,7 +184,7 @@ const AdminDashboard = ({ API_BASE }) => {
 
   const clearAdminSession = () => {
     localStorage.removeItem('chernobyl_admin_token');
-    localStorage.removeItem('stalker_admin_token');
+    localStorage.removeItem('treasure_admin_token');
     setAdminToken('');
     setIsAdmin(false);
   };
@@ -196,42 +201,31 @@ const AdminDashboard = ({ API_BASE }) => {
       fetch(`${API_BASE}/admin/reports`, { headers }),
     ]);
 
-    if ([teamsRes, submissionsRes, leaderboardRes, clueLocationsRes].some((res) => res.status === 401)) {
-      clearAdminSession();
-      return;
-    }
-
     if (teamsRes.ok) {
       const data = await teamsRes.json();
-      setTeams(data.teams);
+      setTeams(data.teams || []);
     }
-
     if (submissionsRes.ok) {
       const data = await submissionsRes.json();
-      setSubmissions(data.submissions);
+      setSubmissions(data.submissions || []);
     }
-
     if (leaderboardRes.ok) {
       const data = await leaderboardRes.json();
-      setLeaderboard(data.teams);
+      setLeaderboard(data.leaderboard || []);
     }
-
-    if (clueLocationsRes && clueLocationsRes.ok) {
+    if (clueLocationsRes.ok) {
       const data = await clueLocationsRes.json();
-      setClueLocations(data.clueLocations || []);
+      setClueLocations(data.locations || []);
     }
-
-    if (routesRes && routesRes.ok) {
+    if (routesRes.ok) {
       const data = await routesRes.json();
       setAllRoutes(data.routes || []);
     }
-
-    if (sysRes && sysRes.ok) {
+    if (sysRes.ok) {
       const data = await sysRes.json();
-      setSystemState(data);
+      setSystemState(data || { testDevMode: false, coordMappingEnabled: false, coordRadiusMeters: 3.5 });
     }
-
-    if (repRes && repRes.ok) {
+    if (repRes.ok) {
       const data = await repRes.json();
       setReports(data.reports || []);
     }
@@ -247,7 +241,7 @@ const AdminDashboard = ({ API_BASE }) => {
       if (res.ok) {
         const data = await res.json();
         setSystemState(data.state);
-        showToast('TEST DEV MODE', data.message, data.state.testDevMode ? 'warning' : 'info');
+        showBanner('TEST DEV MODE', data.message, data.state.testDevMode ? 'warning' : 'info');
         const routesRes = await fetch(`${API_BASE}/admin/routes`, { headers: { Authorization: `Bearer ${adminToken}` } });
         if (routesRes.ok) {
           const rData = await routesRes.json();
@@ -255,7 +249,7 @@ const AdminDashboard = ({ API_BASE }) => {
         }
       }
     } catch (err) {
-      showToast('SYSTEM ERROR', err.message, 'error');
+      showBanner('SYSTEM ERROR', err.message, 'error');
     }
   };
 
@@ -269,10 +263,10 @@ const AdminDashboard = ({ API_BASE }) => {
       if (res.ok) {
         const data = await res.json();
         setSystemState(data.state);
-        showToast('GPS GEOFENCING MAPPING', data.message, data.state.coordMappingEnabled ? 'success' : 'info');
+        showBanner('GPS GEOFENCING', data.message, data.state.coordMappingEnabled ? 'success' : 'info');
       }
     } catch (err) {
-      showToast('SYSTEM ERROR', err.message, 'error');
+      showBanner('SYSTEM ERROR', err.message, 'error');
     }
   };
 
@@ -297,7 +291,7 @@ const AdminDashboard = ({ API_BASE }) => {
     };
     const handleNewReport = (newRep) => {
       setReports((prev) => [newRep, ...prev]);
-      showToast('NEW ISSUE REPORT', `${newRep.teamName}: ${newRep.category}`, 'warning');
+      showBanner('NEW ISSUE REPORT', `${newRep.teamName}: ${newRep.category}`, 'warning');
     };
 
     socket.on('system:state', handleSystemState);
@@ -330,15 +324,11 @@ const AdminDashboard = ({ API_BASE }) => {
         return [newSub, ...prev];
       });
 
-      setToasts((prev) => [...prev.slice(-4), {
-        id: `sub-${newSub._id}`,
-        title: 'New scan',
-        message: `${newSub.team?.name || 'Team'} — ${newSub.isCorrect ? 'accepted' : 'rejected'}`,
-        type: newSub.isCorrect ? 'success' : 'info',
-      }]);
-      window.setTimeout(() => {
-        setToasts((prev) => prev.filter((t) => t.id !== `sub-${newSub._id}`));
-      }, 4200);
+      showBanner(
+        'NEW SUBMISSION',
+        `${newSub.team?.name || 'Team'} — ${newSub.isCorrect ? 'ACCEPTED' : 'REJECTED'}`,
+        newSub.isCorrect ? 'success' : 'warning'
+      );
     };
 
     const handleSubmissionsCleared = () => {
@@ -447,28 +437,38 @@ const AdminDashboard = ({ API_BASE }) => {
 
   const handleAdminLogin = async (event) => {
     event.preventDefault();
-    const response = await fetch(`${API_BASE}/admin/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
-    });
+    setLoginLoading(true);
+    setLoginError('');
+    try {
+      const response = await fetch(`${API_BASE}/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessCode, password: accessCode, pin: accessCode }),
+      });
 
-    const data = await response.json();
-    if (!response.ok) {
-      showToast('Authentication Failed', data.message || 'Incorrect 4-digit PIN.', 'error');
-      return;
+      const data = await response.json();
+      if (!response.ok) {
+        setLoginError(data.message || 'Check your access code.');
+        return;
+      }
+
+      localStorage.setItem('chernobyl_admin_token', data.token);
+      localStorage.setItem('treasure_admin_token', data.token);
+      setAdminToken(data.token);
+      setIsAdmin(true);
+    } catch (err) {
+      setLoginError('Authentication error: ' + err.message);
+    } finally {
+      setLoginLoading(false);
     }
-
-    localStorage.setItem('chernobyl_admin_token', data.token);
-    setAdminToken(data.token);
-    setIsAdmin(true);
   };
 
   const handleLogout = () => {
     clearAdminSession();
   };
 
-  const runAction = async (path, successTitle, body = null) => {
+  const runAction = async (actionKey, path, successTitle, body = null) => {
+    setActionStatus((prev) => ({ ...prev, [actionKey]: 'loading' }));
     try {
       const options = { method: 'POST' };
       if (body) {
@@ -476,26 +476,53 @@ const AdminDashboard = ({ API_BASE }) => {
         options.body = JSON.stringify(body);
       }
       await authedFetch(`${API_BASE}${path}`, options);
-      // Trigger toast IMMEDIATELY with zero lag
-      showToast(successTitle || 'Updated');
-      // Trigger background refetch asynchronously
-      fetchDashboardData().catch(() => {});
+
+      // If resetting session, optimistically clear session lock & lastIp for that team
+      if (path.includes('/reset-session')) {
+        const teamId = path.split('/teams/')[1]?.split('/')[0];
+        if (teamId) {
+          setTeams((prev) =>
+            prev.map((t) => (t._id === teamId ? { ...t, activeSessionToken: null, lastIp: null } : t))
+          );
+        }
+      }
+
+      await fetchDashboardData();
+      setActionStatus((prev) => ({ ...prev, [actionKey]: 'success' }));
+      if (successTitle) showBanner(successTitle, '', 'success');
+      window.setTimeout(() => {
+        setActionStatus((prev) => {
+          const next = { ...prev };
+          delete next[actionKey];
+          return next;
+        });
+      }, 1200);
     } catch (err) {
-      showToast('Action failed', err.message, 'error');
+      setActionStatus((prev) => ({ ...prev, [actionKey]: 'error' }));
+      showBanner('Action Failed', err.message, 'error');
+      window.setTimeout(() => {
+        setActionStatus((prev) => {
+          const next = { ...prev };
+          delete next[actionKey];
+          return next;
+        });
+      }, 2000);
     }
   };
 
   const handleClearSubmissions = async () => {
-    if (!window.confirm("WARNING: This will permanently delete all submissions from MongoDB, clear all uploaded images from Supabase Storage, and reset all team progress. Are you sure?")) {
+    if (!window.confirm("WARNING: This will permanently delete all photo submissions and Supabase images. Team clue progress, scores, and timer states will NOT be affected. Are you sure?")) {
       return;
     }
+    setClearSubmissionsLoading(true);
     try {
       await authedFetch(`${API_BASE}/admin/submissions/clear`, { method: 'POST' });
       setSubmissions([]);
-      showToast('Reset complete', 'Submissions cleared and teams reset.');
-      fetchDashboardData().catch(() => {});
+      showBanner('Submissions Cleared', 'Submissions removed. Team progress preserved.', 'success');
     } catch (err) {
-      showToast('Reset failed', err.message, 'error');
+      showBanner('Reset failed', err.message, 'error');
+    } finally {
+      setClearSubmissionsLoading(false);
     }
   };
 
@@ -519,11 +546,11 @@ const AdminDashboard = ({ API_BASE }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editForm),
       });
-      showToast('Team Updated', `Team "${editForm.name}" updated successfully.`);
+      showBanner('Team Updated', `Team "${editForm.name}" updated successfully.`);
       setEditingTeam(null);
       fetchDashboardData().catch(() => {});
     } catch (err) {
-      showToast('Update Failed', err.message, 'error');
+      showBanner('Update Failed', err.message, 'error');
     }
   };
 
@@ -535,11 +562,11 @@ const AdminDashboard = ({ API_BASE }) => {
       await authedFetch(`${API_BASE}/admin/teams/${team._id}`, {
         method: 'DELETE',
       });
-      showToast('Team Deleted', `Team "${team.name}" was permanently removed.`);
+      showBanner('Team Deleted', `Team "${team.name}" was permanently removed.`);
       setTeams((prev) => prev.filter((t) => t._id !== team._id));
       fetchDashboardData().catch(() => {});
     } catch (err) {
-      showToast('Delete Failed', err.message, 'error');
+      showBanner('Delete Failed', err.message, 'error');
     }
   };
 
@@ -550,9 +577,9 @@ const AdminDashboard = ({ API_BASE }) => {
         method: 'DELETE',
       });
       setReports((prev) => prev.filter((r) => r._id !== reportId));
-      showToast('Report Deleted', 'Issue report removed.');
+      showBanner('Report Deleted', 'Issue report removed.');
     } catch (err) {
-      showToast('Delete Failed', err.message, 'error');
+      showBanner('Delete Failed', err.message, 'error');
     }
   };
 
@@ -565,9 +592,9 @@ const AdminDashboard = ({ API_BASE }) => {
         method: 'DELETE',
       });
       setReports([]);
-      showToast('Reports Cleared', 'All feedback reports have been removed.');
+      showBanner('Reports Cleared', 'All feedback reports have been removed.');
     } catch (err) {
-      showToast('Clear Failed', err.message, 'error');
+      showBanner('Clear Failed', err.message, 'error');
     }
   };
 
@@ -580,77 +607,122 @@ const AdminDashboard = ({ API_BASE }) => {
         body: JSON.stringify({ status: nextStatus }),
       });
       setReports((prev) => prev.map((r) => (r._id === rep._id ? { ...r, status: nextStatus } : r)));
-      showToast('Report Status', `Marked as ${nextStatus.toUpperCase()}`);
+      showBanner('Report Status', `Marked as ${nextStatus.toUpperCase()}`);
     } catch (err) {
-      showToast('Status Update Failed', err.message, 'error');
+      showBanner('Status Update Failed', err.message, 'error');
     }
   };
 
   if (!isAdmin) {
     return (
-      <div className="admin-apple admin-dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#020709', padding: '20px' }}>
-        <form onSubmit={handleAdminLogin} className="admin-login-card" style={{ maxWidth: '360px', width: '100%', background: 'rgba(0, 39, 41, 0.95)', border: '1px solid #39FF14', padding: '30px 24px', borderRadius: '8px', boxShadow: '0 0 30px rgba(57, 255, 20, 0.2)', textAlign: 'center' }}>
-          <div style={{ color: '#39FF14', fontSize: '11px', letterSpacing: '3px', marginBottom: '8px', fontFamily: 'monospace' }}>
-            // COMMAND OVERRIDE PROTOCOL //
+      <div
+        className="green-theme admin-dashboard"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          background: '#020709',
+          padding: '20px',
+          boxSizing: 'border-box',
+          fontFamily: "'Share Tech Mono', monospace"
+        }}
+      >
+        <form
+          onSubmit={handleAdminLogin}
+          className="cyber-panel"
+          style={{
+            width: '100%',
+            maxWidth: '420px',
+            padding: '36px 28px',
+            border: '1px solid rgba(57, 255, 20, 0.4)',
+            background: 'rgba(3, 14, 18, 0.95)',
+            boxShadow: '0 0 30px rgba(57, 255, 20, 0.1)',
+            textAlign: 'center'
+          }}
+        >
+          <div style={{ fontSize: '11px', letterSpacing: '3px', color: 'rgba(57, 255, 20, 0.7)', marginBottom: '8px' }}>
+            TREASURE HUNT // ADMIN CONSOLE
           </div>
-          <div className="admin-login-title" style={{ color: '#fff', fontSize: '20px', fontWeight: 'bold', letterSpacing: '2px', marginBottom: '20px', fontFamily: '"Cinzel", serif' }}>
-            ADMIN CLEARANCE
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#fff', letterSpacing: '2px', marginBottom: '24px' }}>
+            COMMAND ACCESS
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ position: 'relative' }}>
-              <input
-                className="id-input"
-                type="password"
-                maxLength={4}
-                pattern="[0-9]*"
-                inputMode="numeric"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="ENTER 4-DIGIT PIN"
-                required
-                autoFocus
-                style={{
-                  width: '100%',
-                  padding: '14px',
-                  fontSize: '22px',
-                  letterSpacing: '12px',
-                  textAlign: 'center',
-                  background: 'rgba(0, 0, 0, 0.6)',
-                  border: '1px solid rgba(57, 255, 20, 0.5)',
-                  color: '#39FF14',
-                  borderRadius: '4px',
-                  fontFamily: 'monospace',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-            <button
-              className="cyber-btn striped"
-              type="submit"
+
+          <div style={{ marginBottom: '20px', textAlign: 'left' }}>
+            <label
+              htmlFor="admin-access-code"
               style={{
-                width: '100%',
-                padding: '12px',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-                background: '#39FF14',
-                color: '#002729',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
+                display: 'block',
+                fontSize: '11px',
+                color: 'rgba(0, 229, 255, 0.85)',
+                letterSpacing: '1.5px',
+                marginBottom: '10px',
+                textAlign: 'center'
               }}
             >
-              <Shield size={16} /> UNLOCK TERMINAL
-            </button>
+              ENTER ACCESS CODE
+            </label>
+            <input
+              id="admin-access-code"
+              type="password"
+              value={accessCode}
+              onChange={(e) => setAccessCode(e.target.value)}
+              placeholder="••••••••"
+              autoFocus
+              required
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                background: '#01090c',
+                border: '2px solid #39ff14',
+                borderRadius: '6px',
+                padding: '14px 16px',
+                fontSize: '22px',
+                color: '#39ff14',
+                textAlign: 'center',
+                letterSpacing: '6px',
+                fontFamily: "'Share Tech Mono', monospace",
+                outline: 'none',
+                boxShadow: '0 0 15px rgba(57, 255, 20, 0.2)'
+              }}
+            />
           </div>
+
+          {loginError && (
+            <div
+              style={{
+                background: 'rgba(255, 77, 77, 0.15)',
+                border: '1px solid #ff4d4d',
+                color: '#ff6b6b',
+                padding: '8px 12px',
+                fontSize: '12px',
+                marginBottom: '16px',
+                borderRadius: '4px'
+              }}
+            >
+              {loginError}
+            </div>
+          )}
+
+          <button
+            className={`cyber-btn striped ${loginLoading ? 'is-active-loading' : ''}`}
+            type="submit"
+            disabled={loginLoading}
+            style={{
+              width: '100%',
+              padding: '12px',
+              fontSize: '14px',
+              letterSpacing: '2px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              cursor: loginLoading ? 'not-allowed' : 'pointer'
+            }}
+          >
+            <Shield size={16} /> {loginLoading ? 'AUTHENTICATING...' : 'ENTER COMMAND CENTER'}
+          </button>
         </form>
-        <ToastStack toasts={toasts} onDismiss={dismissToast} />
       </div>
     );
   }
@@ -892,11 +964,12 @@ const AdminDashboard = ({ API_BASE }) => {
           </div>
 
           <button 
-            className="cyber-btn" 
-            style={{ background: '#7f1d1d', border: '1px solid #ef4444', color: '#fca5a5', padding: '8px 16px', fontSize: '11px', cursor: 'pointer' }} 
+            className={`cyber-btn ${clearSubmissionsLoading ? 'is-active-loading' : ''}`} 
+            style={{ background: '#7f1d1d', border: '1px solid #ef4444', color: '#fca5a5', padding: '8px 16px', fontSize: '11px', cursor: clearSubmissionsLoading ? 'wait' : 'pointer' }} 
             onClick={handleClearSubmissions}
+            disabled={clearSubmissionsLoading}
           >
-            CLEAR ALL SUBMISSIONS & RESET TEAMS
+            {clearSubmissionsLoading ? 'CLEARING SUBMISSIONS...' : 'CLEAR ALL SUBMISSIONS (PRESERVE TEAMS)'}
           </button>
         </div>
       )}
@@ -1047,8 +1120,8 @@ const AdminDashboard = ({ API_BASE }) => {
                 </div>
 
                 {isExpanded && (
-                  <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(57,255,20,0.1)', display: 'flex', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-                    <div style={{ flex: '1', minWidth: '280px' }}>
+                  <div className="admin-team-card-content" style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(57,255,20,0.1)' }}>
+                    <div className="admin-team-info-col">
                       {/* Large HUD Mission Timer Box in Expanded View */}
                       <div style={{
                         padding: '12px 16px',
@@ -1089,6 +1162,36 @@ const AdminDashboard = ({ API_BASE }) => {
                         </span>
                       </div>
 
+                      {/* IP and Session Status Badge */}
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginTop: '6px', marginBottom: '8px' }}>
+                        <span style={{
+                          fontSize: '11px',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          fontWeight: 'bold',
+                          border: `1px solid ${team.activeSessionToken ? '#39ff14' : '#64748b'}`,
+                          background: team.activeSessionToken ? 'rgba(57,255,20,0.15)' : 'rgba(100,116,139,0.15)',
+                          color: team.activeSessionToken ? '#39ff14' : '#94a3b8',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px'
+                        }}>
+                          {team.activeSessionToken ? '🔒 DEVICE / SESSION LOCKED' : '🔓 SESSION RESET / UNLOCKED'}
+                        </span>
+
+                        <span style={{
+                          fontSize: '11px',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          border: team.lastIp ? '1px solid rgba(0, 229, 255, 0.4)' : '1px solid rgba(255, 255, 255, 0.15)',
+                          background: team.lastIp ? 'rgba(0, 229, 255, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+                          color: team.lastIp ? '#00e5ff' : 'rgba(255, 255, 255, 0.5)',
+                          fontFamily: "'Share Tech Mono', monospace"
+                        }}>
+                          {team.lastIp ? `IP: ${team.lastIp}` : 'IP: UNBOUND'}
+                        </span>
+                      </div>
+
                       <div style={{ fontSize: '11px', marginTop: '6px' }}>
                         GPS: {team.location?.lat ? `${team.location.lat.toFixed(5)}, ${team.location.lng.toFixed(5)}` : 'No live coordinates yet'}
                       </div>
@@ -1101,7 +1204,7 @@ const AdminDashboard = ({ API_BASE }) => {
                         <div style={{ fontSize: '10px', color: systemState.testDevMode ? '#ffaa00' : '#00e5ff', fontWeight: 'bold', marginBottom: '6px', letterSpacing: '1px' }}>
                           ASSIGN TACTICAL ROUTE:
                         </div>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div className="admin-route-select-row">
                           <select
                             value={teamRoutes[team._id] !== undefined ? teamRoutes[team._id] : (team.assignedRouteId || '')}
                             onChange={(e) => setTeamRoutes((prev) => ({ ...prev, [team._id]: e.target.value }))}
@@ -1116,7 +1219,8 @@ const AdminDashboard = ({ API_BASE }) => {
                               borderRadius: '4px',
                               cursor: 'pointer',
                               flex: '1',
-                              minWidth: '220px'
+                              width: '100%',
+                              minWidth: '0'
                             }}
                           >
                             <option value="">-- SELECT ROUTE --</option>
@@ -1128,15 +1232,16 @@ const AdminDashboard = ({ API_BASE }) => {
                           </select>
 
                           <button
-                            className="cyber-btn-outline"
+                            className={`cyber-btn-outline ${actionStatus[`route-${team._id}`] === 'loading' ? 'is-active-loading' : ''} ${actionStatus[`route-${team._id}`] === 'success' ? 'is-active-success' : ''}`}
                             style={{ padding: '6px 12px', fontSize: '10px', borderColor: '#00e5ff', color: '#00e5ff' }}
+                            disabled={actionStatus[`route-${team._id}`] === 'loading'}
                             onClick={(e) => {
                               e.stopPropagation();
-                              const selectedRId = teamRoutes[team._id] || team.assignedRouteId;
-                              runAction(`/admin/teams/${team._id}/assign-route`, `Route assigned`, { routeId: selectedRId });
+                              const selectedRId = teamRoutes[team._id] !== undefined ? teamRoutes[team._id] : team.assignedRouteId;
+                              runAction(`route-${team._id}`, `/admin/teams/${team._id}/assign-route`, `Route assigned`, { routeId: selectedRId });
                             }}
                           >
-                            SAVE ROUTE
+                            {actionStatus[`route-${team._id}`] === 'loading' ? 'SAVING...' : actionStatus[`route-${team._id}`] === 'success' ? '✓ SAVED' : 'SAVE ROUTE'}
                           </button>
                         </div>
                       </div>
@@ -1155,29 +1260,83 @@ const AdminDashboard = ({ API_BASE }) => {
                       )}
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', flex: '1' }}>
-                      <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); setSelectedQR(team); }}>
+                    <div className="admin-team-btn-grid">
+                      <button
+                        className="cyber-btn-outline"
+                        onClick={(e) => { e.stopPropagation(); setSelectedQR(team); }}
+                      >
                         <QrCode size={14} /> VIEW QR
                       </button>
-                      <button className="cyber-btn striped" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/start`, 'Mission started', { routeId: teamRoutes[team._id] || team.assignedRouteId }); }}>
-                        <Play size={14} /> START
+
+                      <button
+                        className={`cyber-btn striped ${actionStatus[`start-${team._id}`] === 'loading' ? 'is-active-loading' : ''} ${actionStatus[`start-${team._id}`] === 'success' ? 'is-active-success' : ''}`}
+                        disabled={actionStatus[`start-${team._id}`] === 'loading'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          runAction(`start-${team._id}`, `/admin/teams/${team._id}/start`, 'Mission started', { routeId: teamRoutes[team._id] || team.assignedRouteId });
+                        }}
+                      >
+                        <Play size={14} /> {actionStatus[`start-${team._id}`] === 'loading' ? 'STARTING...' : actionStatus[`start-${team._id}`] === 'success' ? '✓ STARTED' : 'START'}
                       </button>
-                      <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/stop`, 'Timer stopped'); }}>
-                        <Power size={14} /> STOP TIMER
+
+                      <button
+                        className={`cyber-btn-outline ${actionStatus[`stop-${team._id}`] === 'loading' ? 'is-active-loading' : ''} ${actionStatus[`stop-${team._id}`] === 'success' ? 'is-active-success' : ''}`}
+                        disabled={actionStatus[`stop-${team._id}`] === 'loading'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          runAction(`stop-${team._id}`, `/admin/teams/${team._id}/stop`, 'Timer stopped');
+                        }}
+                      >
+                        <Power size={14} /> {actionStatus[`stop-${team._id}`] === 'loading' ? 'STOPPING...' : actionStatus[`stop-${team._id}`] === 'success' ? '✓ STOPPED' : 'STOP TIMER'}
                       </button>
-                      <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/clue-override`, 'Clue skipped'); }}>
-                        <SkipForward size={14} /> SKIP CLUE
+
+                      <button
+                        className={`cyber-btn-outline ${actionStatus[`skip-${team._id}`] === 'loading' ? 'is-active-loading' : ''} ${actionStatus[`skip-${team._id}`] === 'success' ? 'is-active-success' : ''}`}
+                        disabled={actionStatus[`skip-${team._id}`] === 'loading'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          runAction(`skip-${team._id}`, `/admin/teams/${team._id}/clue-override`, 'Clue skipped');
+                        }}
+                      >
+                        <SkipForward size={14} /> {actionStatus[`skip-${team._id}`] === 'loading' ? 'SKIPPING...' : actionStatus[`skip-${team._id}`] === 'success' ? '✓ SKIPPED' : 'SKIP CLUE'}
                       </button>
-                      <button className="cyber-btn-outline" onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/reset`, 'Mission reset'); }}>
-                        <RefreshCw size={14} /> RESET MISSION
+
+                      <button
+                        className={`cyber-btn-outline ${actionStatus[`reset-m-${team._id}`] === 'loading' ? 'is-active-loading' : ''} ${actionStatus[`reset-m-${team._id}`] === 'success' ? 'is-active-success' : ''}`}
+                        disabled={actionStatus[`reset-m-${team._id}`] === 'loading'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          runAction(`reset-m-${team._id}`, `/admin/teams/${team._id}/reset`, 'Mission reset');
+                        }}
+                      >
+                        <RefreshCw size={14} /> {actionStatus[`reset-m-${team._id}`] === 'loading' ? 'RESETTING...' : actionStatus[`reset-m-${team._id}`] === 'success' ? '✓ RESET' : 'RESET MISSION'}
                       </button>
-                      <button className="cyber-btn-outline" style={{ borderColor: '#f59e0b', color: '#fbbf24' }} onClick={(e) => { e.stopPropagation(); runAction(`/admin/teams/${team._id}/reset-session`, 'Session reset'); }}>
-                        <RefreshCw size={14} /> RESET IP/SESSION
+
+                      <button
+                        className={`cyber-btn-outline ${actionStatus[`reset-s-${team._id}`] === 'loading' ? 'is-active-loading' : ''} ${actionStatus[`reset-s-${team._id}`] === 'success' ? 'is-active-success' : ''}`}
+                        disabled={actionStatus[`reset-s-${team._id}`] === 'loading'}
+                        style={{ borderColor: '#f59e0b', color: '#fbbf24' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          runAction(`reset-s-${team._id}`, `/admin/teams/${team._id}/reset-session`, 'Session reset');
+                        }}
+                      >
+                        <RefreshCw size={14} /> {actionStatus[`reset-s-${team._id}`] === 'loading' ? 'RESETTING...' : actionStatus[`reset-s-${team._id}`] === 'success' ? '✓ IP RESET' : 'RESET IP/SESSION'}
                       </button>
-                      <button className="cyber-btn-outline" style={{ borderColor: '#00e5ff', color: '#00e5ff' }} onClick={(e) => { e.stopPropagation(); handleOpenEditTeam(team); }}>
+
+                      <button
+                        className="cyber-btn-outline"
+                        style={{ borderColor: '#00e5ff', color: '#00e5ff' }}
+                        onClick={(e) => { e.stopPropagation(); handleOpenEditTeam(team); }}
+                      >
                         <Edit3 size={14} /> EDIT TEAM
                       </button>
-                      <button className="cyber-btn-outline" style={{ borderColor: '#ef4444', color: '#f87171' }} onClick={(e) => { e.stopPropagation(); handleDeleteTeam(team); }}>
+
+                      <button
+                        className="cyber-btn-outline"
+                        style={{ borderColor: '#ef4444', color: '#f87171' }}
+                        onClick={(e) => { e.stopPropagation(); handleDeleteTeam(team); }}
+                      >
                         <Trash2 size={14} /> DELETE TEAM
                       </button>
                     </div>
@@ -1593,41 +1752,6 @@ const AdminDashboard = ({ API_BASE }) => {
         </div>
       )}
 
-      {/* Real-time Submission Toast Notification */}
-      {newSubmissionAlert && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            zIndex: 1000,
-            background: 'rgba(2, 11, 14, 0.95)',
-            border: `1px solid ${newSubmissionAlert.isCorrect ? '#39FF14' : '#FF6400'}`,
-            boxShadow: `0 0 20px ${newSubmissionAlert.isCorrect ? 'rgba(57,255,20,0.3)' : 'rgba(255,100,0,0.3)'}`,
-            padding: '16px',
-            maxWidth: '320px',
-            fontFamily: "'Share Tech Mono', monospace"
-          }}
-        >
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <div style={{ width: '50px', height: '50px', flexShrink: 0, overflow: 'hidden', border: '1px solid rgba(0,240,255,0.3)' }}>
-              <img
-                src={getFullPhotoUrl(newSubmissionAlert.photoUrl)}
-                alt="Toast preview"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            </div>
-            <div>
-              <div style={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}>NEW TRANSMISSION RECEIVED</div>
-              <div style={{ fontSize: '11px', color: 'var(--cyan-primary)' }}>Team: {newSubmissionAlert.team?.name}</div>
-              <div style={{ fontSize: '10px', color: newSubmissionAlert.isCorrect ? '#39FF14' : '#FF6400' }}>
-                RESULT: {newSubmissionAlert.isCorrect ? 'CORRECT (VERIFIED)' : 'INCORRECT'}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Image Zoom Modal */}
       {selectedPhoto && (
         <div
@@ -1685,8 +1809,47 @@ const AdminDashboard = ({ API_BASE }) => {
         </div>
       )}
 
-      {/* Smooth Toast Stack for Reset, Tasks, Errors, and Real-Time Notifications */}
-      <ToastStack toasts={toasts} onDismiss={dismissToast} />
+      {/* Instant, non-laggy status banner */}
+      {banner && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '16px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 99999,
+            padding: '10px 20px',
+            borderRadius: '6px',
+            background:
+              banner.type === 'error'
+                ? 'rgba(45, 12, 12, 0.95)'
+                : banner.type === 'warning'
+                ? 'rgba(45, 30, 10, 0.95)'
+                : 'rgba(8, 28, 16, 0.95)',
+            border: `1px solid ${
+              banner.type === 'error' ? '#ff4d4d' : banner.type === 'warning' ? '#f59e0b' : '#39ff14'
+            }`,
+            color: '#fff',
+            fontSize: '12px',
+            fontFamily: "'Share Tech Mono', monospace",
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            boxShadow: '0 6px 24px rgba(0,0,0,0.6)',
+            pointerEvents: 'none'
+          }}
+        >
+          <span
+            style={{
+              fontWeight: 'bold',
+              color: banner.type === 'error' ? '#ff4d4d' : banner.type === 'warning' ? '#f59e0b' : '#39ff14'
+            }}
+          >
+            {banner.title}
+          </span>
+          {banner.message && <span style={{ opacity: 0.9 }}>{banner.message}</span>}
+        </div>
+      )}
     </div>
   );
 };

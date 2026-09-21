@@ -40,7 +40,7 @@ const PwaDownloadLanding = () => {
     window.addEventListener('pwa-install-ready', syncPrompt);
     window.addEventListener('beforeinstallprompt', syncPrompt);
     window.addEventListener('appinstalled', () => {
-      setInstallStatus('App Installed Successfully! Launch The Pripyat Exodus from your home screen.');
+      setInstallStatus('App Installed Successfully! Launch Treasure Hunt from your home screen.');
       window.__pwaInstallPrompt = null;
       setDeferredPrompt(null);
     });
@@ -64,7 +64,7 @@ const PwaDownloadLanding = () => {
         promptEvent.prompt();
         const { outcome } = await promptEvent.userChoice;
         if (outcome === 'accepted') {
-          setInstallStatus('App Installed! Launch The Pripyat Exodus from your home screen.');
+          setInstallStatus('App Installed! Launch Treasure Hunt from your home screen.');
         } else {
           setInstallStatus('Installation deferred. Click below anytime to retry.');
         }
@@ -162,7 +162,7 @@ const PwaDownloadLanding = () => {
           margin: 0,
           fontFamily: 'var(--font-serif, "Cinzel", serif)'
         }}>
-          THE PRIPYAT EXODUS
+          TREASURE HUNT
         </h1>
 
         <p style={{
@@ -174,8 +174,8 @@ const PwaDownloadLanding = () => {
           fontFamily: 'var(--font-mono, monospace)'
         }}>
           {isIos
-            ? 'Access Protocol: Install The Pripyat Exodus to your home screen. The full 3D interactive terminal, confidential dossier registration, and GPS radar will unlock in app mode.'
-            : 'Access Protocol: Download & install The Pripyat Exodus app to your device. Once launched from your home screen, all 3D interfaces and clearance registration will unlock.'}
+            ? 'Access Protocol: Install Treasure Hunt to your home screen. The full 3D interactive terminal, confidential dossier registration, and GPS radar will unlock in app mode.'
+            : 'Access Protocol: Download & install the Treasure Hunt tactical app to your device. Once launched from your home screen, all 3D interfaces and clearance registration will unlock.'}
         </p>
 
         {/* Primary Action Button */}
@@ -189,44 +189,53 @@ const PwaDownloadLanding = () => {
             background: '#39FF14',
             color: '#002729',
             border: 'none',
-            borderRadius: '8px',
-            fontSize: '15px',
-            fontWeight: 'bold',
+            borderRadius: '4px',
             fontFamily: 'var(--font-mono, monospace)',
-            letterSpacing: '1px',
-            textTransform: 'uppercase',
-            cursor: 'pointer',
+            fontSize: '1rem',
+            fontWeight: 'bold',
+            letterSpacing: '1.5px',
+            cursor: isInstalling ? 'wait' : 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '10px',
-            boxShadow: '0 0 24px rgba(57, 255, 20, 0.4)',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#ffffff';
-            e.currentTarget.style.boxShadow = '0 0 30px rgba(255, 255, 255, 0.6)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = '#39FF14';
-            e.currentTarget.style.boxShadow = '0 0 24px rgba(57, 255, 20, 0.4)';
+            boxShadow: '0 0 20px rgba(57, 255, 20, 0.4)',
+            transition: 'all 0.2s ease',
+            textTransform: 'uppercase'
           }}
         >
-          <Download size={20} />
-          {isInstalling ? 'INSTALLING PROTOCOL…' : isIos ? 'INSTALL ON IPHONE' : '1-CLICK INSTALL APP'}
+          <Download size={18} />
+          {isInstalling ? 'INSTALLING PROTOCOL...' : 'DOWNLOAD & INSTALL APP'}
         </button>
 
+        {/* Secondary: Show Manual Guide */}
+        <button
+          onClick={() => setShowGuide(true)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'rgba(57, 255, 20, 0.7)',
+            fontSize: '0.85rem',
+            fontFamily: 'var(--font-mono, monospace)',
+            cursor: 'pointer',
+            textDecoration: 'underline',
+            letterSpacing: '0.5px'
+          }}
+        >
+          [View Manual Installation Instructions]
+        </button>
+
+        {/* Status display */}
         {installStatus && (
           <div style={{
-            fontSize: '12px',
+            fontSize: '0.85rem',
             color: '#39FF14',
+            fontFamily: 'var(--font-mono, monospace)',
             background: 'rgba(57, 255, 20, 0.1)',
-            border: '1px solid rgba(57, 255, 20, 0.3)',
-            borderRadius: '6px',
-            padding: '8px 12px',
-            width: '100%'
+            padding: '8px 14px',
+            borderRadius: '4px',
+            border: '1px solid rgba(57, 255, 20, 0.3)'
           }}>
-            <CheckCircle size={14} style={{ display: 'inline', marginRight: '6px' }} />
             {installStatus}
           </div>
         )}
@@ -236,7 +245,7 @@ const PwaDownloadLanding = () => {
         </div>
       </div>
 
-      {/* Guide Modal */}
+      {/* Manual Installation Guide Modal */}
       {showGuide && (
         <div
           onClick={() => setShowGuide(false)}
@@ -245,6 +254,7 @@ const PwaDownloadLanding = () => {
             inset: 0,
             background: 'rgba(0, 15, 18, 0.88)',
             backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
             zIndex: 100,
             display: 'flex',
             alignItems: 'center',
@@ -256,14 +266,15 @@ const PwaDownloadLanding = () => {
             onClick={(e) => e.stopPropagation()}
             style={{
               width: '100%',
-              maxWidth: '400px',
+              maxWidth: '460px',
               background: '#002729',
               border: '2px solid #39FF14',
               borderRadius: '8px',
               padding: '24px',
               boxShadow: '0 0 35px rgba(57, 255, 20, 0.3)',
               textAlign: 'left',
-              color: '#D9E0E0'
+              color: '#D9E0E0',
+              fontFamily: 'var(--font-mono, monospace)'
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '15px', fontWeight: 'bold', color: '#39FF14', marginBottom: '16px', letterSpacing: '1px' }}>
@@ -276,13 +287,13 @@ const PwaDownloadLanding = () => {
                 <li>Tap the <strong>Share</strong> icon in Safari <Share size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />.</li>
                 <li>Scroll down and tap <strong>Add to Home Screen</strong> <PlusSquare size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />.</li>
                 <li>Tap <strong>Add</strong> in top-right corner.</li>
-                <li>Launch <strong>The Pripyat Exodus</strong> from your Home Screen to unlock the app!</li>
+                <li>Launch <strong>TREASURE HUNT</strong> from your Home Screen to unlock the 3D terminal!</li>
               </ol>
             ) : (
               <ol style={{ paddingLeft: '20px', margin: 0, lineHeight: '1.8', fontSize: '13px', color: 'rgba(217, 224, 224, 0.9)' }}>
-                <li>Tap the browser menu button (<strong>⋮</strong> or <strong>≡</strong>) in Chrome, Edge, Firefox, or Samsung Internet.</li>
-                <li>Select <strong>Install App</strong> or <strong>Add to Home Screen</strong>.</li>
-                <li>Confirm installation, then open <strong>The Pripyat Exodus</strong> from your home screen.</li>
+                <li>Click the <strong>Install / Computer</strong> icon in the address bar, or open the browser menu (<strong>⋮</strong>).</li>
+                <li>Select <strong>Install Treasure Hunt</strong> or <strong>Add to Home Screen</strong>.</li>
+                <li>Confirm installation, then launch Treasure Hunt from your desktop/apps.</li>
               </ol>
             )}
 

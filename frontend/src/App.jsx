@@ -15,7 +15,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 function App() {
   const [operatorName, setOperatorName] = useState('');
   const [teamInfo, setTeamInfo] = useState(null);
-  const [token, setToken] = useState(() => localStorage.getItem('chernobyl_token') || localStorage.getItem('stalker_token') || '');
+  const [token, setToken] = useState(() => localStorage.getItem('chernobyl_token') || localStorage.getItem('treasure_token') || '');
 
   const isStandalone = typeof window !== 'undefined' && Boolean(
     window.matchMedia('(display-mode: standalone)').matches ||
@@ -207,7 +207,7 @@ function App() {
     setOperatorName('');
     setTeamInfo(null);
     localStorage.removeItem('chernobyl_token');
-    localStorage.removeItem('stalker_token');
+    localStorage.removeItem('treasure_token');
     window.location.hash = '#welcome';
   };
 

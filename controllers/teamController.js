@@ -355,8 +355,10 @@ export const loginWithQr = async (req, res) => {
       team.members.push(user._id);
     }
 
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || null;
     const sessionToken = crypto.randomUUID();
     team.activeSessionToken = sessionToken;
+    if (clientIp) team.lastIp = clientIp;
     await team.save();
 
     const token = buildToken(user._id, user.role, sessionToken);
@@ -447,9 +449,13 @@ export const updateLocation = async (req, res) => {
   }
 
   try {
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || null;
+    const updateFields = { location: { lat, lng, updatedAt: new Date() } };
+    if (clientIp) updateFields.lastIp = clientIp;
+
     const team = await Team.findByIdAndUpdate(
       req.user.team,
-      { location: { lat, lng, updatedAt: new Date() } },
+      updateFields,
       { new: true }
     );
     if (!team) return res.status(400).json({ message: "You are not part of a team yet" });

@@ -44,6 +44,7 @@ const teamSchema = new mongoose.Schema(
       default: "not_started",
     },
     activeSessionToken: { type: String, default: null },
+    lastIp: { type: String, default: null },
 
     
     location: {

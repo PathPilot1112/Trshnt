@@ -43,14 +43,17 @@ const buildSnapshot = (teams) =>
 // --- Admin Authentication ---
 
 export const adminLogin = async (req, res) => {
-  const { password, pin } = req.body;
-  const inputPassword = String(pin || password || "").trim();
+  const { email, password, pin, accessCode } = req.body;
+  const inputCode = String(accessCode || pin || password || "").trim();
   
   const targetPassword = String(process.env.ADMIN_PIN || process.env.ADMIN_PASSWORD || "1234").trim();
   const targetEmail = process.env.ADMIN_MAIL || "admin@pripyatexodus.com";
 
-  if (!inputPassword || inputPassword !== targetPassword) {
-    return res.status(401).json({ message: "Invalid 4-digit admin password" });
+  const isMatch = (inputCode && inputCode === targetPassword) || 
+                  (email && email.toLowerCase() === targetEmail.toLowerCase() && inputCode === targetPassword);
+
+  if (!isMatch) {
+    return res.status(401).json({ message: "Invalid admin access code" });
   }
 
   try {
@@ -273,11 +276,12 @@ export const resetTeamSession = async (req, res) => {
     if (!team) return res.status(404).json({ message: "Team not found" });
 
     team.activeSessionToken = null;
+    team.lastIp = null;
     await team.save();
 
     const io = req.app.get("io");
     if (io) {
-      io.emit("team:status", { teamId: team._id, status: team.status, activeSessionToken: null });
+      io.emit("team:status", { teamId: team._id, status: team.status, activeSessionToken: null, lastIp: null });
     }
 
     res.json({ message: "Team session lock & active IP reset successfully", team });
@@ -399,18 +403,14 @@ export const clearSubmissions = async (req, res) => {
 
     // 2. Delete from MongoDB
     await Submission.deleteMany({});
-    
-    // 3. Clear completedClues, score, and activeSessionToken for all teams
-    await Team.updateMany({}, { completedClues: [], cluePath: [], score: 0, currentClueIndex: 0, status: "not_started", activeSessionToken: null });
 
-    // Emit event to update leaderboard and reset dashboards
+    // Emit event to update submissions list on dashboards without wiping team progress
     const io = req.app.get("io");
     if (io) {
       io.emit("submissions:cleared");
-      io.emit("leaderboard:snapshot", []);
     }
 
-    res.json({ message: "All submissions and S3 images cleared successfully, teams reset." });
+    res.json({ message: "All submissions and storage images cleared successfully. Team progress has been preserved." });
   } catch (err) {
     res.status(500).json({ message: "Failed to clear submissions", error: err.message });
   }

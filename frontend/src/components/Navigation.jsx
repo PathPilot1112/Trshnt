@@ -109,6 +109,7 @@ const Navigation = ({ onNavigate }) => {
               transition: 'transform 0.2s ease'
             }} 
           />
+          <span style={{ color: '#39FF14', fontSize: '1rem', marginLeft: '6px' }}>TREASURE_HUNT</span>
         </div>
 
         {/* Desktop Links */}
@@ -257,7 +258,7 @@ const Navigation = ({ onNavigate }) => {
               borderRadius: '2px'
             }}
           >
-            LOGIN TO STALKER PDA [SCAN QR]
+            LOGIN VIA SCAN QR
           </button>
         </div>
       )}

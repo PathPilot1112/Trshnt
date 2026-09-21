@@ -21,7 +21,7 @@ const Welcome = ({ onQrLogin }) => {
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      const dismissed = localStorage.getItem('chernobyl_pwa_dismissed') === 'true' || localStorage.getItem('stalker_pwa_dismissed') === 'true';
+      const dismissed = localStorage.getItem('chernobyl_pwa_dismissed') === 'true' || localStorage.getItem('treasure_pwa_dismissed') === 'true';
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
       if (!dismissed && !isStandalone) {
         setShowInstallBanner(true);
@@ -33,7 +33,7 @@ const Welcome = ({ onQrLogin }) => {
     // Dynamic banner fallback after 3 seconds if not standalone and not dismissed
     const fallbackTimer = setTimeout(() => {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-      const dismissed = localStorage.getItem('chernobyl_pwa_dismissed') === 'true' || localStorage.getItem('stalker_pwa_dismissed') === 'true';
+      const dismissed = localStorage.getItem('chernobyl_pwa_dismissed') === 'true' || localStorage.getItem('treasure_pwa_dismissed') === 'true';
       if (!isStandalone && !dismissed && !deferredPrompt) {
         setShowInstallBanner(true);
       }
