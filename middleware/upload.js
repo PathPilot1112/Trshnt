@@ -7,9 +7,10 @@ import path from "path";
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-  const allowed = /jpeg|jpg|png|webp/;
-  const ok = allowed.test(path.extname(file.originalname).toLowerCase());
-  if (ok) cb(null, true);
+  const allowedExts = /jpeg|jpg|png|webp|jfif|heic/i;
+  const extOk = allowedExts.test(path.extname(file.originalname || '').toLowerCase());
+  const mimeOk = file.mimetype && (file.mimetype.startsWith('image/') || file.mimetype === 'application/octet-stream');
+  if (extOk || mimeOk) cb(null, true);
   else cb(new Error("Only image files (jpg, png, webp) are allowed"));
 };
 

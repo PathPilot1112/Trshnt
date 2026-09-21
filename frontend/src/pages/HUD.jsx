@@ -15,6 +15,7 @@ import {
   Check
 } from 'lucide-react';
 import { getSocket } from '../socket';
+import ScanComponent from './Scan';
 
 const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) => {
   const [cluePayload, setCluePayload] = useState(null);
@@ -24,6 +25,7 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
   const [elapsedMs, setElapsedMs] = useState(teamInfo?.timerAccumulatedMs || 0);
   const [selectedItemModal, setSelectedItemModal] = useState(null);
   const [showInventoryDrawer, setShowInventoryDrawer] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
 
   // Report Modal & System State
   const [showReportModal, setShowReportModal] = useState(false);
@@ -99,7 +101,7 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
   }, [API_BASE, token]);
 
   // Fetch full clue payload with zero-lag background updates
-  useEffect(() => {
+  const fetchCurrentClue = async (showLoader = false) => {
     if (localTeam?.status === 'finished') {
       setClueFinished(true);
       setIsLoadingClue(false);
@@ -110,34 +112,29 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
       setIsLoadingClue(false);
       return;
     }
-
-    const fetchCurrentClue = async () => {
-      if (!cluePayload) {
-        setIsLoadingClue(true);
+    if (showLoader && !cluePayload) {
+      setIsLoadingClue(true);
+    }
+    try {
+      const response = await fetch(`${API_BASE}/clues/current`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      setCluePayload(data);
+      if (data.systemState) {
+        setSystemState(data.systemState);
       }
-      try {
-        const response = await fetch(`${API_BASE}/clues/current`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!response.ok) return;
-        const data = await response.json();
-        setCluePayload(data);
-        if (data.systemState) {
-          setSystemState(data.systemState);
-        }
-        if (data.finished) {
-          setClueFinished(true);
-        } else {
-          setClueFinished(false);
-        }
-      } catch (err) {
-        console.error("Error loading clue payload:", err);
-      } finally {
-        setIsLoadingClue(false);
-      }
-    };
+      setClueFinished(Boolean(data.finished));
+    } catch (err) {
+      console.error("Error loading clue payload:", err);
+    } finally {
+      setIsLoadingClue(false);
+    }
+  };
 
-    fetchCurrentClue();
+  useEffect(() => {
+    fetchCurrentClue(true);
   }, [API_BASE, token, localTeam?.currentClueIndex, localTeam?.status]);
 
   // Timer interval
@@ -612,7 +609,7 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
                       type="button"
                       className="hud-scan-btn"
                       disabled={!canScan}
-                      onClick={() => canScan && onNavigate('scan')}
+                      onClick={() => canScan && setIsScanning(true)}
                       style={{
                         margin: 0,
                         width: '100%',
@@ -808,7 +805,7 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
         </button>
 
         <button
-          onClick={() => canScan && onNavigate('scan')}
+          onClick={() => canScan && setIsScanning(true)}
           disabled={!canScan}
           style={{
             background: canScan ? '#39ff14' : 'rgba(255,255,255,0.1)',
@@ -986,6 +983,32 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
               </form>
             )}
           </div>
+        </div>
+      )}
+
+      {/* ═══════════════ DIRECT IN-HUD SCANNER OVERLAY ═══════════════ */}
+      {isScanning && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          background: 'var(--color-bg, #002729)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}>
+          <div className="hazard-bar" />
+          <ScanComponent
+            API_BASE={API_BASE}
+            token={token}
+            onAbort={() => {
+              setIsScanning(false);
+              fetchCurrentClue();
+              if (window.location.hash === '#scan') {
+                window.location.hash = '#hud';
+              }
+            }}
+          />
         </div>
       )}
 

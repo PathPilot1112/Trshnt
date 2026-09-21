@@ -6,7 +6,6 @@ import AdminDashboard from './pages/AdminDashboard';
 import RegistrationPage from './pages/RegistrationPage';
 import RegistrationSuccess from './pages/RegistrationSuccess';
 import HomeLandingPage from './pages/HomeLandingPage';
-import PwaDownloadLanding from './pages/PwaDownloadLanding';
 import ScanlineOverlay from './components/ScanlineOverlay';
 import BackgroundCanvas from './components/BackgroundCanvas';
 
@@ -17,32 +16,18 @@ function App() {
   const [teamInfo, setTeamInfo] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem('chernobyl_token') || localStorage.getItem('treasure_token') || '');
 
-  const isStandalone = typeof window !== 'undefined' && Boolean(
-    window.matchMedia('(display-mode: standalone)').matches ||
-    window.matchMedia('(display-mode: fullscreen)').matches ||
-    window.matchMedia('(display-mode: minimal-ui)').matches ||
-    window.navigator?.standalone === true ||
-    document.referrer.includes('android-app://') ||
-    new URLSearchParams(window.location.search).get('pwa') === 'true' ||
-    localStorage.getItem('force_pwa_mode') === 'true'
-  );
-
   const getInitialRoute = () => {
     const hash = typeof window !== 'undefined' ? window.location.hash : '';
     if (hash === '#admin' || hash === '#admin-login') return 'admin';
-    
-    // In standard browser: initial step must be downloading/installing the PWA
-    if (!isStandalone) {
-      return 'pwa-download';
-    }
-
-    // In PWA app: everything opens up!
     if (hash === '#hud') return 'hud';
     if (hash === '#scan') return 'scan';
     if (hash === '#register') return 'register';
     if (hash === '#registration-success') return 'registration-success';
     if (hash === '#welcome') return 'welcome';
     if (hash === '#home') return 'home';
+
+    // Direct land in HUD if operative already holds valid session token
+    if (token) return 'hud';
     return 'home';
   };
 
@@ -50,7 +35,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [registeredTeam, setRegisteredTeam] = useState(null);
 
-  // Parse route from URL hash changes
+  // Parse route from URL hash changes without arbitrary page redirects
   useEffect(() => {
     const parseRoute = () => {
       const hash = window.location.hash;
@@ -58,14 +43,6 @@ function App() {
         setCurrentRoute('admin');
         return;
       }
-
-      // Initial gate: in standard browser, force PWA installation screen
-      if (!isStandalone) {
-        setCurrentRoute('pwa-download');
-        return;
-      }
-
-      // Inside installed PWA: all sections and views are unlocked
       if (hash === '#hud') {
         setCurrentRoute('hud');
       } else if (hash === '#scan') {
@@ -78,18 +55,15 @@ function App() {
         setCurrentRoute('welcome');
       } else if (hash === '#home') {
         setCurrentRoute('home');
-      } else if (hash === '#pwa-download') {
-        setCurrentRoute('pwa-download');
       } else {
-        // Default inside PWA
-        setCurrentRoute('home');
+        setCurrentRoute(token ? 'hud' : 'home');
       }
     };
 
     parseRoute();
     window.addEventListener('hashchange', parseRoute);
     return () => window.removeEventListener('hashchange', parseRoute);
-  }, [isStandalone]);
+  }, [token]);
 
   // Persist session if token exists
   useEffect(() => {
@@ -214,16 +188,6 @@ function App() {
   const handleNavigation = (route) => {
     window.location.hash = `#${route}`;
   };
-
-  // PWA Download Landing page (Default browser screen on `/`)
-  if (currentRoute === 'pwa-download') {
-    return (
-      <PwaDownloadLanding
-        onOpenRegister={() => window.location.hash = '#register'}
-        onOpenLogin={() => window.location.hash = '#welcome'}
-      />
-    );
-  }
 
   // Home Landing Page (Full website landing page from chiru webpage)
   if (currentRoute === 'home') {

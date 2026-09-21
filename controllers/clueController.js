@@ -10,11 +10,14 @@ import { getSystemState } from "../utils/systemConfig.js";
 import { isWithinGeofenceRange } from "../utils/clueLocations.js";
 
 const getTeamClue = async (team) => {
-  const clues = await Clue.find();
+  const clues = (await Clue.find()) || [];
   await ensureCluePath(team, clues);
-  const step = team.cluePath[team.currentClueIndex];
+  const step = team.cluePath?.[team.currentClueIndex];
   if (!step) return { clues, currentClue: null, finished: true };
-  const currentClue = clues.find((c) => String(c._id) === String(step.clue));
+  let currentClue = clues.find((c) => String(c._id) === String(step.clue));
+  if (!currentClue) {
+    currentClue = clues.find((c) => c.title === step.locationName) || clues[0] || null;
+  }
   return { clues, currentClue, finished: !currentClue };
 };
 
@@ -24,7 +27,7 @@ export const getCurrentClue = async (req, res) => {
   const team = await Team.findById(req.user.team);
   if (!team) return res.status(404).json({ message: "Team not found" });
 
-  const clues = await Clue.find();
+  const clues = (await Clue.find()) || [];
   await ensureCluePath(team, clues);
   return res.json(publicCluePayload(team, clues));
 };
@@ -44,7 +47,8 @@ export const submitPhoto = async (req, res) => {
   // With memoryStorage, the file is in req.file.buffer — no disk path exists.
   const fileBuffer = req.file.buffer;
   const originalName = req.file.originalname || 'scan.jpg';
-  let photoUrl = `data:image/jpeg;base64,...`; // placeholder until cloud upload
+  // Immediate data URI fallback if cloud storage fails or is slow
+  let photoUrl = `data:${req.file.mimetype || 'image/jpeg'};base64,${fileBuffer.toString('base64')}`;
 
   try {
     // 1. Upload to Supabase if configured (primary cloud storage)
@@ -61,7 +65,7 @@ export const submitPhoto = async (req, res) => {
             photoUrl = await uploadToCloudinary(fileBuffer);
             console.log("☁️ Cloudinary upload successful:", photoUrl);
           } catch (cloudErr) {
-            console.error("❌ Cloudinary upload failed, no cloud storage available:", cloudErr.message);
+            console.error("❌ Cloudinary upload failed:", cloudErr.message);
           }
         }
       }
@@ -77,13 +81,18 @@ export const submitPhoto = async (req, res) => {
 
     // 2. Send photo to ML Service with offline fallback
     let mlResponse;
+    const { testDevMode, coordMappingEnabled, coordRadiusMeters } = getSystemState();
     try {
-      mlResponse = await predictImage(fileBuffer);
+      mlResponse = await predictImage(fileBuffer, { teamId: team._id, clueId: currentClue._id, targetName: currentClue.title });
     } catch (err) {
-      console.warn("⚠️ ML Service offline, rejecting submission:", err.message);
-      return res.status(503).json({ 
-        message: "Scanning system is currently offline. Please try again later."
-      });
+      console.warn("⚠️ ML Service error/timeout:", err.message);
+      if (testDevMode) {
+        mlResponse = { prediction: currentClue.targetLabel || currentClue.title, confidence: 0.99 };
+      } else {
+        return res.status(503).json({ 
+          message: `Verification service unavailable: ${err.message || "ML service offline"}. Please try again.`
+        });
+      }
     }
     
     // 3. Determine predicted label string and validate against current clue
@@ -101,8 +110,7 @@ export const submitPhoto = async (req, res) => {
     const isConfident = confidence >= (currentClue.confidenceThreshold || 0.45);
     const isMlMatch = Boolean(isLabelMatch && isConfident);
 
-    // Check GPS Coordinate Geofencing (3-4 meter circular range parameter)
-    const { coordMappingEnabled, coordRadiusMeters } = getSystemState();
+    // Check GPS Coordinate Geofencing
     const userLat = parseFloat(req.body?.lat || req.body?.userLat || req.query?.lat || team.location?.lat);
     const userLng = parseFloat(req.body?.lng || req.body?.userLng || req.query?.lng || team.location?.lng);
     const geofenceResult = isWithinGeofenceRange(userLat, userLng, [currentClue.title, currentClue.targetLabel, currentClue.location], coordRadiusMeters || 35);
@@ -110,8 +118,10 @@ export const submitPhoto = async (req, res) => {
     let isCorrect = false;
     let feedbackMessage = "";
 
-    // 1. MUST FIRST check ML response
-    if (!isMlMatch) {
+    if (testDevMode) {
+      isCorrect = true;
+      feedbackMessage = `[TEST DEV MODE] Scan accepted! Visual detected: ${predictedLabel} (${Math.round(confidence * 100)}%).`;
+    } else if (!isMlMatch) {
       isCorrect = false;
       feedbackMessage = "Scan not accepted. Visual scan did not match the objective.";
     } else {
@@ -123,7 +133,6 @@ export const submitPhoto = async (req, res) => {
       } else {
         // GPS mapping is ON -> immediately verify GPS mapping to target field
         if (!geofenceResult.hasCoordinates) {
-          // Those whose GPS coordinates are missing: accept ONLY on basis of ML response!
           console.log(`📍 Target "${currentClue.title || currentClue.targetLabel}" has no GPS coordinates; accepted on basis of ML response.`);
           isCorrect = true;
           feedbackMessage = "Scan accepted! Visual match confirmed (GPS exempt - location coordinates not mapped).";
@@ -185,8 +194,8 @@ export const submitPhoto = async (req, res) => {
         clue: currentClue._id,
         photoUrl
       });
-      team.score += currentClue.points;
-      team.currentClueIndex += 1;
+      team.score = (team.score || 0) + (currentClue.points || 100);
+      team.currentClueIndex = (team.currentClueIndex || 0) + 1;
 
       if (team.currentClueIndex >= team.cluePath.length) {
         team.status = "finished";

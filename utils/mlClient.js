@@ -36,7 +36,7 @@ export const predictImage = async (bufferOrPath, context = {}) => {
       headers: {
         ...formData.getHeaders?.() ?? {},
       },
-      timeout: 45000,
+      timeout: 60000,
     });
 
     const latencyMs = Date.now() - startTime;
