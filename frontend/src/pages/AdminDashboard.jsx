@@ -641,6 +641,31 @@ const AdminDashboard = ({ API_BASE }) => {
             textAlign: 'center'
           }}
         >
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+            <img 
+              src="/logo1.png" 
+              alt="Fundaz Logo" 
+              style={{ 
+                height: '36px', 
+                width: '36px', 
+                objectFit: 'contain',
+                borderRadius: '50%',
+                background: '#ffffff',
+                padding: '2px',
+                boxShadow: '0 0 10px rgba(255, 255, 255, 0.4)'
+              }} 
+            />
+            <img 
+              src="/aaruush_logo_clean.png" 
+              alt="Aaruush '26 Logo" 
+              style={{ 
+                height: '32px', 
+                width: 'auto', 
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 0 8px rgba(255, 120, 0, 0.35))'
+              }} 
+            />
+          </div>
           <div style={{ fontSize: '11px', letterSpacing: '3px', color: 'rgba(57, 255, 20, 0.7)', marginBottom: '8px' }}>
             TREASURE HUNT // ADMIN CONSOLE
           </div>
@@ -729,10 +754,39 @@ const AdminDashboard = ({ API_BASE }) => {
 
   return (
     <div className="green-theme admin-dashboard" style={{ minHeight: '100vh', background: '#020709', color: 'var(--green-primary)', padding: '20px', fontFamily: "'Share Tech Mono', monospace", overflowY: 'auto', overflowX: 'hidden', height: 'auto', maxWidth: '100vw', boxSizing: 'border-box' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '12px', flexWrap: 'wrap' }}>
-        <div>
-          <div style={{ fontSize: '22px', color: '#fff' }}>ADMIN DASHBOARD</div>
-          <div style={{ fontSize: '11px', color: 'rgba(0,240,255,0.6)' }}>Live QR onboarding, sockets, timers, map telemetry</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '16px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <img 
+              src="/logo1.png" 
+              alt="Fundaz Logo" 
+              style={{ 
+                height: '42px', 
+                width: '42px', 
+                objectFit: 'contain',
+                borderRadius: '50%',
+                background: '#ffffff',
+                padding: '2px',
+                boxShadow: '0 0 10px rgba(255, 255, 255, 0.4)',
+                flexShrink: 0
+              }} 
+            />
+            <img 
+              src="/aaruush_logo_clean.png" 
+              alt="Aaruush '26 Logo" 
+              style={{ 
+                height: '38px', 
+                maxWidth: '190px', 
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 0 8px rgba(255, 120, 0, 0.35))',
+                flexShrink: 0
+              }} 
+            />
+          </div>
+          <div style={{ borderLeft: '1px solid rgba(57, 255, 20, 0.3)', paddingLeft: '14px' }}>
+            <div style={{ fontSize: '22px', color: '#fff', fontWeight: 'bold', letterSpacing: '1px' }}>ADMIN DASHBOARD</div>
+            <div style={{ fontSize: '11px', color: 'rgba(0,240,255,0.6)' }}>Live QR onboarding, sockets, timers, map telemetry</div>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
           {/* ML Core status indicator */}
