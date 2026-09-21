@@ -48,7 +48,7 @@ const Footer = () => {
         </div>
 
         <div style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(1rem, 3.5vw, 1.3rem)', color: '#ffffff', letterSpacing: '2px', fontWeight: 'bold' }}>
-          TREASURE HUNT
+          THE PRIPYAT EXODUS
         </div>
         
         <div style={{ 

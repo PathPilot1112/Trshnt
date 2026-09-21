@@ -349,7 +349,7 @@ function App() {
               </div>
 
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'rgba(155,168,168,0.4)', marginTop: '8px' }}>
-                RAD_LVL: 3.6R/hr // SECTOR: PRIPYAT
+                RAD_LVL: 3.6R/hr — SECTOR: PRIPYAT
               </div>
             </div>
           ) : (

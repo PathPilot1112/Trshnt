@@ -741,7 +741,7 @@ const Scan = ({ API_BASE, token, onAbort }) => {
         color: 'rgba(57, 255, 20, 0.7)',
         letterSpacing: '1px',
       }}>
-        STATUS // {logs[logs.length - 1] || 'SYSTEM ONLINE'}
+        STATUS: {logs[logs.length - 1] || 'SYSTEM ONLINE'}
       </div>
 
       {/* ═══════════════ RESULT MODAL ═══════════════ */}

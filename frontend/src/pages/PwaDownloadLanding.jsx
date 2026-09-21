@@ -40,7 +40,7 @@ const PwaDownloadLanding = () => {
     window.addEventListener('pwa-install-ready', syncPrompt);
     window.addEventListener('beforeinstallprompt', syncPrompt);
     window.addEventListener('appinstalled', () => {
-      setInstallStatus('App Installed Successfully! Launch Treasure Hunt from your home screen.');
+      setInstallStatus('App Installed Successfully! Launch The Pripyat Exodus from your home screen.');
       window.__pwaInstallPrompt = null;
       setDeferredPrompt(null);
     });
@@ -74,7 +74,7 @@ const PwaDownloadLanding = () => {
         promptEvent.prompt();
         const { outcome } = await promptEvent.userChoice;
         if (outcome === 'accepted') {
-          setInstallStatus('App Installed! Launch Treasure Hunt from your home screen.');
+          setInstallStatus('App Installed! Launch The Pripyat Exodus from your home screen.');
         } else {
           setInstallStatus('Installation deferred. Click below anytime to retry.');
         }
@@ -170,7 +170,7 @@ const PwaDownloadLanding = () => {
         </div>
 
         <div style={{ fontSize: '11px', letterSpacing: '2px', color: 'var(--color-neon-green, #2ee540)', textTransform: 'uppercase' }}>
-          TREASURE HUNT // APP INSTALLATION
+          THE PRIPYAT EXODUS — APP INSTALLATION
         </div>
 
         <h1 style={{
@@ -181,7 +181,7 @@ const PwaDownloadLanding = () => {
           margin: 0,
           fontFamily: 'var(--font-serif, "Cinzel", serif)'
         }}>
-          TREASURE HUNT
+          THE PRIPYAT EXODUS
         </h1>
 
         <p style={{
@@ -193,8 +193,8 @@ const PwaDownloadLanding = () => {
           fontFamily: 'var(--font-mono, monospace)'
         }}>
           {isIos
-            ? 'Access Protocol: Install Treasure Hunt to your home screen. The full 3D interactive terminal, confidential dossier registration, and GPS radar will unlock in app mode.'
-            : 'Access Protocol: Download & install the Treasure Hunt tactical app to your device. Once launched from your home screen, all 3D interfaces and clearance registration will unlock.'}
+            ? 'Access Protocol: Install The Pripyat Exodus to your home screen. The full 3D interactive terminal, confidential dossier registration, and GPS radar will unlock in app mode.'
+            : 'Access Protocol: Download & install The Pripyat Exodus app to your device. Once launched from your home screen, all 3D interfaces and clearance registration will unlock.'}
         </p>
 
         {/* Primary Action Button */}
@@ -298,7 +298,7 @@ const PwaDownloadLanding = () => {
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '15px', fontWeight: 'bold', color: 'var(--color-neon-green, #2ee540)', marginBottom: '16px', letterSpacing: '1px' }}>
               <Smartphone size={20} color="var(--color-neon-green, #2ee540)" />
-              {isIos ? '// INSTALL ON IOS SAFARI' : '// INSTALL ON ANDROID / PHONE / BROWSER'}
+              {isIos ? 'INSTALL ON IOS SAFARI' : 'INSTALL ON ANDROID, PHONE, OR DESKTOP BROWSER'}
             </div>
 
             {isIos ? (
@@ -306,13 +306,13 @@ const PwaDownloadLanding = () => {
                 <li>Tap the <strong>Share</strong> icon in Safari <Share size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />.</li>
                 <li>Scroll down and tap <strong>Add to Home Screen</strong> <PlusSquare size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />.</li>
                 <li>Tap <strong>Add</strong> in top-right corner.</li>
-                <li>Launch <strong>TREASURE HUNT</strong> from your Home Screen to unlock the 3D terminal!</li>
+                <li>Launch <strong>The Pripyat Exodus</strong> from your Home Screen to unlock the 3D terminal!</li>
               </ol>
             ) : (
               <ol style={{ paddingLeft: '20px', margin: 0, lineHeight: '1.8', fontSize: '13px', color: 'rgba(217, 224, 224, 0.9)' }}>
                 <li>Click the <strong>Install / Computer</strong> icon in the address bar, or open the browser menu (<strong>⋮</strong>).</li>
-                <li>Select <strong>Install Treasure Hunt</strong> or <strong>Add to Home Screen</strong>.</li>
-                <li>Confirm installation, then launch Treasure Hunt from your desktop/apps.</li>
+                <li>Select <strong>Install The Pripyat Exodus</strong> or <strong>Add to Home Screen</strong>.</li>
+                <li>Confirm installation, then launch The Pripyat Exodus from your apps.</li>
               </ol>
             )}
 

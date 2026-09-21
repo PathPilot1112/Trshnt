@@ -308,7 +308,7 @@ const RegistrationPage = ({ API_BASE = '/api', onRegisterSuccess, onCancel }) =>
         {/* Document Header */}
         <div className="doc-header">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.4rem' }}>
-            <div className="doc-meta">FORM-4B // DEPT OF BIO-RESEARCH // CLEARANCE LEVEL: OMEGA</div>
+            <div className="doc-meta">FORM-4B — DEPT OF BIO-RESEARCH — CLEARANCE LEVEL: OMEGA</div>
             <PwaInstallButton variant="dossier" />
           </div>
           <h2 className="doc-title">CONFIDENTIAL PROJECT CLEARANCE</h2>
@@ -337,7 +337,7 @@ const RegistrationPage = ({ API_BASE = '/api', onRegisterSuccess, onCancel }) =>
           color: '#8b0000',
           lineHeight: '1.4'
         }}>
-          <strong>[NOTICE // PARTICIPATION FEE]:</strong> Each team must pay a participation fee of <strong>₹50 per team</strong> before the hunt begins. The fee is <strong>non-refundable</strong> once the team has registered.
+          <strong>[NOTICE: PARTICIPATION FEE]:</strong> Each team must pay a participation fee of <strong>₹50 per team</strong> before the mission begins. The fee is <strong>non-refundable</strong> once the team has registered.
         </div>
 
         {error && (

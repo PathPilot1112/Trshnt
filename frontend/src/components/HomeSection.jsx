@@ -129,13 +129,13 @@ const HomeSection = () => {
 
       {/* Title Text Block (Top) */}
       <div className="home-title-block">
-        <h1 className="glitch-text" data-text="TREASURE" style={{ 
+        <h1 className="glitch-text" data-text="THE PRIPYAT" style={{ 
           fontSize: 'clamp(2.2rem, 7vw, 5.2rem)', 
           margin: 0,
           letterSpacing: 'clamp(2px, 1.5vw, 6px)',
           lineHeight: 1.05
         }}>
-          TREASURE
+          THE PRIPYAT
         </h1>
         <h2 style={{ 
           letterSpacing: 'clamp(4px, 2vw, 9px)', 
@@ -145,7 +145,7 @@ const HomeSection = () => {
           color: 'var(--color-neon-green, #2ee540)',
           fontWeight: 'bold'
         }}>
-          HUNT
+          EXODUS
         </h2>
       </div>
 

@@ -666,8 +666,8 @@ const AdminDashboard = ({ API_BASE }) => {
               }} 
             />
           </div>
-          <div style={{ fontSize: '11px', letterSpacing: '3px', color: 'rgba(57, 255, 20, 0.7)', marginBottom: '8px' }}>
-            TREASURE HUNT // ADMIN CONSOLE
+          <div style={{ fontSize: '11px', letterSpacing: '3px', color: 'rgba(46, 229, 64, 0.8)', marginBottom: '8px' }}>
+            THE PRIPYAT EXODUS — ADMIN CONSOLE
           </div>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#fff', letterSpacing: '2px', marginBottom: '24px' }}>
             COMMAND ACCESS

@@ -103,14 +103,13 @@ const Navigation = ({ onNavigate }) => {
             alt="Aaruush Logo" 
             style={{ 
               height: '32px', 
-              maxWidth: '150px',
+              maxWidth: '150px', 
               objectFit: 'contain',
               filter: 'drop-shadow(0 0 6px rgba(255, 120, 0, 0.4))',
               transition: 'transform 0.2s ease',
               flexShrink: 0
             }} 
           />
-          <span style={{ color: 'var(--color-neon-green, #2ee540)', fontSize: '1rem', marginLeft: '6px', fontWeight: 'bold' }}>TREASURE_HUNT</span>
         </div>
 
         {/* Desktop Links */}
@@ -206,7 +205,7 @@ const Navigation = ({ onNavigate }) => {
             width: '100%',
             maxWidth: '100vw',
             background: 'rgba(0, 24, 26, 0.98)',
-            borderBottom: '2px solid #39FF14',
+            borderBottom: '2px solid var(--color-neon-green, #2ee540)',
             boxShadow: '0 12px 36px rgba(0,0,0,0.95)',
             zIndex: 1002,
             display: 'flex',
@@ -226,7 +225,7 @@ const Navigation = ({ onNavigate }) => {
               style={{
                 background: 'transparent',
                 border: 'none',
-                borderBottom: '1px solid rgba(57, 255, 20, 0.2)',
+                borderBottom: '1px solid rgba(46, 229, 64, 0.2)',
                 color: '#D9E0E0',
                 padding: '10px 0',
                 textAlign: 'left',
@@ -237,16 +236,16 @@ const Navigation = ({ onNavigate }) => {
                 cursor: 'pointer'
               }}
             >
-              // {item}
+              {item}
             </button>
           ))}
 
           <button
             onClick={() => handleNavClick('Login')}
             style={{
-              background: 'rgba(57, 255, 20, 0.18)',
-              border: '1px solid #39FF14',
-              color: '#39FF14',
+              background: 'rgba(46, 229, 64, 0.18)',
+              border: '1px solid var(--color-neon-green, #2ee540)',
+              color: 'var(--color-neon-green, #2ee540)',
               padding: '12px',
               textAlign: 'center',
               fontSize: '0.95rem',

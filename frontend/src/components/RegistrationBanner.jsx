@@ -196,7 +196,7 @@ const RegistrationBanner = ({ onOpenRegister }) => {
               e.currentTarget.style.boxShadow = '0 0 20px rgba(57, 255, 20, 0.4)';
             }}
           >
-            ENLIST UNIT // REGISTER NOW ➔
+            ENLIST UNIT — REGISTER NOW ➔
           </button>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-accent)' }}>
             CLEARANCE PROTOCOL: OMEGA-4 REQUIRED

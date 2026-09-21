@@ -212,7 +212,7 @@ const Welcome = ({ onQrLogin }) => {
           <div className="pwa-notification-content">
             <div className="pwa-alert-icon">⚠️</div>
             <div className="pwa-notification-text">
-              <div className="pwa-notification-title">UPLINK_ALERT // PWA_DOWNLOAD_AVAILABLE</div>
+              <div className="pwa-notification-title">UPLINK ALERT — PWA DOWNLOAD AVAILABLE</div>
               <div>The Pripyat Exodus Tactical Interface can be downloaded to your terminal for offline mission data access.</div>
             </div>
           </div>
@@ -232,7 +232,7 @@ const Welcome = ({ onQrLogin }) => {
         <div className="net-info" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <img src="/logo1.png" alt="Fundaz Logo" style={{ height: '26px', width: '26px', borderRadius: '50%', background: '#fff', padding: '1px', boxShadow: '0 0 8px rgba(255, 255, 255, 0.4)' }} />
           <img src="/aaruush_logo_clean.png" alt="Aaruush Logo" style={{ height: '22px', maxWidth: '90px', objectFit: 'contain', filter: 'drop-shadow(0 0 6px rgba(255, 120, 0, 0.4))' }} />
-          <div className="operator-info" style={{ fontSize: '10px', color: 'var(--color-neon-green, #2ee540)', letterSpacing: '1px' }}>TREASURE HUNT // MISSION PROTOCOL</div>
+          <div className="operator-info" style={{ fontSize: '10px', color: 'var(--color-neon-green, #2ee540)', letterSpacing: '1px' }}>THE PRIPYAT EXODUS — MISSION PROTOCOL</div>
         </div>
         <div className="header-icons" style={{ gap: '8px' }}>
           <span className="red-stamp-mini">TOP SECRET</span>
@@ -246,7 +246,7 @@ const Welcome = ({ onQrLogin }) => {
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
         {/* === Classified Banner === */}
         <div className="classified-banner">
-          FORM-4B // CLEARANCE OMEGA // MISSION PROTOCOL ACTIVE
+          FORM-4B — CLEARANCE OMEGA — MISSION PROTOCOL ACTIVE
         </div>
 
         {/* === Title Block with Glitch & Parchment Text === */}
@@ -342,7 +342,7 @@ const Welcome = ({ onQrLogin }) => {
               marginBottom: '12px',
               textTransform: 'uppercase',
             }}>
-              TEAM_QR_SCANNER // ZONE_AUTH
+              TEAM_QR_SCANNER — ZONE_AUTHENTICATION
             </div>
 
             <div style={{
@@ -416,7 +416,7 @@ const Welcome = ({ onQrLogin }) => {
               marginBottom: '12px',
               textTransform: 'uppercase',
             }}>
-              TERMINAL_MANUAL_INSTALL // PROT_OS
+              TERMINAL_MANUAL_INSTALL — PROTOCOL
             </div>
 
             <div style={{ fontSize: '10px', lineHeight: '1.5', display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
