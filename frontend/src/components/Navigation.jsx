@@ -87,7 +87,7 @@ const Navigation = ({ onNavigate }) => {
           onClick={handleHomeClick}
         >
           <span style={{ color: '#39FF14', fontSize: '1rem' }}>☢</span>
-          ZONE_4
+          TREASURE_HUNT
         </div>
 
         {/* Desktop Links */}
@@ -236,7 +236,7 @@ const Navigation = ({ onNavigate }) => {
               borderRadius: '2px'
             }}
           >
-            LOGIN TO STALKER PDA [SCAN QR]
+            LOGIN VIA SCAN QR
           </button>
         </div>
       )}

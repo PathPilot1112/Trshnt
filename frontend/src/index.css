@@ -2082,3 +2082,115 @@ body {
   background-color: transparent;
   color: #ff3333;
 }
+
+/* ==========================================================================
+   ADMIN DASHBOARD RESPONSIVE GRID & BUTTON STATES
+   ========================================================================== */
+
+.admin-team-card-content {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.admin-team-info-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-team-btn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-route-select-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+/* Active & Feedback Button States */
+.cyber-btn-outline.is-active-loading,
+.cyber-btn.is-active-loading {
+  opacity: 0.85 !important;
+  border-color: #00e5ff !important;
+  color: #00e5ff !important;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.4) !important;
+  cursor: wait !important;
+  transform: scale(0.98);
+}
+
+.cyber-btn-outline.is-active-success,
+.cyber-btn.is-active-success {
+  background: rgba(57, 255, 20, 0.22) !important;
+  border-color: #39ff14 !important;
+  color: #39ff14 !important;
+  box-shadow: 0 0 14px rgba(57, 255, 20, 0.5) !important;
+  transform: scale(1.02);
+  transition: all 0.15s ease-in-out;
+}
+
+.cyber-btn-outline.is-active-error,
+.cyber-btn.is-active-error {
+  background: rgba(255, 77, 77, 0.2) !important;
+  border-color: #ff4d4d !important;
+  color: #ff4d4d !important;
+  box-shadow: 0 0 12px rgba(255, 77, 77, 0.4) !important;
+}
+
+/* Mobile Alignment & Button Grid Accessibility */
+@media (max-width: 768px) {
+  .admin-dashboard {
+    padding: 10px !important;
+  }
+
+  .admin-team-card-content {
+    flex-direction: column !important;
+    gap: 14px !important;
+  }
+
+  .admin-team-info-col {
+    width: 100% !important;
+  }
+
+  .admin-team-btn-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .admin-team-btn-grid button {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 8px 6px !important;
+    font-size: 11px !important;
+    min-height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  .admin-route-select-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .admin-route-select-row select {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .admin-route-select-row button {
+    width: 100% !important;
+  }
+}

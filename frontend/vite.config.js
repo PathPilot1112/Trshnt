@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
-        name: 'Zone 4: Exclusion Zone Gameplay & Registration',
-        short_name: 'Zone 4',
-        description: 'Interactive 3D Treasure Hunt Registration & Stalker PDA Mission System',
+        name: 'Treasure Hunt: Gameplay & Mission Terminal',
+        short_name: 'Treasure Hunt',
+        description: 'Interactive 3D Treasure Hunt Registration & Mission System',
         theme_color: '#002729',
         background_color: '#002729',
         display: 'standalone',

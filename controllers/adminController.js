@@ -43,13 +43,17 @@ const buildSnapshot = (teams) =>
 // --- Admin Authentication ---
 
 export const adminLogin = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, accessCode } = req.body;
   
   const targetEmail = process.env.ADMIN_MAIL || "admintest@gmail.com";
   const targetPassword = process.env.ADMIN_PASSWORD || "admin123";
 
-  if (email !== targetEmail || password !== targetPassword) {
-    return res.status(401).json({ message: "Invalid admin credentials" });
+  const code = accessCode || password;
+  const isMatch = (code && code === targetPassword) || 
+                  (email && email.toLowerCase() === targetEmail.toLowerCase() && password === targetPassword);
+
+  if (!isMatch) {
+    return res.status(401).json({ message: "Invalid admin access code" });
   }
 
   try {
@@ -270,11 +274,12 @@ export const resetTeamSession = async (req, res) => {
     if (!team) return res.status(404).json({ message: "Team not found" });
 
     team.activeSessionToken = null;
+    team.lastIp = null;
     await team.save();
 
     const io = req.app.get("io");
     if (io) {
-      io.emit("team:status", { teamId: team._id, status: team.status, activeSessionToken: null });
+      io.emit("team:status", { teamId: team._id, status: team.status, activeSessionToken: null, lastIp: null });
     }
 
     res.json({ message: "Team session lock & active IP reset successfully", team });
@@ -396,18 +401,14 @@ export const clearSubmissions = async (req, res) => {
 
     // 2. Delete from MongoDB
     await Submission.deleteMany({});
-    
-    // 3. Clear completedClues, score, and activeSessionToken for all teams
-    await Team.updateMany({}, { completedClues: [], cluePath: [], score: 0, currentClueIndex: 0, status: "not_started", activeSessionToken: null });
 
-    // Emit event to update leaderboard and reset dashboards
+    // Emit event to update submissions list on dashboards without wiping team progress
     const io = req.app.get("io");
     if (io) {
       io.emit("submissions:cleared");
-      io.emit("leaderboard:snapshot", []);
     }
 
-    res.json({ message: "All submissions and S3 images cleared successfully, teams reset." });
+    res.json({ message: "All submissions and storage images cleared successfully. Team progress has been preserved." });
   } catch (err) {
     res.status(500).json({ message: "Failed to clear submissions", error: err.message });
   }
