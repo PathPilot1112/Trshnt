@@ -139,7 +139,7 @@ const AdminDashboard = ({ API_BASE }) => {
 
   const getFullPhotoUrl = (photoUrl) => {
     if (!photoUrl) return '';
-    if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) {
+    if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://') || photoUrl.startsWith('data:')) {
       return photoUrl;
     }
     const base = API_BASE ? API_BASE.replace(/\/+$/, '') : '';
@@ -180,6 +180,16 @@ const AdminDashboard = ({ API_BASE }) => {
     if (!cid) return 'N/A';
     const found = clueLocations.find((loc) => String(loc.clueid) === String(cid) || String(loc.order) === String(cid));
     return found ? (found['clue text'] || found.clue_text || found.text) : 'N/A';
+  };
+
+  const getClueLocationText = (clue) => {
+    if (typeof clue === 'object' && (clue?.title || clue?.targetLabel || clue?.location)) {
+      return clue.title || clue.targetLabel || clue.location;
+    }
+    const cid = typeof clue === 'object' ? (clue?.clueId || clue?.order) : clue;
+    if (!cid) return 'Unknown Location';
+    const found = clueLocations.find((loc) => String(loc.clueid) === String(cid) || String(loc.order) === String(cid));
+    return found ? (found.title || found.targetLabel || found.location || 'Unknown Location') : 'Unknown Location';
   };
 
   const clearAdminSession = () => {
@@ -417,6 +427,15 @@ const AdminDashboard = ({ API_BASE }) => {
     const firstLocated = mergedTeams.find((team) => team.location?.lat && team.location?.lng);
     return firstLocated ? [firstLocated.location.lat, firstLocated.location.lng] : DEFAULT_CENTER;
   }, [mergedTeams]);
+
+  const filteredSubmissions = useMemo(() => {
+    if (!Array.isArray(submissions)) return [];
+    if (selectedTeamFilter === 'all') return submissions;
+    return submissions.filter((sub) => {
+      const teamId = sub.team?._id || sub.team;
+      return String(teamId) === String(selectedTeamFilter);
+    });
+  }, [submissions, selectedTeamFilter]);
 
   const authedFetch = async (url, options = {}) => {
     const response = await fetch(url, {
@@ -1434,108 +1453,153 @@ const AdminDashboard = ({ API_BASE }) => {
 
       {activeTab === 'submissions' && (
         <div style={{ display: 'grid', gap: '14px', maxHeight: '68vh', overflowY: 'auto', paddingRight: '6px' }}>
-          {filteredSubmissions.map((submission) => {
-            const isExpanded = !!expandedSubmissions[submission._id];
-            const photoUrl = getFullPhotoUrl(submission.photoUrl);
-            const matchLocation = getClueLocationText(submission.clue);
-            const clueText = getClueText(submission.clue);
+          {filteredSubmissions.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '40px 20px',
+              color: 'rgba(255,255,255,0.4)',
+              fontFamily: 'var(--font-mono, monospace)',
+              border: '1px dashed rgba(57,255,20,0.2)',
+              background: 'rgba(4, 18, 23, 0.4)'
+            }}>
+              NO SUBMISSIONS RECORDED YET {selectedTeamFilter !== 'all' ? 'FOR THIS TEAM' : ''}
+            </div>
+          ) : (
+            filteredSubmissions.map((submission) => {
+              const isExpanded = !!expandedSubmissions[submission._id];
+              const photoUrl = getFullPhotoUrl(submission.photoUrl);
+              const matchLocation = getClueLocationText(submission.clue);
+              const clueText = getClueText(submission.clue);
 
-            return (
-              <div
-                key={submission._id}
-                style={{
-                  border: `1px solid ${submission.isCorrect ? 'rgba(57,255,20,0.3)' : 'rgba(255,100,0,0.3)'}`,
-                  background: 'rgba(4, 18, 23, 0.85)',
-                  padding: '16px',
-                  boxShadow: submission.isCorrect ? '0 0 10px rgba(57,255,20,0.05)' : '0 0 10px rgba(255,100,0,0.05)',
-                  transition: 'all 0.3s ease'
-                }}
-              >
+              return (
                 <div
-                  onClick={() => toggleSubmission(submission._id)}
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
+                  key={submission._id}
+                  style={{
+                    border: `1px solid ${submission.isCorrect ? 'rgba(57,255,20,0.3)' : 'rgba(255,100,0,0.3)'}`,
+                    background: 'rgba(4, 18, 23, 0.85)',
+                    padding: '16px',
+                    boxShadow: submission.isCorrect ? '0 0 10px rgba(57,255,20,0.05)' : '0 0 10px rgba(255,100,0,0.05)',
+                    transition: 'all 0.3s ease'
+                  }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                    <span style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold' }}>{submission.team?.name || 'Unknown Team'}</span>
-                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
-                      ({new Date(submission.createdAt).toLocaleTimeString()})
-                    </span>
-                    <span style={{ fontSize: '11px', color: 'var(--green-primary)' }}>
-                      CLUE {submission.clue?.order || '?'}: {submission.clue?.title || 'Unknown'}
-                    </span>
-                  </div>
-                  
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span
-                      style={{
-                        fontSize: '9px',
-                        letterSpacing: '1px',
-                        fontWeight: 'bold',
-                        padding: '2px 8px',
-                        background: submission.isCorrect ? 'rgba(57,255,20,0.15)' : 'rgba(255,100,0,0.15)',
-                        color: submission.isCorrect ? '#39FF14' : '#FF6400',
-                        border: `1px solid ${submission.isCorrect ? '#39FF14' : '#FF6400'}`,
-                      }}
-                    >
-                      {submission.isCorrect ? 'VERIFIED' : 'REJECTED'}
-                    </span>
-                    <span style={{ fontSize: '11px', color: 'var(--green-primary)' }}>
-                      {isExpanded ? '[- COLLAPSE]' : '[+ EXPAND]'}
-                    </span>
-                  </div>
-                </div>
-
-                {isExpanded && (
-                  <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(57,255,20,0.1)', display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                    {/* Left Side: Thumbnail with Click to Zoom */}
-                    <div
-                      onClick={() => setSelectedPhoto(photoUrl)}
-                      style={{
-                        width: '120px',
-                        height: '120px',
-                        cursor: 'zoom-in',
-                        overflow: 'hidden',
-                        border: `1px solid ${submission.isCorrect ? 'rgba(57,255,20,0.5)' : 'rgba(255,100,0,0.5)'}`,
-                        boxShadow: '0 0 5px rgba(57,255,20,0.1)',
-                        position: 'relative'
-                      }}
-                    >
-                      <img
-                        src={photoUrl}
-                        alt="Submission Snapshot"
+                  <div
+                    onClick={() => toggleSubmission(submission._id)}
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                      <span style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold' }}>{submission.team?.name || 'Unknown Team'}</span>
+                      <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
+                        ({new Date(submission.createdAt).toLocaleTimeString()})
+                      </span>
+                      <span style={{ fontSize: '11px', color: 'var(--green-primary)' }}>
+                        CLUE {submission.clue?.order || '?'}: {submission.clue?.title || 'Unknown'}
+                      </span>
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span
                         style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          transition: 'transform 0.3s ease',
+                          fontSize: '9px',
+                          letterSpacing: '1px',
+                          fontWeight: 'bold',
+                          padding: '2px 8px',
+                          background: submission.isCorrect ? 'rgba(57,255,20,0.15)' : 'rgba(255,100,0,0.15)',
+                          color: submission.isCorrect ? '#39FF14' : '#FF6400',
+                          border: `1px solid ${submission.isCorrect ? '#39FF14' : '#FF6400'}`,
                         }}
-                        onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.1)')}
-                        onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1.0)')}
-                      />
-                    </div>
-
-                    {/* Right Side: Meta details */}
-                    <div style={{ flex: '1', minWidth: '260px' }}>
-                      <div style={{ fontSize: '12px', color: '#cbd5e1', fontStyle: 'italic', background: 'rgba(0,0,0,0.3)', padding: '6px 10px', borderLeft: '2px solid var(--green-primary)' }}>
-                        &ldquo;{clueText}&rdquo;
-                      </div>
-
-                      <div style={{ fontSize: '11px', marginTop: '8px', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px' }}>
-                        <span style={{ color: 'rgba(57,255,20,0.5)' }}>TARGET LOC:</span>
-                        <span style={{ color: '#ffb84d' }}>{matchLocation}</span>
-
-                        <span style={{ color: 'rgba(57,255,20,0.5)' }}>ML PREDICT:</span>
-                        <span>{submission.mlResult?.predictedLabel || 'N/A'}</span>
-
-                        <span style={{ color: 'rgba(57,255,20,0.5)' }}>CONFIDENCE:</span>
-                        <span>{Math.round((submission.mlResult?.confidence || 0) * 100)}%</span>
-                      </div>
+                      >
+                        {submission.isCorrect ? 'VERIFIED' : 'REJECTED'}
+                      </span>
+                      <span style={{ fontSize: '11px', color: 'var(--green-primary)' }}>
+                        {isExpanded ? '[- COLLAPSE]' : '[+ EXPAND]'}
+                      </span>
                     </div>
                   </div>
-                )}
-              </div>
-            );
-          })}
+
+                  {isExpanded && (
+                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(57,255,20,0.1)', display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                      {/* Left Side: Thumbnail with Click to Zoom */}
+                      <div
+                        onClick={() => setSelectedPhoto(photoUrl)}
+                        style={{
+                          width: '120px',
+                          height: '120px',
+                          cursor: 'zoom-in',
+                          overflow: 'hidden',
+                          border: `1px solid ${submission.isCorrect ? 'rgba(57,255,20,0.5)' : 'rgba(255,100,0,0.5)'}`,
+                          boxShadow: '0 0 5px rgba(57,255,20,0.1)',
+                          position: 'relative'
+                        }}
+                      >
+                        <img
+                          src={photoUrl}
+                          alt="Submission Snapshot"
+                          loading="lazy"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            transition: 'transform 0.3s ease',
+                          }}
+                          onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.1)')}
+                          onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1.0)')}
+                        />
+                      </div>
+
+                      {/* Right Side: Meta details */}
+                      <div style={{ flex: '1', minWidth: '260px' }}>
+                        <div style={{ fontSize: '12px', color: '#cbd5e1', fontStyle: 'italic', background: 'rgba(0,0,0,0.3)', padding: '6px 10px', borderLeft: '2px solid var(--green-primary)' }}>
+                          &ldquo;{clueText}&rdquo;
+                        </div>
+
+                        <div style={{ fontSize: '11px', marginTop: '8px', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px' }}>
+                          <span style={{ color: 'rgba(57,255,20,0.5)' }}>TARGET LOC:</span>
+                          <span style={{ color: '#ffb84d' }}>{matchLocation}</span>
+
+                          <span style={{ color: 'rgba(57,255,20,0.5)' }}>ML PREDICT:</span>
+                          <span>{submission.mlResult?.predictedLabel || 'N/A'}</span>
+
+                          <span style={{ color: 'rgba(57,255,20,0.5)' }}>CONFIDENCE:</span>
+                          <span>{Math.round((submission.mlResult?.confidence || 0) * 100)}%</span>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+                          <button
+                            onClick={() => handleToggleSubmissionAccepted(submission)}
+                            style={{
+                              padding: '5px 12px',
+                              fontSize: '11px',
+                              background: submission.isCorrect ? 'rgba(255,100,0,0.2)' : 'rgba(57,255,20,0.2)',
+                              color: submission.isCorrect ? '#ffaa00' : '#39ff14',
+                              border: `1px solid ${submission.isCorrect ? '#ffaa00' : '#39ff14'}`,
+                              cursor: 'pointer',
+                              fontFamily: 'inherit'
+                            }}
+                          >
+                            {submission.isCorrect ? 'OVERRIDE: MARK REJECTED' : 'OVERRIDE: MARK ACCEPTED'}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSubmission(submission._id)}
+                            style={{
+                              padding: '5px 12px',
+                              fontSize: '11px',
+                              background: 'rgba(239,68,68,0.2)',
+                              color: '#f87171',
+                              border: '1px solid #ef4444',
+                              cursor: 'pointer',
+                              fontFamily: 'inherit'
+                            }}
+                          >
+                            DELETE
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       )}
 
