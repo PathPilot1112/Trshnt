@@ -136,7 +136,7 @@ const RegistrationSuccess = ({ team, onDone }) => {
       </h2>
 
       <div style={{ color: 'var(--color-text)', fontSize: '0.9rem', lineHeight: '1.6', width: '100%', textAlign: 'center' }}>
-        Your unit has been successfully cleared for deployment into the exclusion zone. Anomaly tracking is active.
+        Your squad has been successfully cleared for deployment into the Treasure Hunt mission sectors. Checkpoint tracking is active.
       </div>
 
       <div style={{

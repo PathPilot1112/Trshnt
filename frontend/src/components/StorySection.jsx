@@ -227,7 +227,7 @@ const StorySection = () => {
               wordBreak: 'normal',
               overflowWrap: 'break-word'
             }}>
-              Decades after the catastrophic failure of Reactor 4, the exclusion zone remains sealed. But anomalies have begun to shift, revealing pathways to secure bunkers containing invaluable artifacts. You and your squad have been briefed. Your mission: infiltrate, secure the payload, and extract before the radiation consumes you.
+              Secured sectors have been sealed across campus. But tactical pathways have begun to shift, revealing hidden checkpoints containing invaluable mission artifacts. You and your squad have been briefed. Your mission: infiltrate, solve the clues, secure the payload, and extract in record time.
             </p>
           </div>
         </div>

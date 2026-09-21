@@ -85,7 +85,7 @@ const Navigation = ({ onNavigate }) => {
         >
           <img 
             src="/logo1.png" 
-            alt="Atomic Pi Logo" 
+            alt="Fundaz Logo" 
             style={{ 
               height: '36px', 
               width: '36px', 
@@ -93,23 +93,24 @@ const Navigation = ({ onNavigate }) => {
               borderRadius: '50%',
               background: '#ffffff',
               padding: '2px',
-              boxShadow: '0 0 10px rgba(255, 255, 255, 0.4)',
-              transition: 'transform 0.2s ease'
+              boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
+              transition: 'transform 0.2s ease',
+              flexShrink: 0
             }} 
           />
           <img 
-            src="/logo2.png" 
+            src="/aaruush_logo_clean.png" 
             alt="Aaruush Logo" 
             style={{ 
-              height: '36px', 
-              width: '36px', 
+              height: '32px', 
+              maxWidth: '150px',
               objectFit: 'contain',
-              borderRadius: '50%',
-              boxShadow: '0 0 10px rgba(255, 120, 0, 0.5)',
-              transition: 'transform 0.2s ease'
+              filter: 'drop-shadow(0 0 6px rgba(255, 120, 0, 0.4))',
+              transition: 'transform 0.2s ease',
+              flexShrink: 0
             }} 
           />
-          <span style={{ color: '#39FF14', fontSize: '1rem', marginLeft: '6px' }}>TREASURE_HUNT</span>
+          <span style={{ color: 'var(--color-neon-green, #2ee540)', fontSize: '1rem', marginLeft: '6px', fontWeight: 'bold' }}>TREASURE_HUNT</span>
         </div>
 
         {/* Desktop Links */}
@@ -137,7 +138,7 @@ const Navigation = ({ onNavigate }) => {
                     letterSpacing: '1px',
                     transition: 'color 0.2s ease'
                   }}
-                  onMouseEnter={(e) => e.target.style.color = '#39FF14'}
+                  onMouseEnter={(e) => e.target.style.color = 'var(--color-neon-green, #2ee540)'}
                   onMouseLeave={(e) => e.target.style.color = 'var(--color-text, #D9E0E0)'}
                 >
                   {item}
@@ -148,9 +149,9 @@ const Navigation = ({ onNavigate }) => {
               <button 
                 onClick={() => handleNavClick('Login')}
                 style={{
-                  background: 'rgba(57, 255, 20, 0.1)',
-                  border: '1px solid rgba(57, 255, 20, 0.4)',
-                  color: '#39FF14',
+                  background: 'rgba(46, 229, 64, 0.1)',
+                  border: '1px solid rgba(46, 229, 64, 0.4)',
+                  color: 'var(--color-neon-green, #2ee540)',
                   padding: '4px 10px',
                   cursor: 'pointer',
                   fontFamily: 'inherit',
@@ -174,9 +175,9 @@ const Navigation = ({ onNavigate }) => {
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Toggle Navigation Menu"
             style={{
-              background: 'rgba(57, 255, 20, 0.15)',
-              border: '1px solid #39FF14',
-              color: '#39FF14',
+              background: 'rgba(46, 229, 64, 0.15)',
+              border: '1px solid var(--color-neon-green, #2ee540)',
+              color: 'var(--color-neon-green, #2ee540)',
               padding: '6px 10px',
               borderRadius: '4px',
               cursor: 'pointer',

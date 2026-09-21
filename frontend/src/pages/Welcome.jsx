@@ -230,14 +230,14 @@ const Welcome = ({ onQrLogin }) => {
       {/* === Top classified header === */}
       <div className="stalker-header">
         <div className="net-info" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <img src="/logo1.png" alt="Logo 1" style={{ height: '26px', width: '26px', borderRadius: '50%', background: '#fff', padding: '1px', boxShadow: '0 0 8px rgba(255, 255, 255, 0.4)' }} />
-          <img src="/logo2.png" alt="Logo 2" style={{ height: '26px', width: '26px', borderRadius: '50%', boxShadow: '0 0 8px rgba(255, 120, 0, 0.5)' }} />
-          <div className="operator-info" style={{ fontSize: '10px', color: '#39FF14', letterSpacing: '1px' }}>PRIPYAT EXCLUSION ZONE</div>
+          <img src="/logo1.png" alt="Fundaz Logo" style={{ height: '26px', width: '26px', borderRadius: '50%', background: '#fff', padding: '1px', boxShadow: '0 0 8px rgba(255, 255, 255, 0.4)' }} />
+          <img src="/aaruush_logo_clean.png" alt="Aaruush Logo" style={{ height: '22px', maxWidth: '90px', objectFit: 'contain', filter: 'drop-shadow(0 0 6px rgba(255, 120, 0, 0.4))' }} />
+          <div className="operator-info" style={{ fontSize: '10px', color: 'var(--color-neon-green, #2ee540)', letterSpacing: '1px' }}>TREASURE HUNT // MISSION PROTOCOL</div>
         </div>
         <div className="header-icons" style={{ gap: '8px' }}>
           <span className="red-stamp-mini">TOP SECRET</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9px', color: 'var(--color-neon-green)' }}>
-            <Wifi size={11} style={{ filter: 'drop-shadow(0 0 4px #39FF14)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9px', color: 'var(--color-neon-green, #2ee540)' }}>
+            <Wifi size={11} style={{ filter: 'drop-shadow(0 0 4px rgba(46, 229, 64, 0.5))' }} />
             <span className="glow-text">UPLINK</span>
           </div>
         </div>
@@ -246,17 +246,17 @@ const Welcome = ({ onQrLogin }) => {
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
         {/* === Classified Banner === */}
         <div className="classified-banner">
-          FORM-4B // CLEARANCE OMEGA // CHERNOBYL PROTOCOL ACTIVE
+          FORM-4B // CLEARANCE OMEGA // MISSION PROTOCOL ACTIVE
         </div>
 
         {/* === Title Block with Glitch & Parchment Text === */}
         <div className="welcome-title-container" style={{ margin: '4px 0', textAlign: 'center' }}>
           <div
             className="welcome-title glitch-text"
-            data-text="WELCOME TO THE ZONE"
+            data-text="WELCOME OPERATIVE"
             style={{ fontSize: 'clamp(18px, 5vw, 24px)', color: 'var(--color-text)' }}
           >
-            WELCOME TO THE ZONE
+            WELCOME OPERATIVE
           </div>
           <div className="welcome-subtitle" style={{ color: 'var(--color-accent)', fontSize: '10px' }}>
             {typedText}

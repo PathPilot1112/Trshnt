@@ -9,7 +9,7 @@ const HomeSection = () => {
 
   // Typewriter effect state
   const [typedText, setTypedText] = useState('');
-  const fullText = "Descend into the exclusion zone. Follow the clues. Survive the radiation. Scroll to begin the transmission.";
+  const fullText = "Welcome to the Hunt. Follow the clues. Decode the transmissions. Scroll to begin.";
 
   useEffect(() => {
     let currentText = '';
@@ -59,32 +59,6 @@ const HomeSection = () => {
             opacity: 0.9;
           }
 
-          .home-telemetry-left {
-            position: absolute;
-            top: 4.8rem;
-            left: 1.2rem;
-            z-index: 20;
-            font-family: var(--font-mono);
-            font-size: 0.8rem;
-            color: var(--color-text);
-            pointer-events: none;
-            text-align: left;
-            line-height: 1.4;
-          }
-
-          .home-telemetry-right {
-            position: absolute;
-            top: 4.8rem;
-            right: 1.2rem;
-            z-index: 20;
-            font-family: var(--font-mono);
-            font-size: 0.8rem;
-            color: var(--color-text);
-            pointer-events: none;
-            text-align: right;
-            line-height: 1.4;
-          }
-
           .home-title-block {
             position: absolute;
             top: 15%;
@@ -115,17 +89,6 @@ const HomeSection = () => {
               height: clamp(190px, 56vw, 260px) !important;
               top: 50% !important;
             }
-            .home-telemetry-left, .home-telemetry-right {
-              font-size: 0.65rem !important;
-              top: 3.8rem !important;
-              line-height: 1.3 !important;
-            }
-            .home-telemetry-left {
-              left: 0.6rem !important;
-            }
-            .home-telemetry-right {
-              right: 0.6rem !important;
-            }
             .home-title-block {
               top: 20% !important;
               width: 95% !important;
@@ -142,7 +105,7 @@ const HomeSection = () => {
       <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1, overflow: 'hidden' }}>
         <MagicRings 
           color="#9BA8A8"
-          colorTwo="#39FF14"
+          colorTwo="var(--color-neon-green, #2ee540)"
           opacity={0.75}
           ringCount={5}
           baseRadius={0.18}
@@ -163,38 +126,26 @@ const HomeSection = () => {
       
       {/* CRT Scanlines Overlay */}
       <div className="scanlines"></div>
-      
-      {/* Classified UI Corners */}
-      <div className="home-telemetry-left">
-        SYS.BOOT: <span className="redacted">OK</span><br/>
-        PRTCL: <span style={{ color: '#39FF14' }}>ACTIVE</span><br/>
-        SEC.LVL: <span className="redacted">OMEGA</span>
-      </div>
-      <div className="home-telemetry-right">
-        RAD.LVL: <span style={{ color: '#39FF14' }}>3.6R/hr</span><br/>
-        <span className="redacted">NOT GREAT</span><br/>
-        <span className="redacted">NOT TERRIBLE</span>
-      </div>
 
       {/* Title Text Block (Top) */}
       <div className="home-title-block">
-        <h1 className="glitch-text" data-text="THE PRIPYAT" style={{ 
-          fontSize: 'clamp(2rem, 6.5vw, 5.2rem)', 
+        <h1 className="glitch-text" data-text="TREASURE" style={{ 
+          fontSize: 'clamp(2.2rem, 7vw, 5.2rem)', 
           margin: 0,
           letterSpacing: 'clamp(2px, 1.5vw, 6px)',
           lineHeight: 1.05
         }}>
-          THE PRIPYAT
+          TREASURE
         </h1>
         <h2 style={{ 
           letterSpacing: 'clamp(4px, 2vw, 9px)', 
-          fontSize: 'clamp(1.1rem, 3vw, 2.2rem)', 
+          fontSize: 'clamp(1.2rem, 3.2vw, 2.4rem)', 
           marginTop: '6px', 
           fontFamily: 'var(--font-serif, "Cinzel", serif)', 
-          color: '#39FF14',
+          color: 'var(--color-neon-green, #2ee540)',
           fontWeight: 'bold'
         }}>
-          EXODUS
+          HUNT
         </h2>
       </div>
 
@@ -204,17 +155,17 @@ const HomeSection = () => {
           marginInline: 'auto', 
           backgroundColor: 'rgba(0,39,41,0.92)',
           padding: '0.75rem 1rem',
-          border: '1px solid var(--color-neon-green)',
+          border: '1px solid var(--color-neon-green, #2ee540)',
           fontFamily: 'var(--font-mono)',
           fontSize: 'clamp(0.75rem, 2.4vw, 0.95rem)',
           lineHeight: 1.45,
           color: 'var(--color-text)',
           pointerEvents: 'auto',
           backdropFilter: 'blur(8px)',
-          boxShadow: '0 0 15px rgba(57, 255, 20, 0.15)',
+          boxShadow: '0 0 15px rgba(46, 229, 64, 0.15)',
           borderRadius: '3px'
         }}>
-          {typedText}<span className="terminal-cursor" style={{ color: '#39FF14' }}>_</span>
+          {typedText}<span className="terminal-cursor" style={{ color: 'var(--color-neon-green, #2ee540)' }}>_</span>
         </p>
       </div>
     </section>
