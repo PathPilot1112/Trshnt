@@ -1,13 +1,11 @@
 /**
  * Campus Locations with GPS Coordinates and Haversine distance calculator.
- * Filtered list excluding: Slice of Life, Dental College, Sports Complex, Pickleball Court, Mahatma Gandhi Statue, Sai Temple, Valamai College.
+ * Filtered & Deduplicated list excluding: Slice of Life, Dental College, Sports Complex, Pickleball Court, Mahatma Gandhi Statue, Sai Temple, Valamai College.
  */
 
 export const LOCATION_COORDINATES = {
   // ZONE 1
-  "Genz": { lat: 12.822841913197491, lng: 80.04249400973585, zone: "Zone 1" },
   "Genz Cafe": { lat: 12.822841913197491, lng: 80.04249400973585, zone: "Zone 1" },
-  "Rajaraja Chola": { lat: 12.823009293444368, lng: 80.04281319259249, zone: "Zone 1" },
   "Rajaraja Chola Statue": { lat: 12.823009293444368, lng: 80.04281319259249, zone: "Zone 1" },
   "Central Library": { lat: 12.823691889871549, lng: 80.04247255211634, zone: "Zone 1" },
   "Perignar Anna": { lat: null, lng: null, zone: "Zone 1", missingGps: true },
@@ -23,40 +21,40 @@ export const LOCATION_COORDINATES = {
   "Vendhar Square": { lat: 12.824056115180442, lng: 80.04531785843815, zone: "Zone 3" },
   "Fab Lab": { lat: 12.822479081518516, lng: 80.04566922780847, zone: "Zone 3" },
   "Noon Meal Scheme (M Block)": { lat: 12.82148, lng: 80.04522, zone: "Zone 3" },
-  "Noon Meal Scheme": { lat: 12.82148, lng: 80.04522, zone: "Zone 3" },
 
   // ZONE 4
   "TP Auditorium Gate": { lat: 12.824376, lng: 80.047331, zone: "Zone 4" },
-  "The gate of Dr. T. P. Ganesan Auditorium": { lat: 12.824376, lng: 80.047331, zone: "Zone 4" },
-  "Gym": { lat: 12.82611, lng: 80.04909, zone: "Zone 4" },
   "SRM Gymnasium": { lat: 12.82611, lng: 80.04909, zone: "Zone 4" },
 
   // ZONE 5
   "Bell Block": { lat: 12.823287214422754, lng: 80.04406929003538, zone: "Zone 5" },
-  "Bel Block": { lat: 12.823287214422754, lng: 80.04406929003538, zone: "Zone 5" },
   "MBA Gate": { lat: 12.823629, lng: 80.044732, zone: "Zone 5" },
   "Architecture Stonehenge": { lat: 12.824048269271172, lng: 80.04447028029426, zone: "Zone 5" },
-  "Stone Henge": { lat: 12.824048269271172, lng: 80.04447028029426, zone: "Zone 5" },
   "Clock Tower": { lat: 12.823026990716777, lng: 80.04482433186632, zone: "Zone 5" },
   "Architecture #SRM": { lat: null, lng: null, zone: "Zone 5", missingGps: true }
 };
 
 const LOCATION_ALIASES = {
-  belblock: "bellblock",
-  bellblock: "bellblock",
-  perarignaranna: "perignaranna",
-  perignaranna: "perignaranna",
-  srmlogotp: "srmtp",
-  srmtp: "srmtp",
-  srmlogo: "srmtp",
-  archsrm: "architecturesrm",
-  architecturesrm: "architecturesrm",
-  srmarchitectureblock: "architecturesrm",
-  thegateofdrtpganesanauditorium: "tpauditoriumgate",
-  tpauditoriumgate: "tpauditoriumgate",
-  stonehenge: "architecturestonehenge",
-  stoneedge: "architecturestonehenge",
-  architecturestonehenge: "architecturestonehenge"
+  genz: "Genz Cafe",
+  genzcafe: "Genz Cafe",
+  rajarajachola: "Rajaraja Chola Statue",
+  rajarajacholastatue: "Rajaraja Chola Statue",
+  noonmealscheme: "Noon Meal Scheme (M Block)",
+  noonmealschememblock: "Noon Meal Scheme (M Block)",
+  tpauditoriumgate: "TP Auditorium Gate",
+  thegateofdrtpganesanauditorium: "TP Auditorium Gate",
+  gym: "SRM Gymnasium",
+  srmgymnasium: "SRM Gymnasium",
+  belblock: "Bell Block",
+  bellblock: "Bell Block",
+  stonehenge: "Architecture Stonehenge",
+  architecturestonehenge: "Architecture Stonehenge",
+  perarignaranna: "Perignar Anna",
+  perignaranna: "Perignar Anna",
+  srmlogotp: "#SRM (TP)",
+  srmtp: "#SRM (TP)",
+  archsrm: "Architecture #SRM",
+  architecturesrm: "Architecture #SRM"
 };
 
 const cleanStr = (s) => (s || "").toLowerCase().replace(/^zone\s*\d+\s*[-_:]?\s*/, "").replace(/[^a-z0-9]/g, "");
