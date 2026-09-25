@@ -412,11 +412,13 @@ const RegistrationPage = ({ API_BASE = '/api', onRegisterSuccess, onCancel }) =>
                   onChange={(e) => setNumPlayers(parseInt(e.target.value))}
                   className="doc-select"
                 >
+                  <option value={2}>2 BIO-ASSETS</option>
                   <option value={3}>3 BIO-ASSETS</option>
                   <option value={4}>4 BIO-ASSETS</option>
                   <option value={5}>5 BIO-ASSETS</option>
                 </select>
               </div>
+
 
               <div className="input-row" style={{ marginTop: '0.5rem', background: 'rgba(0,0,0,0.03)', padding: '1rem', border: '1px dashed #1a1a1a' }}>
                 <label style={{ color: '#8b0000' }}>PAYMENT PROOF SCREENSHOT (FEE: ₹50 / TEAM):</label>

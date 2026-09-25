@@ -200,9 +200,10 @@ export const joinGame = async (req, res) => {
       return res.status(400).json({ msg: 'Please provide team name and team number.' });
     }
 
-    if (members.length < 3 || members.length > 5) {
-      return res.status(400).json({ msg: 'Team must have between 3 and 5 members.' });
+    if (members.length < 2 || members.length > 5) {
+      return res.status(400).json({ msg: 'Team must have between 2 and 5 members.' });
     }
+
 
     // Check if team name already exists
     const existingTeamName = await Team.findOne({ name: new RegExp(`^${teamName}$`, 'i') });
