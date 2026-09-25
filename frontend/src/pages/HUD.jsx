@@ -302,10 +302,10 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
         </div>
       </header>
 
-      {/* Gamified Top Telemetry Bar (Timer, Live GPS, Squad Supplies) */}
+      {/* Gamified Top Telemetry Bar (Live GPS, Squad Supplies) */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
+        gridTemplateColumns: 'repeat(2, 1fr)',
         gap: '6px',
         padding: '8px 10px',
         background: 'rgba(15, 23, 42, 0.85)',
@@ -313,21 +313,7 @@ const HUD = ({ API_BASE, operatorName, teamInfo, token, onNavigate, onLogout }) 
         borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
         flexShrink: 0
       }}>
-        {/* Stat 1: Timer */}
-        <div style={{
-          background: 'rgba(0, 0, 0, 0.4)',
-          borderRadius: '8px',
-          padding: '6px 4px',
-          textAlign: 'center',
-          border: '1px solid rgba(57, 255, 20, 0.25)'
-        }}>
-          <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            ⏰ Clock
-          </div>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--color-neon-green)', fontFamily: 'var(--font-mono)' }}>
-            {formatElapsed(elapsedMs)}
-          </div>
-        </div>
+
 
         {/* Stat 2: Live GPS Telemetry Indicator */}
         <div style={{

@@ -6,6 +6,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import RegistrationPage from './pages/RegistrationPage';
 import RegistrationSuccess from './pages/RegistrationSuccess';
 import HomeLandingPage from './pages/HomeLandingPage';
+import PwaDownloadLanding from './pages/PwaDownloadLanding';
 import ScanlineOverlay from './components/ScanlineOverlay';
 import BackgroundCanvas from './components/BackgroundCanvas';
 
@@ -15,6 +16,39 @@ function App() {
   const [operatorName, setOperatorName] = useState('');
   const [teamInfo, setTeamInfo] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem('chernobyl_token') || localStorage.getItem('treasure_token') || '');
+  const [forceWeb, setForceWeb] = useState(false);
+
+  const [isPwa, setIsPwa] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return Boolean(
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.navigator.standalone === true ||
+      document.referrer.includes('android-app://')
+    );
+  });
+
+  useEffect(() => {
+    const checkPwa = () => {
+      const standalone = Boolean(
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.matchMedia('(display-mode: fullscreen)').matches ||
+        window.navigator.standalone === true ||
+        document.referrer.includes('android-app://')
+      );
+      setIsPwa(standalone);
+    };
+
+    checkPwa();
+    window.addEventListener('resize', checkPwa);
+    const media = window.matchMedia('(display-mode: standalone)');
+    if (media.addEventListener) media.addEventListener('change', checkPwa);
+
+    return () => {
+      window.removeEventListener('resize', checkPwa);
+      if (media.removeEventListener) media.removeEventListener('change', checkPwa);
+    };
+  }, []);
 
   const getInitialRoute = () => {
     const hash = typeof window !== 'undefined' ? window.location.hash : '';
@@ -34,6 +68,7 @@ function App() {
   const [currentRoute, setCurrentRoute] = useState(getInitialRoute);
   const [isLoading, setIsLoading] = useState(true);
   const [registeredTeam, setRegisteredTeam] = useState(null);
+
 
   // Parse route from URL hash changes without arbitrary page redirects
   useEffect(() => {
@@ -189,7 +224,25 @@ function App() {
     window.location.hash = `#${route}`;
   };
 
-  // Home Landing Page (Full website landing page from chiru webpage)
+  // Admin page — full screen, no PDA frame (Always accessible)
+  if (currentRoute === 'admin') {
+    return (
+      <AdminDashboard API_BASE={API_BASE} />
+    );
+  }
+
+  // If opening link directly in standard browser tab (not standalone PWA app), show Download App page first
+  if (!isPwa && !forceWeb) {
+    return (
+      <PwaDownloadLanding
+        onContinueToWeb={() => setForceWeb(true)}
+        onOpenRegister={() => { setForceWeb(true); window.location.hash = '#register'; }}
+        onOpenAdmin={() => window.location.hash = '#admin'}
+      />
+    );
+  }
+
+  // Home Landing Page
   if (currentRoute === 'home') {
     return (
       <HomeLandingPage
@@ -198,12 +251,6 @@ function App() {
     );
   }
 
-  // Admin page — full screen, no PDA frame
-  if (currentRoute === 'admin') {
-    return (
-      <AdminDashboard API_BASE={API_BASE} />
-    );
-  }
 
   // Registration — full viewport confidential dossier
   if (currentRoute === 'register') {
