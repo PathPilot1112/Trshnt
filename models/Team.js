@@ -46,6 +46,9 @@ const teamSchema = new mongoose.Schema(
     activeSessionToken: { type: String, default: null },
     lastIp: { type: String, default: null },
 
+    paymentScreenshotUrl: { type: String, default: null },
+    paymentVerified: { type: Boolean, default: false },
+
     
     location: {
       lat: Number,

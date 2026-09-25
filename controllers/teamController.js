@@ -2,6 +2,7 @@ import Team from "../models/Team.js";
 import User from "../models/User.js";
 import Clue from "../models/Clue.js";
 import { assignRouteToTeam } from "../utils/cluePath.js";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
@@ -13,6 +14,7 @@ const buildToken = (userId, role, sessionToken = null) =>
 const buildTeamPayload = (team) => ({
   id: team._id,
   name: team.name,
+  teamNumber: team.teamNumber,
   status: team.status,
   score: team.score,
   currentClueIndex: team.currentClueIndex,
@@ -23,7 +25,10 @@ const buildTeamPayload = (team) => ({
   timerAccumulatedMs: team.timerAccumulatedMs,
   timerRunning: team.timerRunning,
   location: team.location,
+  paymentScreenshotUrl: team.paymentScreenshotUrl,
+  paymentVerified: team.paymentVerified,
 });
+
 
 const parseQrPayload = (qrData) => {
   if (!qrData || typeof qrData !== "string") return null;
@@ -103,8 +108,21 @@ export const validateMember = async (req, res) => {
   }
 };
 
+export const uploadPaymentScreenshot = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ msg: "No file uploaded." });
+    }
+    const url = await uploadToCloudinary(req.file.buffer);
+    return res.status(200).json({ success: true, url });
+  } catch (err) {
+    console.error("Error uploading payment screenshot:", err);
+    return res.status(500).json({ msg: "Failed to upload payment screenshot", error: err.message });
+  }
+};
+
 export const joinGame = async (req, res) => {
-  const { teamName, teamNumber, members, operatorName } = req.body;
+  const { teamName, teamNumber, members, operatorName, paymentScreenshotUrl } = req.body;
 
   // Fallback to original single player logic if members array is not provided
   if (!members || !Array.isArray(members)) {
@@ -145,6 +163,7 @@ export const joinGame = async (req, res) => {
           team = new Team({
             name: finalTeamName,
             teamNumber: teamNumber || `TH-${randomNum}`,
+            paymentScreenshotUrl: paymentScreenshotUrl || null,
             status: "not_started"
           });
         }
@@ -260,6 +279,8 @@ export const joinGame = async (req, res) => {
     const newTeam = new Team({
       name: teamName,
       teamNumber,
+      paymentScreenshotUrl: paymentScreenshotUrl || null,
+      paymentVerified: false,
       status: "not_started"
     });
 

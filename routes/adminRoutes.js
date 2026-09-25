@@ -27,6 +27,9 @@ import {
   clearAllReports,
   updateTeam,
   deleteTeam,
+  verifyTeamPayment,
+  updateSubmission,
+  deleteSubmission,
 } from "../controllers/adminController.js";
 import { protect, adminOnly } from "../middleware/auth.js";
 
@@ -37,6 +40,8 @@ router.get("/leaderboard", protect, getLeaderboard);
 router.get("/leaderboard/live", protect, adminOnly, getLeaderboardSnapshot);
 router.get("/teams", protect, adminOnly, listTeams);
 router.get("/submissions", protect, adminOnly, listSubmissions);
+router.put("/submissions/:id", protect, adminOnly, updateSubmission);
+router.delete("/submissions/:id", protect, adminOnly, deleteSubmission);
 router.post("/submissions/clear", protect, adminOnly, clearSubmissions);
 router.get("/clue-locations", protect, adminOnly, getClueLocations);
 router.get("/routes", protect, adminOnly, getAllRoutes);
@@ -56,6 +61,7 @@ router.put("/reports/:id/status", protect, adminOnly, updateReportStatus);
 router.delete("/reports/clear", protect, adminOnly, clearAllReports);
 router.delete("/reports/:id", protect, adminOnly, deleteReport);
 
+router.put("/teams/:id/verify-payment", protect, adminOnly, verifyTeamPayment);
 router.put("/teams/:id", protect, adminOnly, updateTeam);
 router.delete("/teams/:id", protect, adminOnly, deleteTeam);
 
@@ -69,3 +75,4 @@ router.post("/teams/:id/reset-session", protect, adminOnly, resetTeamSession);
 router.post("/teams/:id/clue-override", protect, adminOnly, clueOverride);
 
 export default router;
+

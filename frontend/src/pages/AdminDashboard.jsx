@@ -199,7 +199,94 @@ const AdminDashboard = ({ API_BASE }) => {
     setIsAdmin(false);
   };
 
+  const downloadCSV = (data, filename) => {
+    if (!data || !data.length) return;
+    const headers = Object.keys(data[0]);
+    const csvRows = [];
+    csvRows.push(headers.join(','));
+
+    for (const row of data) {
+      const values = headers.map(header => {
+        const val = row[header];
+        if (val === null || val === undefined) return '""';
+        const escaped = String(val).replace(/"/g, '""');
+        return `"${escaped}"`;
+      });
+      csvRows.push(values.join(','));
+    }
+
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDownloadTeamsCSV = () => {
+    if (!teams || !teams.length) {
+      showBanner('No Teams', 'No team data available to export.', 'warning');
+      return;
+    }
+    const exportData = teams.map((t) => ({
+      'Team Name': t.name || '',
+      'Team Number': t.teamNumber || '',
+      'Status': t.status || 'not_started',
+      'Score': t.score || 0,
+      'Current Clue Index': t.currentClueIndex || 0,
+      'Payment Verified': t.paymentVerified ? 'YES' : 'NO',
+      'Payment Screenshot URL': t.paymentScreenshotUrl || 'N/A',
+      'Members Count': t.members?.length || 0,
+      'Member Names': t.members?.map(m => typeof m === 'object' ? m.name : m).join('; ') || '',
+      'Member Emails': t.members?.map(m => typeof m === 'object' ? m.email : '').filter(Boolean).join('; ') || '',
+      'Member Phones': t.members?.map(m => typeof m === 'object' ? m.contactNumber : '').filter(Boolean).join('; ') || '',
+      'Member Reg Numbers': t.members?.map(m => typeof m === 'object' ? m.registerNumber : '').filter(Boolean).join('; ') || '',
+      'Assigned Route ID': t.assignedRouteId || 'N/A',
+      'Created At': t.createdAt ? new Date(t.createdAt).toLocaleString() : ''
+    }));
+    downloadCSV(exportData, `teams_export_${Date.now()}.csv`);
+    showBanner('CSV Downloaded', 'Teams CSV exported successfully!');
+  };
+
+  const handleDownloadSubmissionsCSV = () => {
+    if (!submissions || !submissions.length) {
+      showBanner('No Submissions', 'No submission data available to export.', 'warning');
+      return;
+    }
+    const exportData = submissions.map((s) => ({
+      'Submission ID': s._id,
+      'Team Name': s.team?.name || 'Unknown Team',
+      'Clue Order': s.clue?.order || 'N/A',
+      'Clue Title': s.clue?.title || 'N/A',
+      'Photo URL': s.photoUrl || '',
+      'ML Predicted Label': s.mlResult?.predictedLabel || 'N/A',
+      'ML Confidence (%)': s.mlResult?.confidence ? Math.round(s.mlResult.confidence * 100) + '%' : 'N/A',
+      'Verified Status': s.isCorrect ? 'ACCEPTED' : 'REJECTED',
+      'Submitted At': s.createdAt ? new Date(s.createdAt).toLocaleString() : ''
+    }));
+    downloadCSV(exportData, `submissions_export_${Date.now()}.csv`);
+    showBanner('CSV Downloaded', 'Submissions CSV exported successfully!');
+  };
+
+  const handleToggleVerifyPayment = async (team) => {
+    const nextVal = !team.paymentVerified;
+    try {
+      await authedFetch(`${API_BASE}/admin/teams/${team._id}/verify-payment`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentVerified: nextVal }),
+      });
+      setTeams((prev) => prev.map((t) => (t._id === team._id ? { ...t, paymentVerified: nextVal } : t)));
+      showBanner('Payment Updated', `Team "${team.name}" payment marked as ${nextVal ? 'VERIFIED ✓' : 'UNVERIFIED'}`);
+    } catch (err) {
+      showBanner('Update Failed', err.message, 'error');
+    }
+  };
+
   const fetchDashboardData = async () => {
+
     const headers = { Authorization: `Bearer ${adminToken}` };
     const [teamsRes, submissionsRes, leaderboardRes, clueLocationsRes, routesRes, sysRes, repRes] = await Promise.all([
       fetch(`${API_BASE}/admin/teams`, { headers }),
@@ -1001,6 +1088,9 @@ const AdminDashboard = ({ API_BASE }) => {
         <button className={`cyber-btn-outline ${activeTab === 'teams' ? 'glow-text' : ''}`} onClick={() => setActiveTab('teams')}>
           <Users size={14} /> Teams
         </button>
+        <button className={`cyber-btn-outline ${activeTab === 'payments' ? 'glow-text' : ''}`} onClick={() => setActiveTab('payments')} style={{ borderColor: 'rgba(57,255,20,0.5)', color: '#39ff14' }}>
+          <Shield size={14} /> Payment Verification ({teams.filter(t => t.paymentVerified).length}/{teams.length})
+        </button>
         <button className={`cyber-btn-outline ${activeTab === 'map' ? 'glow-text' : ''}`} onClick={() => setActiveTab('map')}>
           <Map size={14} /> Map
         </button>
@@ -1014,26 +1104,36 @@ const AdminDashboard = ({ API_BASE }) => {
 
       {activeTab === 'submissions' && (
         <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '12px', color: 'rgba(0,240,255,0.6)' }}>FILTER BY TEAM:</span>
-            <select
-              value={selectedTeamFilter}
-              onChange={(e) => setSelectedTeamFilter(e.target.value)}
-              style={{
-                background: '#020b0d',
-                color: 'var(--cyan-primary)',
-                border: '1px solid var(--cyan-primary)',
-                padding: '6px 12px',
-                fontFamily: "'Share Tech Mono', monospace",
-                outline: 'none',
-                cursor: 'pointer'
-              }}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '12px', color: 'rgba(0,240,255,0.6)' }}>FILTER BY TEAM:</span>
+              <select
+                value={selectedTeamFilter}
+                onChange={(e) => setSelectedTeamFilter(e.target.value)}
+                style={{
+                  background: '#020b0d',
+                  color: 'var(--cyan-primary)',
+                  border: '1px solid var(--cyan-primary)',
+                  padding: '6px 12px',
+                  fontFamily: "'Share Tech Mono', monospace",
+                  outline: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="all">ALL TEAMS</option>
+                {teams.map((t) => (
+                  <option key={t._id} value={t._id}>{t.name}</option>
+                ))}
+              </select>
+            </div>
+            
+            <button
+              className="cyber-btn-outline"
+              style={{ borderColor: '#00e5ff', color: '#00e5ff', padding: '6px 14px', fontSize: '11px', cursor: 'pointer' }}
+              onClick={handleDownloadSubmissionsCSV}
             >
-              <option value="all">ALL TEAMS</option>
-              {teams.map((t) => (
-                <option key={t._id} value={t._id}>{t.name}</option>
-              ))}
-            </select>
+              📥 DOWNLOAD SUBMISSIONS CSV
+            </button>
           </div>
 
           <button 
@@ -1062,11 +1162,20 @@ const AdminDashboard = ({ API_BASE }) => {
             gap: '12px',
             backdropFilter: 'blur(10px)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Trophy size={18} color="#ffd700" />
-              <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#ffd700', letterSpacing: '1px' }}>
-                LIVE LEADERBOARD & TIME RANKINGS ({mergedTeams.length} TEAMS)
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Trophy size={18} color="#ffd700" />
+                <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#ffd700', letterSpacing: '1px' }}>
+                  LIVE LEADERBOARD & TIME RANKINGS ({mergedTeams.length} TEAMS)
+                </span>
+              </div>
+              <button
+                className="cyber-btn-outline"
+                style={{ borderColor: '#39ff14', color: '#39ff14', padding: '6px 14px', fontSize: '11px', cursor: 'pointer' }}
+                onClick={handleDownloadTeamsCSV}
+              >
+                📥 DOWNLOAD TEAMS CSV
+              </button>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>SORT / RANK BY:</span>
@@ -1091,6 +1200,7 @@ const AdminDashboard = ({ API_BASE }) => {
               </select>
             </div>
           </div>
+
 
           {mergedTeams.map((team, index) => {
             const isExpanded = !!expandedTeams[team._id];
@@ -1263,14 +1373,47 @@ const AdminDashboard = ({ API_BASE }) => {
                         }}>
                           {team.lastIp ? `IP: ${team.lastIp}` : 'IP: UNBOUND'}
                         </span>
+
+                        {/* Payment Verification Status Badge & Toggle */}
+                        <span style={{
+                          fontSize: '11px',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          fontWeight: 'bold',
+                          border: `1px solid ${team.paymentVerified ? '#39ff14' : '#ffaa00'}`,
+                          background: team.paymentVerified ? 'rgba(57,255,20,0.15)' : 'rgba(255,170,0,0.15)',
+                          color: team.paymentVerified ? '#39ff14' : '#ffaa00',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          cursor: 'pointer'
+                        }}
+                        onClick={(e) => { e.stopPropagation(); handleToggleVerifyPayment(team); }}
+                        title="Click to toggle payment verification"
+                        >
+                          {team.paymentVerified ? '💳 PAYMENT VERIFIED ✓' : '💳 PAYMENT PENDING ⏳'}
+                        </span>
                       </div>
+
+                      {team.paymentScreenshotUrl && (
+                        <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>PAYMENT PROOF:</span>
+                          <img 
+                            src={getFullPhotoUrl(team.paymentScreenshotUrl)} 
+                            alt="Payment Proof"
+                            onClick={(e) => { e.stopPropagation(); setSelectedPhoto(getFullPhotoUrl(team.paymentScreenshotUrl)); }}
+                            style={{ width: '45px', height: '45px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #39ff14', cursor: 'zoom-in' }}
+                          />
+                        </div>
+                      )}
 
                       <div style={{ fontSize: '11px', marginTop: '6px' }}>
                         GPS: {team.location?.lat ? `${team.location.lat.toFixed(5)}, ${team.location.lng.toFixed(5)}` : 'No live coordinates yet'}
                       </div>
                       <div style={{ fontSize: '11px', marginTop: '6px', color: '#fff' }}>
-                        MEMBERS: {team.members?.map(m => m.name).join(', ') || 'None'}
+                        MEMBERS: {team.members?.map(m => typeof m === 'object' ? m.name : m).join(', ') || 'None'}
                       </div>
+
 
                       {/* Route Selection Dropdown */}
                       <div style={{ marginTop: '12px', padding: '10px', background: 'rgba(0,0,0,0.3)', border: `1px solid ${systemState.testDevMode ? '#ffaa00' : 'rgba(0,229,255,0.25)'}`, borderRadius: '6px' }}>
@@ -1421,7 +1564,143 @@ const AdminDashboard = ({ API_BASE }) => {
         </div>
       )}
 
+      {activeTab === 'payments' && (
+        <div style={{ display: 'grid', gap: '14px', maxHeight: '72vh', overflowY: 'auto', paddingRight: '6px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(3,12,15,0.85)', padding: '12px 18px', border: '1px solid rgba(57,255,20,0.3)', borderRadius: '8px', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ color: '#39ff14', fontWeight: 'bold', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Shield size={16} /> REGISTRATION PAYMENT VERIFICATION LOG ({teams.length} TOTAL TEAMS)
+            </div>
+            <div style={{ display: 'flex', gap: '12px', fontSize: '11px' }}>
+              <span style={{ color: '#39ff14', background: 'rgba(57,255,20,0.1)', padding: '4px 10px', border: '1px solid #39ff14', borderRadius: '4px' }}>
+                VERIFIED: {teams.filter(t => t.paymentVerified).length}
+              </span>
+              <span style={{ color: '#ffaa00', background: 'rgba(255,170,0,0.1)', padding: '4px 10px', border: '1px solid #ffaa00', borderRadius: '4px' }}>
+                PENDING: {teams.filter(t => !t.paymentVerified).length}
+              </span>
+            </div>
+          </div>
+
+          {teams.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.4)', border: '1px dashed rgba(57,255,20,0.2)', background: 'rgba(4,18,23,0.4)' }}>
+              NO TEAMS REGISTERED YET
+            </div>
+          ) : (
+            teams.map((team) => {
+              const photoUrl = getFullPhotoUrl(team.paymentScreenshotUrl);
+              return (
+                <div
+                  key={team._id}
+                  style={{
+                    background: 'rgba(4, 18, 23, 0.85)',
+                    border: `1px solid ${team.paymentVerified ? 'rgba(57,255,20,0.4)' : 'rgba(255,170,0,0.4)'}`,
+                    padding: '16px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '20px',
+                    flexWrap: 'wrap',
+                    boxShadow: team.paymentVerified ? '0 0 10px rgba(57,255,20,0.05)' : '0 0 10px rgba(255,170,0,0.05)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                    {/* Payment Screenshot Thumbnail */}
+                    {photoUrl ? (
+                      <div
+                        onClick={() => setSelectedPhoto(photoUrl)}
+                        style={{
+                          width: '90px',
+                          height: '90px',
+                          cursor: 'zoom-in',
+                          overflow: 'hidden',
+                          border: `2px solid ${team.paymentVerified ? '#39ff14' : '#ffaa00'}`,
+                          borderRadius: '6px',
+                          position: 'relative'
+                        }}
+                      >
+                        <img
+                          src={photoUrl}
+                          alt="Payment Screenshot"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      </div>
+                    ) : (
+                      <div style={{
+                        width: '90px',
+                        height: '90px',
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px dashed rgba(255,255,255,0.2)',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '9px',
+                        color: 'rgba(255,255,255,0.4)',
+                        textAlign: 'center',
+                        padding: '4px'
+                      }}>
+                        NO SCREENSHOT
+                      </div>
+                    )}
+
+                    {/* Details */}
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff' }}>{team.name}</span>
+                        <span style={{ fontSize: '11px', color: 'rgba(0,240,255,0.8)', fontFamily: 'Courier New, monospace' }}>
+                          [{team.teamNumber || 'N/A'}]
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', marginTop: '4px' }}>
+                        MEMBERS ({team.members?.length || 0}): {team.members?.map(m => typeof m === 'object' ? m.name : m).join(', ') || 'None'}
+                      </div>
+                      <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>
+                        REGISTERED: {team.createdAt ? new Date(team.createdAt).toLocaleString() : 'N/A'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Status & Toggle Button */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      padding: '4px 10px',
+                      borderRadius: '4px',
+                      letterSpacing: '1px',
+                      background: team.paymentVerified ? 'rgba(57,255,20,0.15)' : 'rgba(255,170,0,0.15)',
+                      color: team.paymentVerified ? '#39ff14' : '#ffaa00',
+                      border: `1px solid ${team.paymentVerified ? '#39ff14' : '#ffaa00'}`
+                    }}>
+                      {team.paymentVerified ? 'VERIFIED ✓' : 'PENDING ⏳'}
+                    </span>
+
+                    <button
+                      onClick={() => handleToggleVerifyPayment(team)}
+                      style={{
+                        padding: '8px 16px',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        fontFamily: "'Share Tech Mono', monospace",
+                        background: team.paymentVerified ? 'rgba(255,170,0,0.2)' : 'rgba(57,255,20,0.2)',
+                        color: team.paymentVerified ? '#ffaa00' : '#39ff14',
+                        border: `1px solid ${team.paymentVerified ? '#ffaa00' : '#39ff14'}`,
+                        borderRadius: '4px'
+                      }}
+                    >
+                      {team.paymentVerified ? 'MARK AS UNVERIFIED' : 'ACCEPT & VERIFY PAYMENT'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
       {activeTab === 'map' && (
+
         <div style={{ border: '1px solid rgba(0,240,255,0.2)', background: 'rgba(3,12,15,0.75)', padding: '16px' }}>
           <div style={{ color: '#fff', marginBottom: '12px' }}>LIVE TEAM POSITIONS / OPENSTREETMAP</div>
           <div style={{ height: '65vh', minHeight: '420px' }}>
@@ -1483,20 +1762,33 @@ const AdminDashboard = ({ API_BASE }) => {
                   }}
                 >
                   <div
-                    onClick={() => toggleSubmission(submission._id)}
-                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none', gap: '12px', flexWrap: 'wrap' }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                      <span style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold' }}>{submission.team?.name || 'Unknown Team'}</span>
-                      <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
-                        ({new Date(submission.createdAt).toLocaleTimeString()})
-                      </span>
-                      <span style={{ fontSize: '11px', color: 'var(--green-primary)' }}>
-                        CLUE {submission.clue?.order || '?'}: {submission.clue?.title || 'Unknown'}
-                      </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }} onClick={() => toggleSubmission(submission._id)}>
+                      {/* Photo Thumbnail in header */}
+                      {photoUrl ? (
+                        <img 
+                          src={photoUrl} 
+                          alt="Submission Photo" 
+                          onClick={(e) => { e.stopPropagation(); setSelectedPhoto(photoUrl); }}
+                          style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px', border: `1px solid ${submission.isCorrect ? '#39ff14' : '#ffaa00'}`, cursor: 'zoom-in' }}
+                        />
+                      ) : null}
+
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold' }}>{submission.team?.name || 'Unknown Team'}</span>
+                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
+                            ({new Date(submission.createdAt).toLocaleTimeString()})
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--green-primary)', marginTop: '2px' }}>
+                          CLUE {submission.clue?.order || '?'}: {submission.clue?.title || 'Unknown'}
+                        </div>
+                      </div>
                     </div>
                     
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                       <span
                         style={{
                           fontSize: '9px',
@@ -1508,9 +1800,31 @@ const AdminDashboard = ({ API_BASE }) => {
                           border: `1px solid ${submission.isCorrect ? '#39FF14' : '#FF6400'}`,
                         }}
                       >
-                        {submission.isCorrect ? 'VERIFIED' : 'REJECTED'}
+                        {submission.isCorrect ? 'VERIFIED ✓' : 'REJECTED ✗'}
                       </span>
-                      <span style={{ fontSize: '11px', color: 'var(--green-primary)' }}>
+
+                      {/* Explicit Accept / Reject button with photo */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleSubmissionAccepted(submission);
+                        }}
+                        style={{
+                          padding: '5px 12px',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          background: submission.isCorrect ? 'rgba(255,100,0,0.2)' : 'rgba(57,255,20,0.25)',
+                          color: submission.isCorrect ? '#ffaa00' : '#39ff14',
+                          border: `1px solid ${submission.isCorrect ? '#ffaa00' : '#39ff14'}`,
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                          borderRadius: '4px'
+                        }}
+                      >
+                        {submission.isCorrect ? '✗ REJECT' : '✓ ACCEPT SUBMISSION'}
+                      </button>
+
+                      <span style={{ fontSize: '11px', color: 'var(--green-primary)' }} onClick={() => toggleSubmission(submission._id)}>
                         {isExpanded ? '[- COLLAPSE]' : '[+ EXPAND]'}
                       </span>
                     </div>
@@ -1522,13 +1836,14 @@ const AdminDashboard = ({ API_BASE }) => {
                       <div
                         onClick={() => setSelectedPhoto(photoUrl)}
                         style={{
-                          width: '120px',
-                          height: '120px',
+                          width: '140px',
+                          height: '140px',
                           cursor: 'zoom-in',
                           overflow: 'hidden',
-                          border: `1px solid ${submission.isCorrect ? 'rgba(57,255,20,0.5)' : 'rgba(255,100,0,0.5)'}`,
-                          boxShadow: '0 0 5px rgba(57,255,20,0.1)',
-                          position: 'relative'
+                          border: `2px solid ${submission.isCorrect ? 'rgba(57,255,20,0.8)' : 'rgba(255,100,0,0.8)'}`,
+                          boxShadow: '0 0 8px rgba(57,255,20,0.15)',
+                          position: 'relative',
+                          borderRadius: '6px'
                         }}
                       >
                         <img
@@ -1563,34 +1878,37 @@ const AdminDashboard = ({ API_BASE }) => {
                           <span>{Math.round((submission.mlResult?.confidence || 0) * 100)}%</span>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '14px', flexWrap: 'wrap' }}>
                           <button
                             onClick={() => handleToggleSubmissionAccepted(submission)}
                             style={{
-                              padding: '5px 12px',
+                              padding: '6px 14px',
                               fontSize: '11px',
-                              background: submission.isCorrect ? 'rgba(255,100,0,0.2)' : 'rgba(57,255,20,0.2)',
+                              fontWeight: 'bold',
+                              background: submission.isCorrect ? 'rgba(255,100,0,0.2)' : 'rgba(57,255,20,0.25)',
                               color: submission.isCorrect ? '#ffaa00' : '#39ff14',
                               border: `1px solid ${submission.isCorrect ? '#ffaa00' : '#39ff14'}`,
                               cursor: 'pointer',
-                              fontFamily: 'inherit'
+                              fontFamily: 'inherit',
+                              borderRadius: '4px'
                             }}
                           >
-                            {submission.isCorrect ? 'OVERRIDE: MARK REJECTED' : 'OVERRIDE: MARK ACCEPTED'}
+                            {submission.isCorrect ? 'OVERRIDE: MARK REJECTED' : '✓ ACCEPT SUBMISSION WITH PHOTO'}
                           </button>
                           <button
                             onClick={() => handleDeleteSubmission(submission._id)}
                             style={{
-                              padding: '5px 12px',
+                              padding: '6px 14px',
                               fontSize: '11px',
                               background: 'rgba(239,68,68,0.2)',
                               color: '#f87171',
                               border: '1px solid #ef4444',
                               cursor: 'pointer',
-                              fontFamily: 'inherit'
+                              fontFamily: 'inherit',
+                              borderRadius: '4px'
                             }}
                           >
-                            DELETE
+                            DELETE SUBMISSION
                           </button>
                         </div>
                       </div>
@@ -1602,6 +1920,7 @@ const AdminDashboard = ({ API_BASE }) => {
           )}
         </div>
       )}
+
 
       {activeTab === 'reports' && (
         <div style={{ display: 'grid', gap: '12px', maxHeight: '68vh', overflowY: 'auto', paddingRight: '6px' }}>

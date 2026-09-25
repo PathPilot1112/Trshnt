@@ -536,6 +536,8 @@ export const updateTeam = async (req, res) => {
     }
     if (score !== undefined) team.score = Number(score);
     if (currentClueIndex !== undefined) team.currentClueIndex = Number(currentClueIndex);
+    if (paymentVerified !== undefined) team.paymentVerified = Boolean(paymentVerified);
+    if (paymentScreenshotUrl !== undefined) team.paymentScreenshotUrl = paymentScreenshotUrl;
 
     if (assignedRouteId !== undefined && assignedRouteId !== team.assignedRouteId) {
       const clues = await Clue.find();
@@ -556,12 +558,62 @@ export const updateTeam = async (req, res) => {
         currentClueIndex: team.currentClueIndex,
         assignedRouteId: team.assignedRouteId,
         assignedRouteName: team.assignedRouteName,
+        paymentVerified: team.paymentVerified,
       });
     }
 
     res.json({ message: "Team updated successfully", team });
   } catch (err) {
     res.status(500).json({ message: "Error updating team", error: err.message });
+  }
+};
+
+export const verifyTeamPayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paymentVerified } = req.body;
+    const team = await Team.findById(id);
+    if (!team) return res.status(404).json({ message: "Team not found" });
+
+    team.paymentVerified = paymentVerified !== undefined ? Boolean(paymentVerified) : !team.paymentVerified;
+    await team.save();
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("team:payment", { teamId: team._id, paymentVerified: team.paymentVerified });
+    }
+
+    res.json({ message: `Payment verified status updated to ${team.paymentVerified}`, team });
+  } catch (err) {
+    res.status(500).json({ message: "Error updating payment status", error: err.message });
+  }
+};
+
+export const updateSubmission = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isCorrect } = req.body;
+    const submission = await Submission.findById(id);
+    if (!submission) return res.status(404).json({ message: "Submission not found" });
+
+    if (isCorrect !== undefined) submission.isCorrect = Boolean(isCorrect);
+    await submission.save();
+
+    res.json({ message: "Submission updated successfully", submission });
+  } catch (err) {
+    res.status(500).json({ message: "Error updating submission", error: err.message });
+  }
+};
+
+export const deleteSubmission = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const submission = await Submission.findByIdAndDelete(id);
+    if (!submission) return res.status(404).json({ message: "Submission not found" });
+
+    res.json({ message: "Submission deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting submission", error: err.message });
   }
 };
 
@@ -589,4 +641,5 @@ export const deleteTeam = async (req, res) => {
     res.status(500).json({ message: "Error deleting team", error: err.message });
   }
 };
+
 

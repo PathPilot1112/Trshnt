@@ -27,7 +27,10 @@ if (isCloudinaryConfigured) {
  */
 export const uploadToCloudinary = async (bufferOrPath) => {
   if (!isCloudinaryConfigured) {
-    throw new Error('Cloudinary credentials are not configured');
+    if (Buffer.isBuffer(bufferOrPath)) {
+      return `data:image/jpeg;base64,${bufferOrPath.toString('base64')}`;
+    }
+    return bufferOrPath;
   }
 
   if (Buffer.isBuffer(bufferOrPath)) {

@@ -24,16 +24,18 @@ export const LOCATION_COORDINATES = {
   "#SRM (TP)": { lat: null, lng: null, zone: "Zone 3", missingGps: true },
   "Vendhar Square": { lat: 12.824056115180442, lng: 80.04531785843815, zone: "Zone 3" },
   "Fab Lab": { lat: 12.822479081518516, lng: 80.04566922780847, zone: "Zone 3" },
-  "Noon Meal Scheme (M Block)": { lat: 12.821493, lng: 80.045679, zone: "Zone 3" },
-  "Noon Meal Scheme": { lat: 12.821493, lng: 80.045679, zone: "Zone 3" },
+  "Noon Meal Scheme (M Block)": { lat: 12.82148, lng: 80.04522, zone: "Zone 3" },
+  "Noon Meal Scheme": { lat: 12.82148, lng: 80.04522, zone: "Zone 3" },
 
   // ZONE 4
   "Slice of Life": { lat: 12.821907633229062, lng: 80.04775732746997, zone: "Zone 4" },
   "TP Auditorium Gate": { lat: 12.824376, lng: 80.047331, zone: "Zone 4" },
   "The gate of Dr. T. P. Ganesan Auditorium": { lat: 12.824376, lng: 80.047331, zone: "Zone 4" },
   "Dental College": { lat: 12.825311458267803, lng: 80.04754275076432, zone: "Zone 4" },
-  "Gym": { lat: 12.825912974626478, lng: 80.04903942337197, zone: "Zone 4" },
-  "Pickleball Court": { lat: null, lng: null, zone: "Zone 4", missingGps: true },
+  "Gym": { lat: 12.82611, lng: 80.04909, zone: "Zone 4" },
+  "SRM Gymnasium": { lat: 12.82611, lng: 80.04909, zone: "Zone 4" },
+  "Pickleball Court": { lat: 12.82568, lng: 80.04890, zone: "Zone 4" },
+
 
   // ZONE 5
   "Bell Block": { lat: 12.823287214422754, lng: 80.04406929003538, zone: "Zone 5" },

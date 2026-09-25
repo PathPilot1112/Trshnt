@@ -15,9 +15,39 @@ const RegistrationPage = ({ API_BASE = '/api', onRegisterSuccess, onCancel }) =>
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [paymentScreenshotUrl, setPaymentScreenshotUrl] = useState('');
+  const [uploadingPayment, setUploadingPayment] = useState(false);
+
   useEffect(() => {
     setTeamNumber(generateTeamNumber());
   }, []);
+
+  const handlePaymentUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingPayment(true);
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.append('paymentScreenshot', file);
+
+      const res = await fetch(`${API_BASE}/teams/upload-payment`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        setPaymentScreenshotUrl(data.url);
+      } else {
+        setError(data.msg || data.message || 'Failed to upload payment screenshot.');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Error uploading payment proof to server.');
+    } finally {
+      setUploadingPayment(false);
+    }
+  };
 
   // Update members array when numPlayers changes
   useEffect(() => {
@@ -153,9 +183,11 @@ const RegistrationPage = ({ API_BASE = '/api', onRegisterSuccess, onCancel }) =>
         body: JSON.stringify({
           teamName,
           teamNumber,
-          members
+          members,
+          paymentScreenshotUrl
         })
       });
+
 
       const data = await response.json();
 
@@ -385,7 +417,36 @@ const RegistrationPage = ({ API_BASE = '/api', onRegisterSuccess, onCancel }) =>
                   <option value={5}>5 BIO-ASSETS</option>
                 </select>
               </div>
+
+              <div className="input-row" style={{ marginTop: '0.5rem', background: 'rgba(0,0,0,0.03)', padding: '1rem', border: '1px dashed #1a1a1a' }}>
+                <label style={{ color: '#8b0000' }}>PAYMENT PROOF SCREENSHOT (FEE: ₹50 / TEAM):</label>
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={handlePaymentUpload}
+                  disabled={uploadingPayment}
+                  style={{ marginTop: '0.4rem', cursor: 'pointer', fontFamily: 'Courier New, monospace' }}
+                />
+                {uploadingPayment && (
+                  <div style={{ color: '#0066cc', fontSize: '0.85rem', marginTop: '0.4rem', fontFamily: 'Courier New, monospace', fontWeight: 'bold' }}>
+                    ⏳ UPLOADING PAYMENT SCREENSHOT TO CLOUDINARY...
+                  </div>
+                )}
+                {paymentScreenshotUrl && (
+                  <div style={{ marginTop: '0.8rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                    <img 
+                      src={paymentScreenshotUrl} 
+                      alt="Payment Proof Preview" 
+                      style={{ width: '90px', height: '90px', objectFit: 'cover', border: '2px solid #008800', borderRadius: '4px' }}
+                    />
+                    <div style={{ color: '#007700', fontWeight: 'bold', fontSize: '0.9rem', fontFamily: 'Courier New, monospace' }}>
+                      ✓ CLOUDINARY UPLOAD SUCCESSFUL!
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
+
           )}
 
           {step > 1 && step <= totalSteps && renderMemberForm(step - 2)}
