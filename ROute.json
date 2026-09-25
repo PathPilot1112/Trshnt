@@ -5,10 +5,10 @@
     "distance": "1.48 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Gym \u2192 Mahatma Gandhi Statue \u2192 Arts & Science Block \u2192 Fab Lab \u2192 Bell Block \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Gym → Genz → Arts & Science Block → Fab Lab → Bell Block → TP Stairs",
     "locations": [
       "Gym",
-      "Mahatma Gandhi Statue",
+      "Genz",
       "Arts & Science Block",
       "Fab Lab",
       "Bell Block"
@@ -20,9 +20,9 @@
     "distance": "1.46 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Dental College \u2192 Central Library \u2192 Law Block \u2192 Vendhar Square \u2192 Architecture Stonehenge \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Fab Lab → Central Library → Law Block → Vendhar Square → Architecture Stonehenge → TP Stairs",
     "locations": [
-      "Dental College",
+      "Fab Lab",
       "Central Library",
       "Law Block",
       "Vendhar Square",
@@ -35,11 +35,11 @@
     "distance": "1.42 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Slice of Life \u2192 Genz \u2192 Sports Complex \u2192 Aaruush Logo (TP) \u2192 Clock Tower \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Periyar → Genz → Architecture #SRM → Aaruush Logo (TP) → Clock Tower → TP Stairs",
     "locations": [
-      "Slice of Life",
+      "Periyar",
       "Genz",
-      "Sports Complex",
+      "Architecture #SRM",
       "Aaruush Logo (TP)",
       "Clock Tower"
     ]
@@ -50,11 +50,11 @@
     "distance": "1.50 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 TP Auditorium Gate \u2192 Rajaraja Chola \u2192 Sai Temple \u2192 Noon Meal Scheme (M Block) \u2192 MBA Gate \u2192 TP Stairs",
+    "rawPath": "TP Stairs → TP Auditorium Gate → Rajaraja Chola → #SRM (TP) → Noon Meal Scheme (M Block) → MBA Gate → TP Stairs",
     "locations": [
       "TP Auditorium Gate",
       "Rajaraja Chola",
-      "Sai Temple",
+      "#SRM (TP)",
       "Noon Meal Scheme (M Block)",
       "MBA Gate"
     ]
@@ -65,9 +65,9 @@
     "distance": "1.45 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Pickleball Court \u2192 Periyar \u2192 Arts & Science Block \u2192 #SRM (TP) \u2192 Architecture #SRM \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Central Library → Periyar → Arts & Science Block → #SRM (TP) → Architecture #SRM → TP Stairs",
     "locations": [
-      "Pickleball Court",
+      "Central Library",
       "Periyar",
       "Arts & Science Block",
       "#SRM (TP)",
@@ -80,7 +80,7 @@
     "distance": "1.51 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Gym \u2192 Perignar Anna \u2192 Law Block \u2192 Vendhar Square \u2192 Bell Block \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Gym → Perignar Anna → Law Block → Vendhar Square → Bell Block → TP Stairs",
     "locations": [
       "Gym",
       "Perignar Anna",
@@ -95,11 +95,11 @@
     "distance": "1.43 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Dental College \u2192 Mahatma Gandhi Statue \u2192 Sports Complex \u2192 Fab Lab \u2192 Clock Tower \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Rajaraja Chola → MBA Gate → Bell Block → Fab Lab → Clock Tower → TP Stairs",
     "locations": [
-      "Dental College",
-      "Mahatma Gandhi Statue",
-      "Sports Complex",
+      "Rajaraja Chola",
+      "MBA Gate",
+      "Bell Block",
       "Fab Lab",
       "Clock Tower"
     ]
@@ -110,11 +110,11 @@
     "distance": "1.47 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Slice of Life \u2192 Central Library \u2192 Sai Temple \u2192 Noon Meal Scheme (M Block) \u2192 Architecture Stonehenge \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Fab Lab → Central Library → Bell Block → Noon Meal Scheme (M Block) → Architecture Stonehenge → TP Stairs",
     "locations": [
-      "Slice of Life",
+      "Fab Lab",
       "Central Library",
-      "Sai Temple",
+      "Bell Block",
       "Noon Meal Scheme (M Block)",
       "Architecture Stonehenge"
     ]
@@ -125,7 +125,7 @@
     "distance": "1.40 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 TP Auditorium Gate \u2192 Genz \u2192 Arts & Science Block \u2192 Aaruush Logo (TP) \u2192 MBA Gate \u2192 TP Stairs",
+    "rawPath": "TP Stairs → TP Auditorium Gate → Genz → Arts & Science Block → Aaruush Logo (TP) → MBA Gate → TP Stairs",
     "locations": [
       "TP Auditorium Gate",
       "Genz",
@@ -140,9 +140,9 @@
     "distance": "1.49 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Pickleball Court \u2192 Rajaraja Chola \u2192 Law Block \u2192 #SRM (TP) \u2192 Architecture #SRM \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Vendhar Square → Rajaraja Chola → Law Block → #SRM (TP) → Architecture #SRM → TP Stairs",
     "locations": [
-      "Pickleball Court",
+      "Vendhar Square",
       "Rajaraja Chola",
       "Law Block",
       "#SRM (TP)",
@@ -155,11 +155,11 @@
     "distance": "1.46 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Fab Lab \u2192 Gym \u2192 Mahatma Gandhi Statue \u2192 Bell Block \u2192 Law Block \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Fab Lab → Gym → Periyar → Bell Block → Law Block → TP Stairs",
     "locations": [
       "Fab Lab",
       "Gym",
-      "Mahatma Gandhi Statue",
+      "Periyar",
       "Bell Block",
       "Law Block"
     ]
@@ -170,13 +170,13 @@
     "distance": "1.44 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Vendhar Square \u2192 Dental College \u2192 Central Library \u2192 Architecture Stonehenge \u2192 Sports Complex \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Vendhar Square → Periyar → Central Library → Architecture Stonehenge → Clock Tower → TP Stairs",
     "locations": [
       "Vendhar Square",
-      "Dental College",
+      "Periyar",
       "Central Library",
       "Architecture Stonehenge",
-      "Sports Complex"
+      "Clock Tower"
     ]
   },
   {
@@ -185,10 +185,10 @@
     "distance": "1.41 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Aaruush Logo (TP) \u2192 Slice of Life \u2192 Genz \u2192 Clock Tower \u2192 Arts & Science Block \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Aaruush Logo (TP) → Central Library → Genz → Clock Tower → Arts & Science Block → TP Stairs",
     "locations": [
       "Aaruush Logo (TP)",
-      "Slice of Life",
+      "Central Library",
       "Genz",
       "Clock Tower",
       "Arts & Science Block"
@@ -200,13 +200,13 @@
     "distance": "1.48 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Noon Meal Scheme (M Block) \u2192 TP Auditorium Gate \u2192 Rajaraja Chola \u2192 MBA Gate \u2192 Sai Temple \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Noon Meal Scheme (M Block) → TP Auditorium Gate → Rajaraja Chola → MBA Gate → Architecture #SRM → TP Stairs",
     "locations": [
       "Noon Meal Scheme (M Block)",
       "TP Auditorium Gate",
       "Rajaraja Chola",
       "MBA Gate",
-      "Sai Temple"
+      "Architecture #SRM"
     ]
   },
   {
@@ -215,10 +215,10 @@
     "distance": "1.50 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 #SRM (TP) \u2192 Pickleball Court \u2192 Periyar \u2192 Architecture #SRM \u2192 Law Block \u2192 TP Stairs",
+    "rawPath": "TP Stairs → #SRM (TP) → Clock Tower → Periyar → Architecture #SRM → Law Block → TP Stairs",
     "locations": [
       "#SRM (TP)",
-      "Pickleball Court",
+      "Clock Tower",
       "Periyar",
       "Architecture #SRM",
       "Law Block"
@@ -230,13 +230,13 @@
     "distance": "1.47 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Fab Lab \u2192 Gym \u2192 Perignar Anna \u2192 Bell Block \u2192 Sports Complex \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Fab Lab → Gym → Perignar Anna → Bell Block → Clock Tower → TP Stairs",
     "locations": [
       "Fab Lab",
       "Gym",
       "Perignar Anna",
       "Bell Block",
-      "Sports Complex"
+      "Clock Tower"
     ]
   },
   {
@@ -245,13 +245,13 @@
     "distance": "1.45 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Vendhar Square \u2192 Dental College \u2192 Mahatma Gandhi Statue \u2192 Clock Tower \u2192 Sai Temple \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Vendhar Square → Perignar Anna → Architecture #SRM → Clock Tower → Bell Block → TP Stairs",
     "locations": [
       "Vendhar Square",
-      "Dental College",
-      "Mahatma Gandhi Statue",
+      "Perignar Anna",
+      "Architecture #SRM",
       "Clock Tower",
-      "Sai Temple"
+      "Bell Block"
     ]
   },
   {
@@ -260,10 +260,10 @@
     "distance": "1.43 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Aaruush Logo (TP) \u2192 Slice of Life \u2192 Central Library \u2192 Architecture Stonehenge \u2192 Arts & Science Block \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Aaruush Logo (TP) → Clock Tower → Central Library → Architecture Stonehenge → Arts & Science Block → TP Stairs",
     "locations": [
       "Aaruush Logo (TP)",
-      "Slice of Life",
+      "Clock Tower",
       "Central Library",
       "Architecture Stonehenge",
       "Arts & Science Block"
@@ -275,7 +275,7 @@
     "distance": "1.49 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Noon Meal Scheme (M Block) \u2192 TP Auditorium Gate \u2192 Genz \u2192 MBA Gate \u2192 Law Block \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Noon Meal Scheme (M Block) → TP Auditorium Gate → Genz → MBA Gate → Law Block → TP Stairs",
     "locations": [
       "Noon Meal Scheme (M Block)",
       "TP Auditorium Gate",
@@ -290,13 +290,13 @@
     "distance": "1.46 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 #SRM (TP) \u2192 Pickleball Court \u2192 Rajaraja Chola \u2192 Architecture #SRM \u2192 Sports Complex \u2192 TP Stairs",
+    "rawPath": "TP Stairs → #SRM (TP) → Arts & Science Block → Rajaraja Chola → Architecture #SRM → Clock Tower → TP Stairs",
     "locations": [
       "#SRM (TP)",
-      "Pickleball Court",
+      "Arts & Science Block",
       "Rajaraja Chola",
       "Architecture #SRM",
-      "Sports Complex"
+      "Clock Tower"
     ]
   },
   {
@@ -305,10 +305,10 @@
     "distance": "1.44 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Bell Block \u2192 Mahatma Gandhi Statue \u2192 Gym \u2192 Arts & Science Block \u2192 Fab Lab \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Bell Block → MBA Gate → Gym → Arts & Science Block → Fab Lab → TP Stairs",
     "locations": [
       "Bell Block",
-      "Mahatma Gandhi Statue",
+      "MBA Gate",
       "Gym",
       "Arts & Science Block",
       "Fab Lab"
@@ -320,11 +320,11 @@
     "distance": "1.47 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Architecture Stonehenge \u2192 Central Library \u2192 Dental College \u2192 Law Block \u2192 Vendhar Square \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Architecture Stonehenge → Central Library → Rajaraja Chola → Law Block → Vendhar Square → TP Stairs",
     "locations": [
       "Architecture Stonehenge",
       "Central Library",
-      "Dental College",
+      "Rajaraja Chola",
       "Law Block",
       "Vendhar Square"
     ]
@@ -335,12 +335,12 @@
     "distance": "1.41 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Clock Tower \u2192 Genz \u2192 Slice of Life \u2192 Sports Complex \u2192 Aaruush Logo (TP) \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Clock Tower → Genz → Vendhar Square → Rajaraja Chola → Aaruush Logo (TP) → TP Stairs",
     "locations": [
       "Clock Tower",
       "Genz",
-      "Slice of Life",
-      "Sports Complex",
+      "Vendhar Square",
+      "Rajaraja Chola",
       "Aaruush Logo (TP)"
     ]
   },
@@ -350,12 +350,12 @@
     "distance": "1.49 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 MBA Gate \u2192 Rajaraja Chola \u2192 TP Auditorium Gate \u2192 Sai Temple \u2192 Noon Meal Scheme (M Block) \u2192 TP Stairs",
+    "rawPath": "TP Stairs → MBA Gate → Rajaraja Chola → TP Auditorium Gate → Gym → Noon Meal Scheme (M Block) → TP Stairs",
     "locations": [
       "MBA Gate",
       "Rajaraja Chola",
       "TP Auditorium Gate",
-      "Sai Temple",
+      "Gym",
       "Noon Meal Scheme (M Block)"
     ]
   },
@@ -365,11 +365,11 @@
     "distance": "1.45 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Architecture #SRM \u2192 Periyar \u2192 Pickleball Court \u2192 Arts & Science Block \u2192 #SRM (TP) \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Architecture #SRM → Periyar → Clock Tower → Arts & Science Block → #SRM (TP) → TP Stairs",
     "locations": [
       "Architecture #SRM",
       "Periyar",
-      "Pickleball Court",
+      "Clock Tower",
       "Arts & Science Block",
       "#SRM (TP)"
     ]
@@ -380,7 +380,7 @@
     "distance": "1.50 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Bell Block \u2192 Perignar Anna \u2192 Gym \u2192 Law Block \u2192 Fab Lab \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Bell Block → Perignar Anna → Gym → Law Block → Fab Lab → TP Stairs",
     "locations": [
       "Bell Block",
       "Perignar Anna",
@@ -395,12 +395,12 @@
     "distance": "1.43 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Architecture Stonehenge \u2192 Mahatma Gandhi Statue \u2192 Dental College \u2192 Sports Complex \u2192 Vendhar Square \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Architecture Stonehenge → TP Auditorium Gate → Arts & Science Block → MBA Gate → Vendhar Square → TP Stairs",
     "locations": [
       "Architecture Stonehenge",
-      "Mahatma Gandhi Statue",
-      "Dental College",
-      "Sports Complex",
+      "TP Auditorium Gate",
+      "Arts & Science Block",
+      "MBA Gate",
       "Vendhar Square"
     ]
   },
@@ -410,12 +410,12 @@
     "distance": "1.46 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Clock Tower \u2192 Central Library \u2192 Slice of Life \u2192 Sai Temple \u2192 Aaruush Logo (TP) \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Clock Tower → Central Library → TP Auditorium Gate → Rajaraja Chola → Aaruush Logo (TP) → TP Stairs",
     "locations": [
       "Clock Tower",
       "Central Library",
-      "Slice of Life",
-      "Sai Temple",
+      "TP Auditorium Gate",
+      "Rajaraja Chola",
       "Aaruush Logo (TP)"
     ]
   },
@@ -425,7 +425,7 @@
     "distance": "1.42 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 MBA Gate \u2192 Genz \u2192 TP Auditorium Gate \u2192 Arts & Science Block \u2192 Noon Meal Scheme (M Block) \u2192 TP Stairs",
+    "rawPath": "TP Stairs → MBA Gate → Genz → TP Auditorium Gate → Arts & Science Block → Noon Meal Scheme (M Block) → TP Stairs",
     "locations": [
       "MBA Gate",
       "Genz",
@@ -440,11 +440,11 @@
     "distance": "1.48 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Architecture #SRM \u2192 Rajaraja Chola \u2192 Pickleball Court \u2192 Law Block \u2192 #SRM (TP) \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Architecture #SRM → Rajaraja Chola → Clock Tower → Law Block → #SRM (TP) → TP Stairs",
     "locations": [
       "Architecture #SRM",
       "Rajaraja Chola",
-      "Pickleball Court",
+      "Clock Tower",
       "Law Block",
       "#SRM (TP)"
     ]
@@ -455,12 +455,12 @@
     "distance": "1.45 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Arts & Science Block \u2192 Bell Block \u2192 Gym \u2192 Mahatma Gandhi Statue \u2192 Fab Lab \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Arts & Science Block → Bell Block → Gym → MBA Gate → Fab Lab → TP Stairs",
     "locations": [
       "Arts & Science Block",
       "Bell Block",
       "Gym",
-      "Mahatma Gandhi Statue",
+      "MBA Gate",
       "Fab Lab"
     ]
   },
@@ -470,11 +470,11 @@
     "distance": "1.47 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Law Block \u2192 Architecture Stonehenge \u2192 Dental College \u2192 Central Library \u2192 Vendhar Square \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Law Block → Architecture Stonehenge → Gym → Central Library → Vendhar Square → TP Stairs",
     "locations": [
       "Law Block",
       "Architecture Stonehenge",
-      "Dental College",
+      "Gym",
       "Central Library",
       "Vendhar Square"
     ]
@@ -485,11 +485,11 @@
     "distance": "1.42 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Sports Complex \u2192 Clock Tower \u2192 Slice of Life \u2192 Genz \u2192 Aaruush Logo (TP) \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Architecture Stonehenge → Clock Tower → Perignar Anna → Genz → Aaruush Logo (TP) → TP Stairs",
     "locations": [
-      "Sports Complex",
+      "Architecture Stonehenge",
       "Clock Tower",
-      "Slice of Life",
+      "Perignar Anna",
       "Genz",
       "Aaruush Logo (TP)"
     ]
@@ -500,9 +500,9 @@
     "distance": "1.49 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Sai Temple \u2192 MBA Gate \u2192 TP Auditorium Gate \u2192 Rajaraja Chola \u2192 Noon Meal Scheme (M Block) \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Aaruush Logo (TP) → MBA Gate → TP Auditorium Gate → Rajaraja Chola → Noon Meal Scheme (M Block) → TP Stairs",
     "locations": [
-      "Sai Temple",
+      "Aaruush Logo (TP)",
       "MBA Gate",
       "TP Auditorium Gate",
       "Rajaraja Chola",
@@ -515,11 +515,11 @@
     "distance": "1.46 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Arts & Science Block \u2192 Architecture #SRM \u2192 Pickleball Court \u2192 Periyar \u2192 #SRM (TP) \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Arts & Science Block → Architecture #SRM → Genz → Periyar → #SRM (TP) → TP Stairs",
     "locations": [
       "Arts & Science Block",
       "Architecture #SRM",
-      "Pickleball Court",
+      "Genz",
       "Periyar",
       "#SRM (TP)"
     ]
@@ -530,7 +530,7 @@
     "distance": "1.50 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Law Block \u2192 Bell Block \u2192 Gym \u2192 Perignar Anna \u2192 Fab Lab \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Law Block → Bell Block → Gym → Perignar Anna → Fab Lab → TP Stairs",
     "locations": [
       "Law Block",
       "Bell Block",
@@ -545,12 +545,12 @@
     "distance": "1.43 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Sports Complex \u2192 Architecture Stonehenge \u2192 Dental College \u2192 Mahatma Gandhi Statue \u2192 Vendhar Square \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Aaruush Logo (TP) → Architecture Stonehenge → #SRM (TP) → Arts & Science Block → Vendhar Square → TP Stairs",
     "locations": [
-      "Sports Complex",
+      "Aaruush Logo (TP)",
       "Architecture Stonehenge",
-      "Dental College",
-      "Mahatma Gandhi Statue",
+      "#SRM (TP)",
+      "Arts & Science Block",
       "Vendhar Square"
     ]
   },
@@ -560,11 +560,11 @@
     "distance": "1.44 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Sai Temple \u2192 Clock Tower \u2192 Slice of Life \u2192 Central Library \u2192 Aaruush Logo (TP) \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Genz → Clock Tower → #SRM (TP) → Central Library → Aaruush Logo (TP) → TP Stairs",
     "locations": [
-      "Sai Temple",
+      "Genz",
       "Clock Tower",
-      "Slice of Life",
+      "#SRM (TP)",
       "Central Library",
       "Aaruush Logo (TP)"
     ]
@@ -575,7 +575,7 @@
     "distance": "1.48 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Arts & Science Block \u2192 MBA Gate \u2192 TP Auditorium Gate \u2192 Genz \u2192 Noon Meal Scheme (M Block) \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Arts & Science Block → MBA Gate → TP Auditorium Gate → Genz → Noon Meal Scheme (M Block) → TP Stairs",
     "locations": [
       "Arts & Science Block",
       "MBA Gate",
@@ -590,11 +590,11 @@
     "distance": "1.47 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Law Block \u2192 Architecture #SRM \u2192 Pickleball Court \u2192 Rajaraja Chola \u2192 #SRM (TP) \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Law Block → Architecture #SRM → Gym → Rajaraja Chola → #SRM (TP) → TP Stairs",
     "locations": [
       "Law Block",
       "Architecture #SRM",
-      "Pickleball Court",
+      "Gym",
       "Rajaraja Chola",
       "#SRM (TP)"
     ]
@@ -605,9 +605,9 @@
     "distance": "1.46 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Mahatma Gandhi Statue \u2192 Fab Lab \u2192 Bell Block \u2192 Arts & Science Block \u2192 Gym \u2192 TP Stairs",
+    "rawPath": "TP Stairs → TP Auditorium Gate → Fab Lab → Bell Block → Arts & Science Block → Gym → TP Stairs",
     "locations": [
-      "Mahatma Gandhi Statue",
+      "TP Auditorium Gate",
       "Fab Lab",
       "Bell Block",
       "Arts & Science Block",
@@ -620,13 +620,13 @@
     "distance": "1.45 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Central Library \u2192 Vendhar Square \u2192 Architecture Stonehenge \u2192 Law Block \u2192 Dental College \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Central Library → Vendhar Square → Architecture Stonehenge → Law Block → Fab Lab → TP Stairs",
     "locations": [
       "Central Library",
       "Vendhar Square",
       "Architecture Stonehenge",
       "Law Block",
-      "Dental College"
+      "Fab Lab"
     ]
   },
   {
@@ -635,13 +635,13 @@
     "distance": "1.42 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Genz \u2192 Aaruush Logo (TP) \u2192 Clock Tower \u2192 Sports Complex \u2192 Slice of Life \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Genz → Aaruush Logo (TP) → Clock Tower → Rajaraja Chola → Periyar → TP Stairs",
     "locations": [
       "Genz",
       "Aaruush Logo (TP)",
       "Clock Tower",
-      "Sports Complex",
-      "Slice of Life"
+      "Rajaraja Chola",
+      "Periyar"
     ]
   },
   {
@@ -650,12 +650,12 @@
     "distance": "1.49 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Rajaraja Chola \u2192 Noon Meal Scheme (M Block) \u2192 MBA Gate \u2192 Sai Temple \u2192 TP Auditorium Gate \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Rajaraja Chola → Noon Meal Scheme (M Block) → MBA Gate → #SRM (TP) → TP Auditorium Gate → TP Stairs",
     "locations": [
       "Rajaraja Chola",
       "Noon Meal Scheme (M Block)",
       "MBA Gate",
-      "Sai Temple",
+      "#SRM (TP)",
       "TP Auditorium Gate"
     ]
   },
@@ -665,13 +665,13 @@
     "distance": "1.47 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Periyar \u2192 #SRM (TP) \u2192 Architecture #SRM \u2192 Arts & Science Block \u2192 Pickleball Court \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Periyar → #SRM (TP) → Architecture #SRM → Arts & Science Block → Central Library → TP Stairs",
     "locations": [
       "Periyar",
       "#SRM (TP)",
       "Architecture #SRM",
       "Arts & Science Block",
-      "Pickleball Court"
+      "Central Library"
     ]
   },
   {
@@ -680,7 +680,7 @@
     "distance": "1.50 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Perignar Anna \u2192 Fab Lab \u2192 Bell Block \u2192 Law Block \u2192 Gym \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Perignar Anna → Fab Lab → Bell Block → Law Block → Gym → TP Stairs",
     "locations": [
       "Perignar Anna",
       "Fab Lab",
@@ -695,13 +695,13 @@
     "distance": "1.44 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Mahatma Gandhi Statue \u2192 Vendhar Square \u2192 Architecture Stonehenge \u2192 Sports Complex \u2192 Dental College \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Rajaraja Chola → Vendhar Square → Architecture Stonehenge → Genz → TP Auditorium Gate → TP Stairs",
     "locations": [
-      "Mahatma Gandhi Statue",
+      "Rajaraja Chola",
       "Vendhar Square",
       "Architecture Stonehenge",
-      "Sports Complex",
-      "Dental College"
+      "Genz",
+      "TP Auditorium Gate"
     ]
   },
   {
@@ -710,13 +710,13 @@
     "distance": "1.43 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Central Library \u2192 Aaruush Logo (TP) \u2192 Clock Tower \u2192 Sai Temple \u2192 Slice of Life \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Central Library → Aaruush Logo (TP) → Clock Tower → Periyar → Arts & Science Block → TP Stairs",
     "locations": [
       "Central Library",
       "Aaruush Logo (TP)",
       "Clock Tower",
-      "Sai Temple",
-      "Slice of Life"
+      "Periyar",
+      "Arts & Science Block"
     ]
   },
   {
@@ -725,7 +725,7 @@
     "distance": "1.48 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Genz \u2192 Noon Meal Scheme (M Block) \u2192 MBA Gate \u2192 Arts & Science Block \u2192 TP Auditorium Gate \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Genz → Noon Meal Scheme (M Block) → MBA Gate → Arts & Science Block → TP Auditorium Gate → TP Stairs",
     "locations": [
       "Genz",
       "Noon Meal Scheme (M Block)",
@@ -740,13 +740,13 @@
     "distance": "1.46 km",
     "startPoint": "TP Stairs",
     "endPoint": "TP Stairs",
-    "rawPath": "TP Stairs \u2192 Rajaraja Chola \u2192 #SRM (TP) \u2192 Architecture #SRM \u2192 Law Block \u2192 Pickleball Court \u2192 TP Stairs",
+    "rawPath": "TP Stairs → Rajaraja Chola → #SRM (TP) → Architecture #SRM → Law Block → Architecture Stonehenge → TP Stairs",
     "locations": [
       "Rajaraja Chola",
       "#SRM (TP)",
       "Architecture #SRM",
       "Law Block",
-      "Pickleball Court"
+      "Architecture Stonehenge"
     ]
   }
 ]
