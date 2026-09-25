@@ -20,8 +20,11 @@ export const seedDatabase = async () => {
     }
 
     // 2. Seed Clues from clue.json (generated from Treasure Hunt Clues.xlsx)
-    const clueCount = await Clue.countDocuments();
-    if (clueCount === 0 || clueCount < 25) {
+    const existingClues = await Clue.find().lean();
+    const uniqueTitles = new Set(existingClues.map(c => (c.title || "").toLowerCase().trim()));
+    const hasDuplicates = existingClues.length !== uniqueTitles.size;
+
+    if (existingClues.length === 0 || existingClues.length !== 25 || hasDuplicates) {
       await Clue.deleteMany({});
       const jsonPath = path.join(process.cwd(), "clue.json");
       const fileData = await fs.readFile(jsonPath, "utf8");
@@ -41,7 +44,7 @@ export const seedDatabase = async () => {
       }));
 
       await Clue.insertMany(cluesToInsert);
-      console.log(`✅ Seeded ${cluesToInsert.length} ML location Clues from clue.json`);
+      console.log(`✅ Seeded ${cluesToInsert.length} distinct ML location Clues from clue.json`);
     } else {
       // Ensure existing clues match updated confidence threshold
       await Clue.updateMany({ confidenceThreshold: { $gt: 0.45 } }, { $set: { confidenceThreshold: 0.45 } });

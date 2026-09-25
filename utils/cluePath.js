@@ -205,12 +205,14 @@ const LOCATION_ALIASES = {
   perignaranna: ["perarignaranna", "perignaranna", "anna"]
 };
 
-// 4. Find DB clue for a given location name
-export const findClueForLocation = (locationName, clues) => {
+// 4. Find DB clue for a given location name ensuring no duplicates in the same route
+export const findClueForLocation = (locationName, clues, usedClueIds = new Set()) => {
   const locClean = cleanStr(locationName);
   const aliases = LOCATION_ALIASES[locClean] || [locClean];
 
+  // Pass 1: Match by alias/title among unused clues
   for (const clue of clues) {
+    if (usedClueIds.has(String(clue._id))) continue;
     const cTitle = cleanStr(clue.title);
     const cLabel = cleanStr(clue.targetLabel);
     const cLoc = cleanStr(clue.zone || clue.location);
@@ -218,16 +220,35 @@ export const findClueForLocation = (locationName, clues) => {
 
     for (const alias of aliases) {
       if (cAll.includes(alias) || alias.includes(cTitle) || (cTitle && cTitle.includes(alias))) {
+        usedClueIds.add(String(clue._id));
         return clue;
       }
     }
   }
 
-  // Fallback: search by partial text
-  return (
+  // Pass 2: Partial title match among unused clues
+  for (const clue of clues) {
+    if (usedClueIds.has(String(clue._id))) continue;
+    const cTitle = cleanStr(clue.title);
+    if (cTitle.includes(locClean) || locClean.includes(cTitle)) {
+      usedClueIds.add(String(clue._id));
+      return clue;
+    }
+  }
+
+  // Pass 3: Pick any unused clue
+  const unusedClue = clues.find((c) => !usedClueIds.has(String(c._id)));
+  if (unusedClue) {
+    usedClueIds.add(String(unusedClue._id));
+    return unusedClue;
+  }
+
+  // Fallback: search by partial text ignoring used filter if all clues are exhausted
+  const fallbackClue =
     clues.find((c) => cleanStr(c.title).includes(locClean) || locClean.includes(cleanStr(c.title))) ||
-    clues[Math.floor(Math.random() * clues.length)]
-  );
+    clues[0];
+  if (fallbackClue && fallbackClue._id) usedClueIds.add(String(fallbackClue._id));
+  return fallbackClue;
 };
 
 // 5. Pick random clue variation
@@ -270,13 +291,14 @@ export const assignRouteToTeam = (team, selectedRouteId, clues) => {
   team.assignedRouteName = route.name;
   team.routeLocations = route.locations; // The 5 places
 
+  const usedClueIds = new Set();
   const pathSteps = route.locations.map((locName) => {
-    const clue = findClueForLocation(locName, clues);
+    const clue = findClueForLocation(locName, clues, usedClueIds);
     const assignedText = pickClueVariation(clue);
     const rewardItem = getItemForLocation(locName);
 
     return {
-      clue: clue._id,
+      clue: clue ? clue._id : null,
       locationName: locName,
       assignedText,
       rewardItem
