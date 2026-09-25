@@ -596,14 +596,84 @@ export const updateSubmission = async (req, res) => {
     const submission = await Submission.findById(id);
     if (!submission) return res.status(404).json({ message: "Submission not found" });
 
-    if (isCorrect !== undefined) submission.isCorrect = Boolean(isCorrect);
+    const wasCorrect = submission.isCorrect;
+    const newIsCorrect = isCorrect !== undefined ? Boolean(isCorrect) : submission.isCorrect;
+
+    submission.isCorrect = newIsCorrect;
     await submission.save();
+
+    // If marked as ACCEPTED (true), automatically accept the clue for the team and advance them forward
+    if (!wasCorrect && newIsCorrect && submission.team) {
+      const team = await Team.findById(submission.team);
+      if (team && team.status !== "finished") {
+        const clueId = submission.clue;
+        const alreadyCompleted = team.completedClues?.some(
+          (c) => String(c.clue?._id || c.clue) === String(clueId)
+        );
+
+        if (!alreadyCompleted) {
+          team.completedClues.push({
+            clue: clueId,
+            photoUrl: submission.photoUrl,
+            completedAt: new Date(),
+          });
+        }
+
+        const clues = await Clue.find();
+        if (!team.cluePath?.length) {
+          team.cluePath = buildRandomCluePath(clues);
+        }
+
+        team.score = (team.score || 0) + 100;
+        team.currentClueIndex = (team.currentClueIndex || 0) + 1;
+
+        if (team.currentClueIndex >= team.cluePath.length) {
+          team.status = "finished";
+          team.finishedAt = new Date();
+          if (team.timerRunning && team.timerStartedAt) {
+            team.timerAccumulatedMs =
+              (team.timerAccumulatedMs || 0) + (Date.now() - new Date(team.timerStartedAt).getTime());
+          }
+          team.timerRunning = false;
+          team.timerStoppedAt = new Date();
+          team.timerStartedAt = undefined;
+        } else if (team.status === "not_started") {
+          team.status = "in_progress";
+        }
+
+        await team.save();
+
+        const io = req.app.get("io");
+        if (io) {
+          const allTeams = await Team.find().populate("members", "name email");
+          io.emit("teams:snapshot", allTeams.map(buildLeaderboardEntry));
+          io.emit("leaderboard:snapshot", buildSnapshot(allTeams));
+          io.emit("team:status", {
+            teamId: team._id,
+            status: team.status,
+            score: team.score,
+            currentClueIndex: team.currentClueIndex,
+            assignedRouteId: team.assignedRouteId,
+            assignedRouteName: team.assignedRouteName,
+          });
+          io.emit("leaderboard:update", {
+            teamId: team._id,
+            name: team.name,
+            score: team.score,
+            currentClueIndex: team.currentClueIndex,
+            elapsedMs: computeElapsedMs(team),
+          });
+        }
+      }
+    }
 
     res.json({ message: "Submission updated successfully", submission });
   } catch (err) {
+    console.error("Error updating submission:", err);
     res.status(500).json({ message: "Error updating submission", error: err.message });
   }
 };
+
 
 export const deleteSubmission = async (req, res) => {
   try {

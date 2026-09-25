@@ -155,11 +155,13 @@ const AdminDashboard = ({ API_BASE }) => {
         body: JSON.stringify({ isCorrect: nextVal }),
       });
       setSubmissions((prev) => prev.map((s) => (s._id === sub._id ? { ...s, isCorrect: nextVal } : s)));
-      showBanner('Submission Updated', `Marked as ${nextVal ? 'ACCEPTED' : 'REJECTED'}`);
+      showBanner('Submission Updated', `Marked as ${nextVal ? 'ACCEPTED (Team Advanced ✓)' : 'REJECTED'}`);
+      fetchDashboardData().catch(() => {});
     } catch (err) {
       showBanner('Update Failed', err.message, 'error');
     }
   };
+
 
   const handleDeleteSubmission = async (subId) => {
     if (!window.confirm('Are you sure you want to delete this submission?')) return;
