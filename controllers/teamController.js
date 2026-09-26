@@ -200,8 +200,8 @@ export const joinGame = async (req, res) => {
       return res.status(400).json({ msg: 'Please provide team name and team number.' });
     }
 
-    if (members.length < 2 || members.length > 5) {
-      return res.status(400).json({ msg: 'Team must have between 2 and 5 members.' });
+    if (members.length < 1 || members.length > 5) {
+      return res.status(400).json({ msg: 'Team must have between 1 and 5 members.' });
     }
 
 

@@ -87,7 +87,7 @@ const RegistrationPage = ({ API_BASE = '/api', onRegisterSuccess, onCancel }) =>
         const memberIndex = step - 2;
         const member = members[memberIndex];
         
-        if (!member.registerNumber || !member.name || !member.email || !member.contactNumber) {
+        if (!member.registerNumber || !member.name || !member.email || !member.contactNumber || !member.yearOfGraduation || !member.course || !member.specialization) {
           setError('All fields in this section are mandatory.');
           setIsSubmitting(false);
           return;
@@ -143,6 +143,27 @@ const RegistrationPage = ({ API_BASE = '/api', onRegisterSuccess, onCancel }) =>
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
+
+    // Validate the current/final member fields before submission
+    const currentMemberIndex = step - 2;
+    if (currentMemberIndex >= 0 && members[currentMemberIndex]) {
+      const member = members[currentMemberIndex];
+      if (!member.registerNumber || !member.name || !member.email || !member.contactNumber || !member.yearOfGraduation || !member.course || !member.specialization) {
+        setError('All fields in this section are mandatory.');
+        setIsSubmitting(false);
+        return;
+      }
+      if (!validateEmail(member.email)) {
+        setError('Invalid email format detected.');
+        setIsSubmitting(false);
+        return;
+      }
+      if (!validatePhone(member.contactNumber)) {
+        setError('Invalid contact number format detected.');
+        setIsSubmitting(false);
+        return;
+      }
+    }
 
     try {
       const response = await fetch(`${API_BASE}/teams/join`, {
@@ -367,6 +388,7 @@ const RegistrationPage = ({ API_BASE = '/api', onRegisterSuccess, onCancel }) =>
                   onChange={(e) => setNumPlayers(parseInt(e.target.value))}
                   className="doc-select"
                 >
+                  <option value={1}>1 BIO-ASSET (SOLO OPERATIVE)</option>
                   <option value={2}>2 BIO-ASSETS</option>
                   <option value={3}>3 BIO-ASSETS</option>
                   <option value={4}>4 BIO-ASSETS</option>
