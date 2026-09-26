@@ -23,6 +23,7 @@ const AdminDashboard = ({ API_BASE }) => {
   const [adminToken, setAdminToken] = useState(() => localStorage.getItem('chernobyl_admin_token') || '');
   const [isAdmin, setIsAdmin] = useState(Boolean(localStorage.getItem('chernobyl_admin_token')));
   const [teams, setTeams] = useState([]);
+  const [totalParticipants, setTotalParticipants] = useState(0);
   const [submissions, setSubmissions] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
   const [activeTab, setActiveTab] = useState('teams');
@@ -303,6 +304,9 @@ const AdminDashboard = ({ API_BASE }) => {
     if (teamsRes.ok) {
       const data = await teamsRes.json();
       setTeams(data.teams || []);
+      if (typeof data.totalParticipants === 'number') {
+        setTotalParticipants(data.totalParticipants);
+      }
     }
     if (submissionsRes.ok) {
       const data = await submissionsRes.json();
@@ -444,6 +448,7 @@ const AdminDashboard = ({ API_BASE }) => {
 
     const handleTeamDeleted = (payload) => {
       setTeams((prev) => prev.filter((t) => t._id !== payload.teamId));
+      fetchDashboardData().catch(() => {});
     };
 
     socket.on('leaderboard:snapshot', handleSnapshot);
@@ -466,6 +471,14 @@ const AdminDashboard = ({ API_BASE }) => {
       socket.off('report:created', handleNewReport);
     };
   }, [API_BASE, adminToken]);
+
+  const totalParticipantCount = useMemo(() => {
+    const fromTeams = teams.reduce((acc, t) => {
+      const count = Array.isArray(t.members) && t.members.length > 0 ? t.members.length : 0;
+      return acc + count;
+    }, 0);
+    return Math.max(fromTeams, totalParticipants || 0);
+  }, [teams, totalParticipants]);
 
   const mergedTeams = useMemo(() => {
     const list = teams.map((team) => {
@@ -897,6 +910,45 @@ const AdminDashboard = ({ API_BASE }) => {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* Total Participants & Teams Header Badge */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            background: 'linear-gradient(135deg, rgba(2, 24, 30, 0.85), rgba(1, 14, 18, 0.9))',
+            border: '1px solid rgba(0, 240, 255, 0.45)',
+            padding: '6px 14px',
+            fontFamily: "'Share Tech Mono', monospace",
+            fontSize: '11px',
+            boxShadow: '0 0 12px rgba(0, 240, 255, 0.15)',
+            borderRadius: '4px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+              <Users size={15} color="#00f0ff" />
+              <span style={{ color: 'rgba(0, 240, 255, 0.85)', letterSpacing: '0.5px' }}>TOTAL PARTICIPANTS:</span>
+              <span style={{
+                fontWeight: 'bold',
+                color: '#00f0ff',
+                fontSize: '15px',
+                textShadow: '0 0 10px rgba(0, 240, 255, 0.7)'
+              }}>
+                {totalParticipantCount}
+              </span>
+            </div>
+            <span style={{ color: 'rgba(255, 255, 255, 0.25)', userSelect: 'none' }}>|</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+              <span style={{ color: 'rgba(57, 255, 20, 0.85)', letterSpacing: '0.5px' }}>TEAMS:</span>
+              <span style={{
+                fontWeight: 'bold',
+                color: '#39ff14',
+                fontSize: '15px',
+                textShadow: '0 0 10px rgba(57, 255, 20, 0.7)'
+              }}>
+                {teams.length}
+              </span>
+            </div>
+          </div>
+
           {/* ML Core status indicator */}
           <div style={{
             display: 'flex',
@@ -1088,7 +1140,7 @@ const AdminDashboard = ({ API_BASE }) => {
 
       <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
         <button className={`cyber-btn-outline ${activeTab === 'teams' ? 'glow-text' : ''}`} onClick={() => setActiveTab('teams')}>
-          <Users size={14} /> Teams
+          <Users size={14} /> Teams ({teams.length})
         </button>
         <button className={`cyber-btn-outline ${activeTab === 'payments' ? 'glow-text' : ''}`} onClick={() => setActiveTab('payments')} style={{ borderColor: 'rgba(57,255,20,0.5)', color: '#39ff14' }}>
           <Shield size={14} /> Payment Verification ({teams.filter(t => t.paymentVerified).length}/{teams.length})
@@ -1168,7 +1220,7 @@ const AdminDashboard = ({ API_BASE }) => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Trophy size={18} color="#ffd700" />
                 <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#ffd700', letterSpacing: '1px' }}>
-                  LIVE LEADERBOARD & TIME RANKINGS ({mergedTeams.length} TEAMS)
+                  LIVE LEADERBOARD & TIME RANKINGS ({mergedTeams.length} TEAMS • {totalParticipantCount} PARTICIPANTS)
                 </span>
               </div>
               <button
