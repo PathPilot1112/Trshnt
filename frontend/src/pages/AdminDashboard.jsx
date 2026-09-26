@@ -474,10 +474,10 @@ const AdminDashboard = ({ API_BASE }) => {
 
   const totalParticipantCount = useMemo(() => {
     const fromTeams = teams.reduce((acc, t) => {
-      const count = Array.isArray(t.members) && t.members.length > 0 ? t.members.length : 0;
+      const count = Array.isArray(t.members) ? t.members.filter(Boolean).length : 0;
       return acc + count;
     }, 0);
-    return Math.max(fromTeams, totalParticipants || 0);
+    return fromTeams > 0 ? fromTeams : (totalParticipants || 0);
   }, [teams, totalParticipants]);
 
   const mergedTeams = useMemo(() => {

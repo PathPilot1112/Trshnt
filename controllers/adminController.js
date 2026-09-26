@@ -134,7 +134,8 @@ export const listClues = async (req, res) => {
 export const listTeams = async(req, res)=>{
   try {
     const teams = await Team.find().populate("members", "name email");
-    const totalParticipants = await User.countDocuments({ role: "player" });
+    const activeTeamIds = teams.map((t) => t._id);
+    const totalParticipants = await User.countDocuments({ role: "player", team: { $in: activeTeamIds } });
     res.json({ teams, totalParticipants });
   } catch (err) {
     res.status(500).json({ message: "Error listing teams", error: err.message });
