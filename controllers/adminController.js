@@ -133,7 +133,7 @@ export const listClues = async (req, res) => {
 
 export const listTeams = async(req, res)=>{
   try {
-    const teams = await Team.find().populate("members", "name email");
+    const teams = await Team.find().populate("members", "name email registerNumber yearOfGraduation course specialization contactNumber role createdAt");
     const activeTeamIds = teams.map((t) => t._id);
     const totalParticipants = await User.countDocuments({ role: "player", team: { $in: activeTeamIds } });
     res.json({ teams, totalParticipants });
@@ -550,7 +550,7 @@ export const updateTeam = async (req, res) => {
 
     const io = req.app.get("io");
     if (io) {
-      const allTeams = await Team.find().populate("members", "name email");
+      const allTeams = await Team.find().populate("members", "name email registerNumber yearOfGraduation course specialization contactNumber role createdAt");
       io.emit("teams:snapshot", allTeams.map(buildLeaderboardEntry));
       io.emit("leaderboard:snapshot", buildSnapshot(allTeams));
       io.emit("team:status", {
@@ -647,7 +647,7 @@ export const updateSubmission = async (req, res) => {
 
         const io = req.app.get("io");
         if (io) {
-          const allTeams = await Team.find().populate("members", "name email");
+          const allTeams = await Team.find().populate("members", "name email registerNumber yearOfGraduation course specialization contactNumber role createdAt");
           io.emit("teams:snapshot", allTeams.map(buildLeaderboardEntry));
           io.emit("leaderboard:snapshot", buildSnapshot(allTeams));
           io.emit("team:status", {
@@ -702,7 +702,7 @@ export const deleteTeam = async (req, res) => {
 
     const io = req.app.get("io");
     if (io) {
-      const remainingTeams = await Team.find().populate("members", "name email");
+      const remainingTeams = await Team.find().populate("members", "name email registerNumber yearOfGraduation course specialization contactNumber role createdAt");
       io.emit("teams:snapshot", remainingTeams.map(buildLeaderboardEntry));
       io.emit("leaderboard:snapshot", buildSnapshot(remainingTeams));
       io.emit("team:deleted", { teamId });

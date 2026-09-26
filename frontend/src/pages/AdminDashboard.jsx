@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import QRCode from 'react-qr-code';
-import { Activity, Clock, Edit3, Map, Play, Power, QrCode, RefreshCw, Shield, SkipForward, Trash2, Trophy, Users, X } from 'lucide-react';
+import { Activity, Clock, Edit3, GraduationCap, Mail, Map, Phone, Play, Power, QrCode, RefreshCw, Search, Shield, SkipForward, Trash2, Trophy, UserCheck, Users, X } from 'lucide-react';
 import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet';
 import { getSocket } from '../socket';
 
@@ -52,6 +52,9 @@ const AdminDashboard = ({ API_BASE }) => {
     currentClueIndex: 0,
     assignedRouteId: '',
   });
+  const [participantSearch, setParticipantSearch] = useState('');
+  const [participantTeamFilter, setParticipantTeamFilter] = useState('all');
+  const [participantCourseFilter, setParticipantCourseFilter] = useState('all');
 
   const showBanner = (title, message = '', type = 'success') => {
     setBanner({ title, message, type });
@@ -251,6 +254,47 @@ const AdminDashboard = ({ API_BASE }) => {
     }));
     downloadCSV(exportData, `teams_export_${Date.now()}.csv`);
     showBanner('CSV Downloaded', 'Teams CSV exported successfully!');
+  };
+
+  const handleDownloadParticipantsCSV = () => {
+    const participantRows = [];
+    teams.forEach((t) => {
+      if (Array.isArray(t.members)) {
+        t.members.forEach((m, idx) => {
+          if (!m) return;
+          participantRows.push({
+            'Team Name': t.name || '',
+            'Team Number': t.teamNumber || '',
+            'Operative Index': `Operative 0${idx + 1}`,
+            'Full Name': typeof m === 'object' ? (m.name || '') : String(m),
+            'Register Number': typeof m === 'object' ? (m.registerNumber || '') : '',
+            'Course': typeof m === 'object' ? (m.course || '') : '',
+            'Specialization': typeof m === 'object' ? (m.specialization || '') : '',
+            'Graduation Year': typeof m === 'object' ? (m.yearOfGraduation || '') : '',
+            'Contact Number': typeof m === 'object' ? (m.contactNumber || '') : '',
+            'Email Address': typeof m === 'object' ? (m.email || '') : '',
+            'Team Status': t.status || 'not_started',
+            'Team Route': t.assignedRouteName || t.assignedRouteId || 'N/A'
+          });
+        });
+      }
+    });
+
+    if (!participantRows.length) {
+      showBanner('No Participants', 'No participant details found to export.', 'warning');
+      return;
+    }
+
+    downloadCSV(participantRows, `participants_roster_${Date.now()}.csv`);
+    showBanner('CSV Downloaded', `Exported ${participantRows.length} participants successfully!`);
+  };
+
+  const handleCopyText = (text, label = 'Copied') => {
+    if (!text) return;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text);
+    }
+    showBanner('COPIED TO CLIPBOARD', `${label}: ${text}`);
   };
 
   const handleDownloadSubmissionsCSV = () => {
@@ -479,6 +523,52 @@ const AdminDashboard = ({ API_BASE }) => {
     }, 0);
     return fromTeams > 0 ? fromTeams : (totalParticipants || 0);
   }, [teams, totalParticipants]);
+
+  const filteredParticipantTeams = useMemo(() => {
+    const searchLower = participantSearch.trim().toLowerCase();
+
+    return teams
+      .filter((team) => {
+        if (participantTeamFilter !== 'all' && String(team._id) !== String(participantTeamFilter)) {
+          return false;
+        }
+        return true;
+      })
+      .map((team) => {
+        const membersList = Array.isArray(team.members) ? team.members.filter(Boolean) : [];
+        const matchingMembers = membersList.filter((m) => {
+          if (participantCourseFilter !== 'all') {
+            const courseVal = (typeof m === 'object' && m.course) ? m.course.toLowerCase() : '';
+            if (!courseVal.includes(participantCourseFilter.toLowerCase())) {
+              return false;
+            }
+          }
+          if (!searchLower) return true;
+
+          const nameMatch = typeof m === 'object' && m.name && m.name.toLowerCase().includes(searchLower);
+          const regMatch = typeof m === 'object' && m.registerNumber && m.registerNumber.toLowerCase().includes(searchLower);
+          const emailMatch = typeof m === 'object' && m.email && m.email.toLowerCase().includes(searchLower);
+          const phoneMatch = typeof m === 'object' && m.contactNumber && m.contactNumber.toLowerCase().includes(searchLower);
+          const specMatch = typeof m === 'object' && m.specialization && m.specialization.toLowerCase().includes(searchLower);
+          const yearMatch = typeof m === 'object' && m.yearOfGraduation && String(m.yearOfGraduation).includes(searchLower);
+
+          const teamNameMatch = team.name && team.name.toLowerCase().includes(searchLower);
+          const teamNumMatch = team.teamNumber && team.teamNumber.toLowerCase().includes(searchLower);
+
+          return nameMatch || regMatch || emailMatch || phoneMatch || specMatch || yearMatch || teamNameMatch || teamNumMatch;
+        });
+
+        return {
+          ...team,
+          matchingMembers
+        };
+      })
+      .filter((team) => team.matchingMembers.length > 0);
+  }, [teams, participantSearch, participantTeamFilter, participantCourseFilter]);
+
+  const totalMatchingParticipants = useMemo(() => {
+    return filteredParticipantTeams.reduce((sum, t) => sum + t.matchingMembers.length, 0);
+  }, [filteredParticipantTeams]);
 
   const mergedTeams = useMemo(() => {
     const list = teams.map((team) => {
@@ -1142,6 +1232,9 @@ const AdminDashboard = ({ API_BASE }) => {
         <button className={`cyber-btn-outline ${activeTab === 'teams' ? 'glow-text' : ''}`} onClick={() => setActiveTab('teams')}>
           <Users size={14} /> Teams ({teams.length})
         </button>
+        <button className={`cyber-btn-outline ${activeTab === 'participants' ? 'glow-text' : ''}`} onClick={() => setActiveTab('participants')} style={{ borderColor: 'rgba(0, 229, 255, 0.6)', color: '#00e5ff' }}>
+          <UserCheck size={14} /> Participants Roster ({totalParticipantCount})
+        </button>
         <button className={`cyber-btn-outline ${activeTab === 'payments' ? 'glow-text' : ''}`} onClick={() => setActiveTab('payments')} style={{ borderColor: 'rgba(57,255,20,0.5)', color: '#39ff14' }}>
           <Shield size={14} /> Payment Verification ({teams.filter(t => t.paymentVerified).length}/{teams.length})
         </button>
@@ -1464,8 +1557,56 @@ const AdminDashboard = ({ API_BASE }) => {
                       <div style={{ fontSize: '11px', marginTop: '6px' }}>
                         GPS: {team.location?.lat ? `${team.location.lat.toFixed(5)}, ${team.location.lng.toFixed(5)}` : 'No live coordinates yet'}
                       </div>
-                      <div style={{ fontSize: '11px', marginTop: '6px', color: '#fff' }}>
-                        MEMBERS: {team.members?.map(m => typeof m === 'object' ? m.name : m).join(', ') || 'None'}
+                      <div style={{ marginTop: '10px', padding: '8px 10px', background: 'rgba(0, 240, 255, 0.04)', border: '1px solid rgba(0, 240, 255, 0.15)', borderRadius: '4px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '6px' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#00f0ff' }}>
+                            TEAM OPERATIVES ({team.members?.length || 0}):
+                          </span>
+                          <button
+                            type="button"
+                            className="cyber-btn-outline"
+                            style={{ fontSize: '9px', padding: '2px 8px', borderColor: '#00f0ff', color: '#00f0ff', cursor: 'pointer' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setParticipantTeamFilter(team._id);
+                              setActiveTab('participants');
+                            }}
+                          >
+                            VIEW FULL DOSSIERS &rarr;
+                          </button>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                          {team.members && team.members.length > 0 ? (
+                            team.members.map((m, mIdx) => {
+                              const isObj = typeof m === 'object' && m !== null;
+                              return (
+                                <div
+                                  key={m._id || mIdx}
+                                  style={{
+                                    fontSize: '11px',
+                                    padding: '3px 8px',
+                                    borderRadius: '4px',
+                                    background: 'rgba(0,0,0,0.5)',
+                                    border: '1px solid rgba(255,255,255,0.15)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                  }}
+                                >
+                                  <span style={{ color: '#fff', fontWeight: 'bold' }}>{isObj ? m.name : String(m)}</span>
+                                  {isObj && m.registerNumber && (
+                                    <span style={{ color: '#00f0ff', fontSize: '10px' }}>({m.registerNumber})</span>
+                                  )}
+                                  {isObj && m.contactNumber && (
+                                    <span style={{ color: '#39ff14', fontSize: '10px' }}>📞 {m.contactNumber}</span>
+                                  )}
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>No operatives registered</span>
+                          )}
+                        </div>
                       </div>
 
 
@@ -1615,6 +1756,402 @@ const AdminDashboard = ({ API_BASE }) => {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {activeTab === 'participants' && (
+        <div style={{ display: 'grid', gap: '16px' }}>
+          {/* Header Banner & Global Controls */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(2, 20, 26, 0.9), rgba(1, 10, 15, 0.95))',
+            border: '1px solid rgba(0, 240, 255, 0.35)',
+            borderRadius: '8px',
+            padding: '16px 20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '16px',
+            flexWrap: 'wrap',
+            boxShadow: '0 0 20px rgba(0, 240, 255, 0.08)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+              <div style={{
+                background: 'rgba(0, 240, 255, 0.12)',
+                border: '1px solid #00f0ff',
+                borderRadius: '8px',
+                padding: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <UserCheck size={22} color="#00f0ff" />
+              </div>
+              <div>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>
+                  PARTICIPANT REGISTRATION DOSSIERS
+                </div>
+                <div style={{ fontSize: '11px', color: 'rgba(0, 240, 255, 0.7)' }}>
+                  All Bio-Asset registration credentials, academic records, and contact nodes grouped by Research Unit
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{
+                background: 'rgba(0, 0, 0, 0.45)',
+                border: '1px solid rgba(0, 240, 255, 0.25)',
+                padding: '6px 12px',
+                borderRadius: '4px',
+                fontSize: '11px',
+                display: 'flex',
+                gap: '12px'
+              }}>
+                <span>TOTAL: <strong style={{ color: '#00f0ff' }}>{totalParticipantCount}</strong></span>
+                <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
+                <span>TEAMS: <strong style={{ color: '#39ff14' }}>{teams.length}</strong></span>
+              </div>
+
+              <button
+                className="cyber-btn-outline"
+                style={{ borderColor: '#00f0ff', color: '#00f0ff', padding: '8px 16px', fontSize: '11px', cursor: 'pointer' }}
+                onClick={handleDownloadParticipantsCSV}
+              >
+                📥 DOWNLOAD PARTICIPANTS CSV
+              </button>
+            </div>
+          </div>
+
+          {/* Search & Filter Toolbar */}
+          <div style={{
+            background: 'rgba(3, 12, 15, 0.8)',
+            border: '1px solid rgba(0, 240, 255, 0.2)',
+            borderRadius: '8px',
+            padding: '12px 18px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '12px',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', flex: '1', minWidth: '280px' }}>
+              <div style={{ position: 'relative', flex: '1', minWidth: '220px' }}>
+                <Search size={14} color="#00f0ff" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type="text"
+                  placeholder="SEARCH OPERATIVE (NAME, REG NUMBER, EMAIL, PHONE, TEAM)..."
+                  value={participantSearch}
+                  onChange={(e) => setParticipantSearch(e.target.value)}
+                  style={{
+                    width: '100%',
+                    background: '#020b0d',
+                    border: '1px solid rgba(0, 240, 255, 0.4)',
+                    padding: '8px 12px 8px 32px',
+                    color: '#fff',
+                    fontFamily: "'Share Tech Mono', monospace",
+                    fontSize: '11px',
+                    borderRadius: '4px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '11px', color: 'rgba(0, 240, 255, 0.7)' }}>TEAM:</span>
+                <select
+                  value={participantTeamFilter}
+                  onChange={(e) => setParticipantTeamFilter(e.target.value)}
+                  style={{
+                    background: '#020b0d',
+                    color: '#00f0ff',
+                    border: '1px solid rgba(0, 240, 255, 0.4)',
+                    padding: '7px 10px',
+                    fontSize: '11px',
+                    fontFamily: "'Share Tech Mono', monospace",
+                    outline: 'none',
+                    cursor: 'pointer',
+                    borderRadius: '4px'
+                  }}
+                >
+                  <option value="all">ALL TEAMS ({teams.length})</option>
+                  {teams.map((t) => (
+                    <option key={t._id} value={t._id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '11px', color: 'rgba(0, 240, 255, 0.7)' }}>COURSE:</span>
+                <select
+                  value={participantCourseFilter}
+                  onChange={(e) => setParticipantCourseFilter(e.target.value)}
+                  style={{
+                    background: '#020b0d',
+                    color: '#00f0ff',
+                    border: '1px solid rgba(0, 240, 255, 0.4)',
+                    padding: '7px 10px',
+                    fontSize: '11px',
+                    fontFamily: "'Share Tech Mono', monospace",
+                    outline: 'none',
+                    cursor: 'pointer',
+                    borderRadius: '4px'
+                  }}
+                >
+                  <option value="all">ALL COURSES</option>
+                  <option value="b.tech">B.TECH</option>
+                  <option value="m.tech">M.TECH</option>
+                </select>
+              </div>
+
+              {(participantSearch || participantTeamFilter !== 'all' || participantCourseFilter !== 'all') && (
+                <button
+                  className="cyber-btn-outline"
+                  style={{ padding: '6px 10px', fontSize: '10px', borderColor: '#f87171', color: '#f87171' }}
+                  onClick={() => {
+                    setParticipantSearch('');
+                    setParticipantTeamFilter('all');
+                    setParticipantCourseFilter('all');
+                  }}
+                >
+                  RESET FILTERS
+                </button>
+              )}
+            </div>
+
+            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>
+              MATCHING: <span style={{ color: '#00f0ff', fontWeight: 'bold' }}>{totalMatchingParticipants}</span> PARTICIPANTS IN <span style={{ color: '#39ff14', fontWeight: 'bold' }}>{filteredParticipantTeams.length}</span> TEAMS
+            </div>
+          </div>
+
+          {/* Grouped Participant Cards by Team */}
+          {filteredParticipantTeams.length === 0 ? (
+            <div style={{
+              padding: '40px',
+              textAlign: 'center',
+              background: 'rgba(3, 12, 15, 0.7)',
+              border: '1px dashed rgba(0, 240, 255, 0.3)',
+              borderRadius: '8px',
+              color: 'rgba(255, 255, 255, 0.6)',
+              fontFamily: "'Share Tech Mono', monospace"
+            }}>
+              [ NO PARTICIPANT DOSSIERS FOUND MATCHING ACTIVE FILTER CRITERIA ]
+            </div>
+          ) : (
+            filteredParticipantTeams.map((team, tIdx) => {
+              return (
+                <div
+                  key={team._id || tIdx}
+                  style={{
+                    background: 'rgba(2, 14, 18, 0.85)',
+                    border: '1px solid rgba(0, 240, 255, 0.3)',
+                    borderRadius: '8px',
+                    padding: '16px',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)'
+                  }}
+                >
+                  {/* Team Header */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '14px',
+                    paddingBottom: '12px',
+                    borderBottom: '1px solid rgba(0, 240, 255, 0.15)',
+                    flexWrap: 'wrap',
+                    gap: '10px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '17px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>
+                        {team.name}
+                      </span>
+                      <span style={{
+                        fontSize: '11px',
+                        padding: '2px 8px',
+                        background: 'rgba(0, 240, 255, 0.1)',
+                        border: '1px solid rgba(0, 240, 255, 0.35)',
+                        color: '#00f0ff',
+                        borderRadius: '4px',
+                        fontFamily: "'Share Tech Mono', monospace"
+                      }}>
+                        CLEARANCE: {team.teamNumber || 'N/A'}
+                      </span>
+                      <span style={{
+                        fontSize: '11px',
+                        padding: '2px 8px',
+                        background: 'rgba(57, 255, 20, 0.1)',
+                        border: '1px solid rgba(57, 255, 20, 0.35)',
+                        color: '#39ff14',
+                        borderRadius: '4px',
+                        fontWeight: 'bold'
+                      }}>
+                        {team.matchingMembers.length} {team.matchingMembers.length === 1 ? 'BIO-ASSET' : 'BIO-ASSETS'}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', fontSize: '11px' }}>
+                      <span style={{ color: 'rgba(255,255,255,0.6)' }}>
+                        ROUTE: <strong style={{ color: '#ffaa00' }}>{team.assignedRouteName || (team.assignedRouteId ? `Route #${team.assignedRouteId}` : 'UNASSIGNED')}</strong>
+                      </span>
+                      <span style={{
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        background: team.status === 'finished' ? 'rgba(0, 229, 255, 0.15)' : team.status === 'in_progress' ? 'rgba(57, 255, 20, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                        border: `1px solid ${team.status === 'finished' ? '#00e5ff' : team.status === 'in_progress' ? '#39ff14' : 'rgba(255, 255, 255, 0.2)'}`,
+                        color: team.status === 'finished' ? '#00e5ff' : team.status === 'in_progress' ? '#39ff14' : 'rgba(255, 255, 255, 0.6)',
+                        fontWeight: 'bold'
+                      }}>
+                        STATUS: {team.status?.toUpperCase() || 'NOT_STARTED'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Operatives Cards Grid */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                    gap: '12px'
+                  }}>
+                    {team.matchingMembers.map((member, mIdx) => {
+                      const isObj = typeof member === 'object' && member !== null;
+                      const memberName = isObj ? (member.name || 'Anonymous Operative') : String(member);
+                      const regNumber = isObj ? (member.registerNumber || 'N/A') : 'N/A';
+                      const email = isObj ? (member.email || 'N/A') : 'N/A';
+                      const phone = isObj ? (member.contactNumber || 'N/A') : 'N/A';
+                      const course = isObj ? (member.course || 'B.Tech') : 'B.Tech';
+                      const specialization = isObj ? (member.specialization || 'General') : 'General';
+                      const year = isObj ? (member.yearOfGraduation || '2026') : '2026';
+
+                      return (
+                        <div
+                          key={member._id || mIdx}
+                          style={{
+                            background: 'rgba(0, 0, 0, 0.4)',
+                            border: '1px solid rgba(0, 240, 255, 0.2)',
+                            borderRadius: '6px',
+                            padding: '12px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '8px',
+                            position: 'relative'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{
+                              fontSize: '10px',
+                              letterSpacing: '0.5px',
+                              fontWeight: 'bold',
+                              color: '#00f0ff',
+                              background: 'rgba(0, 240, 255, 0.1)',
+                              padding: '2px 6px',
+                              borderRadius: '3px',
+                              border: '1px solid rgba(0, 240, 255, 0.3)'
+                            }}>
+                              BIO-ASSET 0{mIdx + 1}
+                            </span>
+                            <span style={{
+                              fontSize: '10px',
+                              color: 'rgba(255,255,255,0.5)'
+                            }}>
+                              CLASS OF {year}
+                            </span>
+                          </div>
+
+                          <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#fff', marginTop: '2px' }}>
+                            {memberName}
+                          </div>
+
+                          {/* Register Number */}
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px dashed rgba(255, 255, 255, 0.15)',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            fontSize: '11px'
+                          }}>
+                            <span style={{ color: 'rgba(255, 255, 255, 0.5)' }}>REG NO:</span>
+                            <span
+                              onClick={() => handleCopyText(regNumber, 'Register Number')}
+                              style={{ color: '#00f0ff', fontWeight: 'bold', cursor: 'pointer', fontFamily: "'Share Tech Mono', monospace" }}
+                              title="Click to copy"
+                            >
+                              {regNumber} 📋
+                            </span>
+                          </div>
+
+                          {/* Academic Information */}
+                          <div style={{
+                            fontSize: '11px',
+                            color: 'rgba(255, 255, 255, 0.8)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            <GraduationCap size={13} color="#ffd700" />
+                            <span>{course} • <span style={{ color: '#ffd700' }}>{specialization}</span></span>
+                          </div>
+
+                          {/* Contact Info */}
+                          <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px',
+                            marginTop: '4px',
+                            paddingTop: '6px',
+                            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                            fontSize: '11px'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <Phone size={12} color="#39ff14" />
+                                <a
+                                  href={`tel:${phone}`}
+                                  style={{ color: '#39ff14', textDecoration: 'none' }}
+                                  title="Click to call"
+                                >
+                                  {phone}
+                                </a>
+                              </div>
+                              <span
+                                onClick={() => handleCopyText(phone, 'Phone Number')}
+                                style={{ color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '10px' }}
+                                title="Copy Phone"
+                              >
+                                📋
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <Mail size={12} color="#00e5ff" />
+                                <a
+                                  href={`mailto:${email}`}
+                                  style={{ color: '#00e5ff', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                                  title="Click to email"
+                                >
+                                  {email}
+                                </a>
+                              </div>
+                              <span
+                                onClick={() => handleCopyText(email, 'Email Address')}
+                                style={{ color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '10px' }}
+                                title="Copy Email"
+                              >
+                                📋
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       )}
 
